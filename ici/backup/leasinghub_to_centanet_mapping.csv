@@ -1,0 +1,433 @@
+building_key,leasinghub_id,leasinghub_original_key,leasinghub_name,centanet_id,centanet_original_key,centanet_name,match_score
+LH_190,190,190,100 Queen's Road Central,e37f48de-3c7c-4bd3-8316-b35228c76e10,e37f48de-3c7c-4bd3-8316-b35228c76e10,100 Queen's Road Central,90.0
+LH_107,107,107,128 Connaught Road Central,cd6b6f32-f52f-4b68-876c-e909c3e9c723,cd6b6f32-f52f-4b68-876c-e909c3e9c723,128 Connaught Road Central,88.6
+LH_17653,17653,17653,181 Queen's Road Central,14147db7-cdb3-4f9c-8064-e0e1de89df7e,14147db7-cdb3-4f9c-8064-e0e1de89df7e,181 Queen's Road Central,88.4
+LH_2971,2971,2971,238 Nathan Road,4219015c-e0fc-4fe2-a53a-afbb8b0d43fa,4219015c-e0fc-4fe2-a53a-afbb8b0d43fa,238 Nathan Road,90.0
+LH_156,156,156,299QRC,c212b1fc-aa78-427e-931c-bf766a88de9d,c212b1fc-aa78-427e-931c-bf766a88de9d,299 QRC,85.19999999999999
+LH_4833,4833,4833,3 Yuk Yat Street,9110fa68-a612-431d-a0b3-2c0f60e5bc47,9110fa68-a612-431d-a0b3-2c0f60e5bc47,3 Yuk Yat Street,90.0
+LH_26,26,26,308 Central Des Voeux,f4e0fe6d-07d8-49da-a242-d51fa81524e2,f4e0fe6d-07d8-49da-a242-d51fa81524e2,308 Central Des Voeux,88.6
+LH_15051,15051,15051,38 Plaza,5b0710db-1f97-40ae-9002-34cd4623cae0,5b0710db-1f97-40ae-9002-34cd4623cae0,38 Plaza,90.0
+LH_11521,11521,11521,41 Heung Yip Road,8819d14a-161a-4f83-a9cd-97e6aab2e0ce,8819d14a-161a-4f83-a9cd-97e6aab2e0ce,41 Heung Yip Road,100.0
+LH_4727,4727,4727,52 Hung To Road,3ba56a1a-0b7f-4897-a6a3-f536cd5023de,3ba56a1a-0b7f-4897-a6a3-f536cd5023de,52 Hung To Road,90.0
+LH_6174,6174,6174,6 Wilmer Street,8e1816d0-46d1-4801-ae08-a6a909ab40a0,8e1816d0-46d1-4801-ae08-a6a909ab40a0,6 Wilmer Street,90.0
+LH_2957,2957,2957,655 Nathan Road,65cb551d-2eb6-43c0-aa1d-5c5d8648b959,65cb551d-2eb6-43c0-aa1d-5c5d8648b959,655 Nathan Road,90.0
+LH_1621,1621,1621,68 Yee Wo Street,af65a222-751f-483f-9ceb-62d8490c1e49,af65a222-751f-483f-9ceb-62d8490c1e49,68 Yee Wo Street,90.0
+LH_12274,12274,12274,8 Observatory Road,2eeb9764-51f5-4d8c-9fcd-d11cf82d6701,2eeb9764-51f5-4d8c-9fcd-d11cf82d6701,8 Observatory Road,77.4
+LH_170,170,170,8 Queen's Road Central,4d06ead3-a23a-4dc5-8d40-4d4cd608c376,4d06ead3-a23a-4dc5-8d40-4d4cd608c376,8 Queen's Road Central,90.0
+LH_1974,1974,1974,8 Wyndham Street,ba76e08d-43fa-48da-b26a-b3b744e897a1,ba76e08d-43fa-48da-b26a-b3b744e897a1,8 Wyndham Street,90.0
+LH_1167,1167,1167,80 Gloucester Road,3c3892c7-2b25-4b25-ac79-789d6a63fd4d,3c3892c7-2b25-4b25-ac79-789d6a63fd4d,80 Gloucester Road,88.4
+LH_1156,1156,1156,88 Gloucester Road,4162a41a-9e19-4b7d-ba18-ea116757c921,4162a41a-9e19-4b7d-ba18-ea116757c921,88 Gloucester Road,90.0
+LH_846,846,846,9 Des Voeux Road West,92fd99a3-9058-4214-a45f-fb2fe70171b3,92fd99a3-9058-4214-a45f-fb2fe70171b3,9 Des Voeux Road West,88.6
+LH_139,139,139,9 Queen's Road Central,435d2ffa-7dd7-4264-afa9-e370ff64dbb8,435d2ffa-7dd7-4264-afa9-e370ff64dbb8,Nine Queen's Road Central,87.0
+LH_5555,5555,5555,9 Wing Hong Street,97e8859d-78c0-4fb6-9ec9-aef9845d1a5e,97e8859d-78c0-4fb6-9ec9-aef9845d1a5e,9 Wing Hong Street,90.0
+LH_6307,6307,6307,909 Cheung Sha Wan Road,f0ea605f-4911-4822-866e-eca42c95b174,f0ea605f-4911-4822-866e-eca42c95b174,909 Cheung Sha Wan Road,90.0
+LH_1131,1131,1131,Admiralty Centre Tower 1,09eeef57-e096-4827-955f-5aadc50263d6,09eeef57-e096-4827-955f-5aadc50263d6,Admiralty Centre Tower 1,90.0
+LH_1130,1130,1130,Admiralty Centre Tower 2,9bb3bed9-b3e1-43a2-a6e0-2c97ff3ed3f5,9bb3bed9-b3e1-43a2-a6e0-2c97ff3ed3f5,Admiralty Centre Tower 2,90.0
+LH_115,115,115,AIA Central,c38f51c0-684d-438f-a00b-d2440822e54a,c38f51c0-684d-438f-a00b-d2440822e54a,AIA Central,90.0
+LH_6238,6238,6238,AIA Financial Centre,d8dbe236-d60b-49d8-b8ca-734c2aed1fcc,d8dbe236-d60b-49d8-b8ca-734c2aed1fcc,AIA Financial Centre,90.0
+LH_2773,2773,2773,AIA Tower,14190f42-cb36-4cfd-90d3-7e73d069f5bd,14190f42-cb36-4cfd-90d3-7e73d069f5bd,AIA Tower,90.0
+LH_5599,5599,5599,Aitken Vanson Centre,6072ec71-f685-4acc-ae01-4c512e800685,6072ec71-f685-4acc-ae01-4c512e800685,Aitken Vanson Centre,90.0
+LH_2618,2618,2618,Albion Plaza,d1ec32f3-c078-43a0-86ef-cf041b34c4a5,d1ec32f3-c078-43a0-86ef-cf041b34c4a5,Albion Plaza,90.0
+LH_1193,1193,1193,Alexandra House,ee44d785-3974-400b-a9fe-755bf05091ca,ee44d785-3974-400b-a9fe-755bf05091ca,Alexandra House,90.0
+LH_117,117,117,Alliance Building,60c03441-c786-41b1-a3cc-443ece2e79dd,60c03441-c786-41b1-a3cc-443ece2e79dd,Alliance Building,78.6
+LH_5601,5601,5601,Apec Plaza,bc45fa97-cf1b-4cd8-a923-419e5f19e38d,bc45fa97-cf1b-4cd8-a923-419e5f19e38d,APEC Plaza,90.0
+LH_2988,2988,2988,Argyle Centre Phase 1,d4ce18fc-b3ad-4523-a28b-9eebf0dba41c,d4ce18fc-b3ad-4523-a28b-9eebf0dba41c,Argyle Centre Phase I,87.0
+LH_369,369,369,Arion Commercial Centre,2542fc73-9920-404c-b46b-4129b488d0cb,2542fc73-9920-404c-b46b-4129b488d0cb,Arion Commercial Centre,90.0
+LH_146,146,146,Asia Standard Tower,0831c6eb-b3a2-4b3a-b621-cfa14964eb9b,0831c6eb-b3a2-4b3a-b621-cfa14964eb9b,Asia Standard Tower,90.0
+LH_2718,2718,2718,Austin Plaza,f38bba3b-3dc5-48a8-98a8-c4283daacb8b,f38bba3b-3dc5-48a8-98a8-c4283daacb8b,Austin Plaza,90.0
+LH_2738,2738,2738,Austin Tower,ebbcc431-6706-4968-858d-d8eb90783b98,ebbcc431-6706-4968-858d-d8eb90783b98,Austin Tower Phase I,90.0
+LH_3826,3826,3826,AXA Southside,614a9d78-fdc8-4f96-b8b1-2e1420a8da34,614a9d78-fdc8-4f96-b8b1-2e1420a8da34,Axa Southside,100.0
+LH_2974,2974,2974,Bangkok Bank Building,b1d7b5c7-51a0-4d58-b639-a1bf30acd8da,b1d7b5c7-51a0-4d58-b639-a1bf30acd8da,Bangkok Bank Building,90.0
+LH_48,48,48,Bangkok Bank Building,a2b669fc-db88-433b-b5f2-0550a111284d,a2b669fc-db88-433b-b5f2-0550a111284d,Bangkok Bank Building,90.0
+LH_1133,1133,1133,Bank of America Tower,c82072f6-c5c3-435f-8d5f-528a8b35f947,c82072f6-c5c3-435f-8d5f-528a8b35f947,Bank of America Tower,90.0
+LH_1295,1295,1295,Bank of China Tower,4a0e7742-4984-4990-9e07-d3068f56642e,4a0e7742-4984-4990-9e07-d3068f56642e,Bank Of China Tower,90.0
+LH_5703,5703,5703,BCC Building,f966c744-43a0-4fd8-bec2-7ac1a77a3482,f966c744-43a0-4fd8-bec2-7ac1a77a3482,Bcc Building,90.0
+LH_3000,3000,3000,Belgian Bank Building,f8bd9d6d-6837-4fcf-b42d-0d2f7b0dd77b,f8bd9d6d-6837-4fcf-b42d-0d2f7b0dd77b,Belgian Bank Building,90.0
+LH_4732,4732,4732,Benson Tower,54649034-e33f-484a-a9e8-80d85edf6567,54649034-e33f-484a-a9e8-80d85edf6567,Benson Tower,90.0
+LH_4496,4496,4496,Billion Centre,93578d20-ead6-4057-ab81-df91e3d5b237,93578d20-ead6-4057-ab81-df91e3d5b237,Billion Centre - Tower A,90.0
+LH_7437,7437,7437,Billion Plaza,10cc0175-1270-4290-a8dd-8727c7ca185f,10cc0175-1270-4290-a8dd-8727c7ca185f,Billion Plaza,90.0
+LH_7431,7431,7431,Billion Plaza II,0813c17a-903d-4d12-a078-0564b4d84342,0813c17a-903d-4d12-a078-0564b4d84342,Billion Plaza II,90.0
+LH_6591,6591,6591,Boss Commercial Centre,45ecfe02-3b0c-493b-99c0-473dc78eb715,45ecfe02-3b0c-493b-99c0-473dc78eb715,Boss Commercial Centre,90.0
+LH_2935,2935,2935,Bright Growth Medical Centre,966d47f8-d85f-4d5e-aaff-e2a69e199baf,966d47f8-d85f-4d5e-aaff-e2a69e199baf,Bright Growth Medical Centre,90.0
+LH_5312,5312,5312,Brill Plaza,c58926c2-ad0d-44a0-95dd-f480b4d3c741,c58926c2-ad0d-44a0-95dd-f480b4d3c741,Brill Plaza,88.4
+LH_4968,4968,4968,C-BONS International Center,78ed3493-4920-4a16-b85f-54638e67a5e3,78ed3493-4920-4a16-b85f-54638e67a5e3,C-Bons International Center,90.0
+LH_3510,3510,3510,Cameron Plaza,34ceebc2-629e-4ac1-b756-115f4b94221a,34ceebc2-629e-4ac1-b756-115f4b94221a,Cameron Plaza,90.0
+LH_1152,1152,1152,Capital Centre,1d945fc9-cdf6-4110-a3ce-3743ed3ce3c7,1d945fc9-cdf6-4110-a3ce-3743ed3ce3c7,Capital Centre,90.0
+LH_4932,4932,4932,Capital Tower,4cb51620-42d3-49f1-808e-5797400539fc,4cb51620-42d3-49f1-808e-5797400539fc,Capital Tower Tower A,90.0
+LH_5706,5706,5706,Carnarvon Plaza,09f12cdc-dce3-4096-a893-1535653c0a5a,09f12cdc-dce3-4096-a893-1535653c0a5a,Carnarvon Plaza,90.0
+LH_11523,11523,11523,Casey Aberdeen House,0e00db43-941b-4e3f-9780-d7562992d53a,0e00db43-941b-4e3f-9780-d7562992d53a,Casey Aberdeen House,100.0
+LH_3174,3174,3174,Catic Plaza,c328ef26-fb73-4597-9ff1-3906452d525b,c328ef26-fb73-4597-9ff1-3906452d525b,Catic Plaza,90.0
+LH_2546,2546,2546,Causeway Bay Commercial Building,69ba8e4b-5d34-4971-b684-8448b39e9c5d,69ba8e4b-5d34-4971-b684-8448b39e9c5d,Witty Commercial Building,75.8
+LH_1384,1384,1384,Causeway Bay Plaza 1,5a3f2f59-41bc-4201-ad5d-76df53160c3b,5a3f2f59-41bc-4201-ad5d-76df53160c3b,Causeway Bay Plaza 1,90.0
+LH_977,977,977,Causeway Bay Plaza 2,e5f2af0c-9ce5-46d5-b1b3-ea51f3e28f74,e5f2af0c-9ce5-46d5-b1b3-ea51f3e28f74,Causeway Bay Plaza 2,90.0
+LH_99,99,99,CCB Tower,980eb4ca-b923-4616-af33-bb0b3392a1cd,980eb4ca-b923-4616-af33-bb0b3392a1cd,CCB Tower,90.0
+LH_13711,13711,13711,CDW Building,ef97a36a-4ffa-4f57-a63c-a1fced58da1f,ef97a36a-4ffa-4f57-a63c-a1fced58da1f,CDW Building,90.0
+LH_2007,2007,2007,Central Plaza,0de67100-379e-48ac-9134-f9c7a39dc01d,0de67100-379e-48ac-9134-f9c7a39dc01d,Central Plaza,90.0
+LH_145,145,145,Central Tower,6d5ec20c-47a0-4009-b6a7-be6e94e47eea,6d5ec20c-47a0-4009-b6a7-be6e94e47eea,Central Tower,90.0
+LH_15092,15092,15092,Centre Parc,0f4345a1-cb88-4b14-b9af-373e7827c6cc,0f4345a1-cb88-4b14-b9af-373e7827c6cc,Centre Parc,90.0
+LH_650,650,650,Century Square,70aa39e0-abf6-4fe9-ae6c-3bedfa5754af,70aa39e0-abf6-4fe9-ae6c-3bedfa5754af,Century Square,90.0
+LH_3007,3007,3007,Champion Building,fe2ae5b4-3806-42a1-896d-0424b995361a,fe2ae5b4-3806-42a1-896d-0424b995361a,Champion Building,90.0
+LH_1191,1191,1191,Chater House,1b631fe7-47c0-44f3-b7c5-7303f1c2c5bb,1b631fe7-47c0-44f3-b7c5-7303f1c2c5bb,Chater House,90.0
+LH_16759,16759,16759,Cheung Kei Center Tower A,c8a89772-81bf-4106-a949-7c1b65a5f90d,c8a89772-81bf-4106-a949-7c1b65a5f90d,Cheung Tat Centre,75.19999999999999
+LH_166,166,166,Cheung Kong Center,9877c872-799c-49da-a166-e1019205f6c0,9877c872-799c-49da-a166-e1019205f6c0,Cheung Kong Center,90.0
+LH_6311,6311,6311,Cheung Sha Wan Plaza Tower 1,7d67df18-3959-44b6-ba3f-4e78cada9309,7d67df18-3959-44b6-ba3f-4e78cada9309,Cheung Sha Wan Plaza 1,90.0
+LH_6312,6312,6312,Cheung Sha Wan Plaza Tower 2,f34740d3-d614-4835-adbf-13e07cc9ebd0,f34740d3-d614-4835-adbf-13e07cc9ebd0,Cheung Sha Wan Plaza 2,90.0
+LH_4552,4552,4552,Chevalier Commercial Centre,eff786dd-31bf-4426-9633-31e59f32ad82,eff786dd-31bf-4426-9633-31e59f32ad82,Chevalier Commercial Centre,90.0
+LH_138,138,138,China Building,afae4454-1852-4a5f-8961-9e85298cc36c,afae4454-1852-4a5f-8961-9e85298cc36c,China Building,90.0
+LH_2291,2291,2291,China Hong Kong City Tower 1,e56a7428-99af-463a-8de2-44049da44c83,e56a7428-99af-463a-8de2-44049da44c83,China HK City Tower 1,85.19999999999999
+LH_2292,2292,2292,China Hong Kong City Tower 2,cdd5191a-c16b-474e-b98d-73f5bd757f11,cdd5191a-c16b-474e-b98d-73f5bd757f11,China HK City Tower 2,85.19999999999999
+LH_2293,2293,2293,China Hong Kong City Tower 3,1b6bad3c-b5a0-4078-9e62-270ccd6137d2,1b6bad3c-b5a0-4078-9e62-270ccd6137d2,China HK City Tower 3,85.19999999999999
+LH_2300,2300,2300,China Hong Kong City Tower 5,93260d04-bebb-4e4f-ae94-045a70bd40a5,93260d04-bebb-4e4f-ae94-045a70bd40a5,China HK City Tower 5,85.19999999999999
+LH_2294,2294,2294,China Hong Kong City Tower 6,66c08670-af9a-4bdf-a2d9-1d80f61f20ea,66c08670-af9a-4bdf-a2d9-1d80f61f20ea,China HK City Tower 6,85.19999999999999
+LH_22,22,22,China Insurance Group Building,32171908-20bd-4a5b-a138-f9758d2739e9,32171908-20bd-4a5b-a138-f9758d2739e9,China Insurance Group Building,88.6
+LH_1382,1382,1382,China Overseas Building,8bc3f15e-61ca-4c04-865e-0647c5289706,8bc3f15e-61ca-4c04-865e-0647c5289706,China Overseas Building,90.0
+LH_2006,2006,2006,China Resources Building,10d09d41-c05c-4009-9893-ea0438376c99,10d09d41-c05c-4009-9893-ea0438376c99,China Resources Building,90.0
+LH_6270,6270,6270,China Shipbuilding Tower,5654f7dc-3a96-4da2-b32f-27af3ce21de6,5654f7dc-3a96-4da2-b32f-27af3ce21de6,China Shipbuilding Tower,90.0
+LH_6153,6153,6153,China United Centre,d6e20613-9e5e-4186-84f6-cdb66721a236,d6e20613-9e5e-4186-84f6-cdb66721a236,China United Centre,88.6
+LH_1163,1163,1163,Chinachem Century Tower,28a26484-fbbd-41d2-bd8f-fe878f614ef2,28a26484-fbbd-41d2-bd8f-fe878f614ef2,Chinachem Century Tower,90.0
+LH_2663,2663,2663,Chinachem Golden Plaza,1d520530-c4f2-452d-973a-249286e861fb,1d520530-c4f2-452d-973a-249286e861fb,Chinachem Golden Plaza,90.0
+LH_1574,1574,1574,Chinachem Johnston Plaza,db3c81e3-4e23-4842-bfc0-9baa43c4f84c,db3c81e3-4e23-4842-bfc0-9baa43c4f84c,Chinachem Johnston Plaza,90.0
+LH_1071,1071,1071,Chinachem Leighton Plaza,a4ace4eb-cb63-46ca-abda-49746ec403dd,a4ace4eb-cb63-46ca-abda-49746ec403dd,Chinachem Leighton Plaza,90.0
+LH_129,129,129,Chinachem Tower,4abd63f8-acf0-4a62-9f20-15180f45d824,4abd63f8-acf0-4a62-9f20-15180f45d824,Chinachem Tower,90.0
+LH_1502,1502,1502,Chinaweal Centre,6e194746-d213-4bc0-8954-50c381ce7290,6e194746-d213-4bc0-8954-50c381ce7290,Chinaweal Centre,90.0
+LH_2968,2968,2968,Chow Tai Fook Centre,63661c58-1b31-45ee-b406-4512d8c084a3,63661c58-1b31-45ee-b406-4512d8c084a3,Chow Tai Fook Commercial Centre,89.4
+LH_122,122,122,Chu Kong Shipping Tower,8b36b0a2-12d4-479b-bd40-bcaee0cefc47,8b36b0a2-12d4-479b-bd40-bcaee0cefc47,Chu Kong Shipping Tower,90.0
+LH_15050,15050,15050,Chung Kiu Commercial Building,5bf1710b-eb1d-4fef-89d1-a3acacbb4a5c,5bf1710b-eb1d-4fef-89d1-a3acacbb4a5c,Chung Kiu Commercial Building,90.0
+LH_998,998,998,Chung Wai Commercial Building,8658d886-2039-40d2-874c-3774e1f27acf,8658d886-2039-40d2-874c-3774e1f27acf,Chung Wai Commercial Building,90.0
+LH_1379,1379,1379,Circle Plaza,57ff18ce-5256-499f-b457-2dec554aef19,57ff18ce-5256-499f-b457-2dec554aef19,Circle Plaza,90.0
+LH_6133,6133,6133,Circle Tower,e2dfc3c9-52a0-4fc7-ba1a-8fee276f886c,e2dfc3c9-52a0-4fc7-ba1a-8fee276f886c,Circle Tower,90.0
+LH_6180,6180,6180,Citic Tower,79c4d7ed-0abe-4212-be29-18207eaaf986,79c4d7ed-0abe-4212-be29-18207eaaf986,Citic Tower,90.0
+LH_1957,1957,1957,Citicorp Centre,d1b11d99-9990-4477-ac76-e99382b5cb35,d1b11d99-9990-4477-ac76-e99382b5cb35,Citicorp Centre,90.0
+LH_6470,6470,6470,Citimark,0ba2818d-34cf-4e42-b94b-54ec8e69e3f9,0ba2818d-34cf-4e42-b94b-54ec8e69e3f9,Citimark,90.0
+LH_1579,1579,1579,CNT House,a7d5bec2-e5bf-434d-b432-e973e8a40640,a7d5bec2-e5bf-434d-b432-e973e8a40640,Cnt House,90.0
+LH_1380,1380,1380,CNT Tower,7715a43f-3e8a-4565-b3cf-50f1c404453b,7715a43f-3e8a-4565-b3cf-50f1c404453b,Cnt Tower,90.0
+LH_1146,1146,1146,Cofco Tower,f3d1bfd6-c895-429c-a12f-7a31793eb2ea,f3d1bfd6-c895-429c-a12f-7a31793eb2ea,Cofco Tower,88.0
+LH_7436,7436,7436,Comweb Plaza,8b578e11-5ca0-437b-a450-b4419e4733b1,8b578e11-5ca0-437b-a450-b4419e4733b1,Comweb Plaza,90.0
+LH_582,582,582,Connaught Marina,682e3fdc-8230-44a3-9541-05d652789c78,682e3fdc-8230-44a3-9541-05d652789c78,Connaught Marina,90.0
+LH_4729,4729,4729,Contempo Place,2fa21f44-781a-490f-89f4-4a2da00e7c64,2fa21f44-781a-490f-89f4-4a2da00e7c64,Contempo Place,90.0
+LH_2005,2005,2005,Convention Plaza Office Tower,055d4139-3f9f-4ad3-a845-689fea37b0c0,055d4139-3f9f-4ad3-a845-689fea37b0c0,Office Tower - Convention Plaza,90.0
+LH_7182,7182,7182,COS Centre,1272a802-d6c1-4853-baa9-2f8f188cbf5d,1272a802-d6c1-4853-baa9-2f8f188cbf5d,COS Centre,90.0
+LH_164,164,164,Cosco Tower,ac92b31d-0bf1-4ceb-b8d8-7948e2354ba0,ac92b31d-0bf1-4ceb-b8d8-7948e2354ba0,Cosco Tower,90.0
+LH_143,143,143,Crawford House,e74dc370-d212-4287-85c8-d3c934284dbc,e74dc370-d212-4287-85c8-d3c934284dbc,Crawford House,90.0
+LH_15091,15091,15091,CTF Life Tower,3b38603e-099d-4d59-a5fa-f9e46f7e2a00,3b38603e-099d-4d59-a5fa-f9e46f7e2a00,CTF Life Tower,90.0
+LH_5360,5360,5360,D.J. Securities Building,06bf7584-0cfc-4d0e-bfad-c53234839c54,06bf7584-0cfc-4d0e-bfad-c53234839c54,D.J. Securities Building,90.0
+LH_4615,4615,4615,Dah Chong Hong Group Building,5117490d-8482-4953-af0c-5c59e7fe73ba,5117490d-8482-4953-af0c-5c59e7fe73ba,Dah Chong Hong Motor Service Building,82.8
+LH_361,361,361,Dah Sing Financial Centre,8e124135-87f4-463c-af3c-b2b089cefdbd,8e124135-87f4-463c-af3c-b2b089cefdbd,Dah Sing Financial Centre,90.0
+LH_1244,1244,1244,Duke Wellington House,c38fee12-52a5-4c15-a828-186dce95d414,c38fee12-52a5-4c15-a828-186dce95d414,Duke Wellington House,90.0
+LH_3084,3084,3084,Dundas Square,cc7d1b50-bc77-4af1-a02b-8f5c955a77eb,cc7d1b50-bc77-4af1-a02b-8f5c955a77eb,Dundas Square,89.4
+LH_2619,2619,2619,East Ocean Centre,b66ad474-0d52-4bbf-b399-b3947f262fa7,b66ad474-0d52-4bbf-b399-b3947f262fa7,East Ocean Centre,90.0
+LH_1378,1378,1378,East Point Centre,1850b2b5-ae9a-4bdd-99a8-38571b985300,1850b2b5-ae9a-4bdd-99a8-38571b985300,East Point Centre,87.8
+LH_11453,11453,11453,Easy Tower,3adf22f1-2866-4dba-bdf7-ce41986dbf04,3adf22f1-2866-4dba-bdf7-ce41986dbf04,Easy Tower,88.4
+LH_152,152,152,Edinburgh Tower,5f040784-9767-4a63-ac8e-a835ca2b2e6e,5f040784-9767-4a63-ac8e-a835ca2b2e6e,Edinburgh Tower,90.0
+LH_6302,6302,6302,Edward Wong Tower,00331206-d8ac-40a2-9139-f52eb6968007,00331206-d8ac-40a2-9139-f52eb6968007,Edward Wong Tower,90.0
+LH_4738,4738,4738,EGL Tower,b326bb15-4820-4c16-8fba-4d69a0b71474,b326bb15-4820-4c16-8fba-4d69a0b71474,EGL Tower,90.0
+LH_4139,4139,4139,Eight Commercial Tower,1b5ddb5a-657b-4059-b3f1-8166f533e802,1b5ddb5a-657b-4059-b3f1-8166f533e802,Eight Commercial Tower,90.0
+LH_4713,4713,4713,Elite Centre,03257ae8-1ac2-45db-a002-629787db81b9,03257ae8-1ac2-45db-a002-629787db81b9,Elite Centre,78.2
+LH_4450,4450,4450,Eltee Building,b903e231-d511-4d37-bf46-284d1c72c989,b903e231-d511-4d37-bf46-284d1c72c989,Eltee Building,90.0
+LH_1386,1386,1386,Emperor Group Centre,276cb2aa-d7b9-40fc-803f-2c8f78795861,276cb2aa-d7b9-40fc-803f-2c8f78795861,Emperor Group Centre,87.8
+LH_2666,2666,2666,Empire Centre,d3fd06ca-bee8-4a5a-b331-0a053cd021c0,d3fd06ca-bee8-4a5a-b331-0a053cd021c0,Empire Centre,90.0
+LH_2617,2617,2617,Energy Plaza,665c4138-8468-4d5d-b912-2218277d1ec3,665c4138-8468-4d5d-b912-2218277d1ec3,Energy Plaza,90.0
+LH_5237,5237,5237,Enterprise Square Five Tower 1,79a8d3ef-27fc-4b30-9f9b-ceea06503cf9,79a8d3ef-27fc-4b30-9f9b-ceea06503cf9,Enterprise Square Five Tower 1,90.0
+LH_5235,5235,5235,Enterprise Square Five Tower 2,3bf659f2-9db4-4fc0-8ccc-567a145416b1,3bf659f2-9db4-4fc0-8ccc-567a145416b1,Enterprise Square Five Tower 2,90.0
+LH_5238,5238,5238,Enterprise Square Three,ddf74e66-b706-4406-b0b2-9afe502ca46e,ddf74e66-b706-4406-b0b2-9afe502ca46e,Enterprise Square Three,90.0
+LH_15085,15085,15085,Enterprise Square Tower 1,e933509a-04d7-4cb7-9b04-deaeee648575,e933509a-04d7-4cb7-9b04-deaeee648575,Enterprise Square Tower 1,90.0
+LH_15086,15086,15086,Enterprise Square Tower 2,7915bec1-4f3f-43ff-837a-d41314422805,7915bec1-4f3f-43ff-837a-d41314422805,Enterprise Square Tower 2,90.0
+LH_15087,15087,15087,Enterprise Square Tower 3,4f9f26f1-824c-4f1f-a87b-199331b7d6f3,4f9f26f1-824c-4f1f-a87b-199331b7d6f3,Enterprise Square Tower 3,90.0
+LH_15084,15084,15084,Enterprise Square Two,90898c11-c10a-4e08-88bf-767c629f3ab4,90898c11-c10a-4e08-88bf-767c629f3ab4,Enterprise Square Two,90.0
+LH_140,140,140,Entertainment Building,c6e6597a-7d6e-441c-a7e2-e6bc4da14d8a,c6e6597a-7d6e-441c-a7e2-e6bc4da14d8a,Entertainment Building,90.0
+LH_6341,6341,6341,Eton Tower,32f29cf4-de81-4504-80dd-557eb0327b0e,32f29cf4-de81-4504-80dd-557eb0327b0e,Eton Tower,90.0
+LH_7250,7250,7250,Ever Gain Plaza Tower 1,36533fe1-f521-4c5e-b477-51cf984a324a,36533fe1-f521-4c5e-b477-51cf984a324a,Ever Gain Plaza Tower 1,90.0
+LH_7251,7251,7251,Ever Gain Plaza Tower 2,5577f936-3bff-4dc6-87f2-d5e0916cc505,5577f936-3bff-4dc6-87f2-d5e0916cc505,Ever Gain Plaza Tower 2,90.0
+LH_3298,3298,3298,Excel Centre,247210d9-46d8-416f-919e-03de8ae7b70b,247210d9-46d8-416f-919e-03de8ae7b70b,Excel Centre,89.6
+LH_5239,5239,5239,Exchange Tower,7c82f47b-bf2a-427b-8a0c-21d9cc5e42d5,7c82f47b-bf2a-427b-8a0c-21d9cc5e42d5,Exchange Tower,90.0
+LH_2003,2003,2003,Fairmont House,031426f8-db10-4f0a-afac-e351cd3a32c9,031426f8-db10-4f0a-afac-e351cd3a32c9,Fairmont House,90.0
+LH_1132,1132,1132,Far East Finance Centre,8d493726-ea4c-4864-aaa8-c677373415c5,8d493726-ea4c-4864-aaa8-c677373415c5,Far East Finance Centre,90.0
+LH_11518,11518,11518,Festigood Centre,d5bba6d7-db8f-4bcc-b321-92782922be33,d5bba6d7-db8f-4bcc-b321-92782922be33,Festigood Centre,90.0
+LH_1636,1636,1636,Fortune Centre,67874cd0-e9c9-4c0c-a7e9-28ab23941d92,67874cd0-e9c9-4c0c-a7e9-28ab23941d92,Fortune Centre,90.0
+LH_1667,1667,1667,Foyer,2c90c4d7-1c48-4411-adf0-2ad6cb6ad3fe,2c90c4d7-1c48-4411-adf0-2ad6cb6ad3fe,Foyer,90.0
+LH_16276,16276,16276,Fuk Shing Commercial Building,ddfa4e08-ca1a-45a3-bc64-9fe8058282d4,ddfa4e08-ca1a-45a3-bc64-9fe8058282d4,Fuk Shing Commercial Building,90.0
+LH_4736,4736,4736,Fullerton Centre,9d0ee886-4826-4f95-b4e1-9dd4cc4f9f37,9d0ee886-4826-4f95-b4e1-9dd4cc4f9f37,Fullerton Centre,90.0
+LH_3085,3085,3085,Gala Place,3715c9a3-0c3c-4017-867b-a1c51a3f7938,3715c9a3-0c3c-4017-867b-a1c51a3f7938,Gala Place,90.0
+LH_5669,5669,5669,Gee Luen Hing Industrial Building,f78419dc-9353-4539-958b-00385e1e8f4f,f78419dc-9353-4539-958b-00385e1e8f4f,Effort Industrial Building,75.2
+LH_3810,3810,3810,Genesis,d976d9a9-37ec-4589-a0db-47b6292d3498,d976d9a9-37ec-4589-a0db-47b6292d3498,Genesis,100.0
+LH_17492,17492,17492,GF Tower,7104f94b-38eb-47b1-b1d0-c2ac12d4b6b0,7104f94b-38eb-47b1-b1d0-c2ac12d4b6b0,GF Tower,87.8
+LH_7271,7271,7271,Ginza Plaza,04b3d6e1-2ae1-4228-b243-580ea2cfec61,04b3d6e1-2ae1-4228-b243-580ea2cfec61,Ginza Plaza,89.6
+LH_2994,2994,2994,Ginza Square,4ff4db2b-677d-4f5d-8710-ce3d0fb63e20,4ff4db2b-677d-4f5d-8710-ce3d0fb63e20,Ginza Square,90.0
+LH_3829,3829,3829,Global Trade Square,3d385596-e372-435e-ace2-804040ff636d,3d385596-e372-435e-ace2-804040ff636d,Global Trade Square,98.8
+LH_153,153,153,Gloucester Tower,5673cc13-003b-45c8-9b9d-5c9c6120f86e,5673cc13-003b-45c8-9b9d-5c9c6120f86e,Gloucester Tower,90.0
+LH_8,8,8,Golden Centre,ebe8e792-03fe-4f05-bf57-ea9cff1e2e3d,ebe8e792-03fe-4f05-bf57-ea9cff1e2e3d,Golden Centre,90.0
+LH_3512,3512,3512,Golden Dragon Centre,aab2215f-246a-4e7a-a124-8d057177f4ff,aab2215f-246a-4e7a-a124-8d057177f4ff,Golden Dragon Centre,90.0
+LH_7111,7111,7111,Golden Era Plaza,54a7921d-ed37-470a-91ce-724553361f4f,54a7921d-ed37-470a-91ce-724553361f4f,Golden Era Plaza,90.0
+LH_6025,6025,6025,Grand Centre,af59ab63-b589-4a9f-a3de-611d9301dd07,af59ab63-b589-4a9f-a3de-611d9301dd07,Grand Centre,88.4
+LH_6926,6926,6926,Grand Century Place Tower 1,e989b81e-113f-4198-98e9-e3e049deae5a,e989b81e-113f-4198-98e9-e3e049deae5a,Grand Century Place I,87.0
+LH_3011,3011,3011,Grand Plaza Office Tower One,d529596f-07d7-4de1-9db3-caa90f106f92,d529596f-07d7-4de1-9db3-caa90f106f92,"Office Tower One, Grand Plaza",90.0
+LH_3012,3012,3012,Grand Plaza Office Tower Two,2ab62d4c-8fe6-4161-b505-7a94fc26500f,2ab62d4c-8fe6-4161-b505-7a94fc26500f,"Office Tower Two, Grand Plaza",90.0
+LH_2004,2004,2004,Great Eagle Centre,ec56b894-52c5-4f79-9aa3-23717150771f,ec56b894-52c5-4f79-9aa3-23717150771f,Great Eagle Centre,90.0
+LH_2244,2244,2244,Great Smart Tower,bd92ab92-67dc-4b3f-9143-8f124a9c3036,bd92ab92-67dc-4b3f-9143-8f124a9c3036,Great Smart Tower,84.6
+LH_646,646,646,Guangdong Finance Building,93f0cfb8-1cef-4559-9d85-0db7b6f30d94,93f0cfb8-1cef-4559-9d85-0db7b6f30d94,Guangdong Finance Building,90.0
+LH_119,119,119,Guangdong Investment Tower,e2b1d65b-dd92-46dc-ad42-6a91581076b2,e2b1d65b-dd92-46dc-ad42-6a91581076b2,Guangdong Investment Tower,90.0
+LH_1104,1104,1104,Hang Lung Centre,88a8a107-d942-48d5-9ea7-c5d035edeac5,88a8a107-d942-48d5-9ea7-c5d035edeac5,Hang Lung Centre,90.0
+LH_2010,2010,2010,Harbour Centre,d6ee21fa-8a23-4676-857a-274deb3eb908,d6ee21fa-8a23-4676-857a-274deb3eb908,Harbour Centre,90.0
+LH_2620,2620,2620,Harbour Crystal Centre,e530b24f-ec98-4a5c-8eac-efc628d1111c,e530b24f-ec98-4a5c-8eac-efc628d1111c,Harbour Crystal Centre,90.0
+LH_11442,11442,11442,Harbourside HQ,624def23-1a6a-47d2-9d49-432ef06a5d91,624def23-1a6a-47d2-9d49-432ef06a5d91,Harbourside HQ,90.0
+LH_1148,1148,1148,Harcourt House,17fbcfc6-b338-441d-8456-2a833e345f24,17fbcfc6-b338-441d-8456-2a833e345f24,Harcourt House,90.0
+LH_165,165,165,Henley Building,8fbb3757-9ef8-4e86-8f57-bac695d68238,8fbb3757-9ef8-4e86-8f57-bac695d68238,Henley Building,90.0
+LH_35,35,35,Hip Shing Hong Centre,45b35c13-b7e8-4e03-a88f-4e1f10fda49d,45b35c13-b7e8-4e03-a88f-4e1f10fda49d,Hip Shing Hong Centre,90.0
+LH_3004,3004,3004,Hollywood Plaza,302c51c2-528d-429c-b3bb-d46f52e695d9,302c51c2-528d-429c-b3bb-d46f52e695d9,Hollywood Plaza,90.0
+LH_1966,1966,1966,Hong Kong Diamond Exchange Building,0e12b315-8cf7-48dd-bb21-f032912b9dbf,0e12b315-8cf7-48dd-bb21-f032912b9dbf,Hong Kong Diamond Exchange Building,90.0
+LH_3431,3431,3431,Hong Kong Pacific Centre,c384a628-a81a-429d-ac94-5a3625710966,c384a628-a81a-429d-ac94-5a3625710966,Hong Kong Pacific Centre,90.0
+LH_641,641,641,Hong Kong Plaza,fa36a9b3-0a54-4aab-961c-d42ebfbf03d7,fa36a9b3-0a54-4aab-961c-d42ebfbf03d7,Hong Kong Plaza,90.0
+LH_3284,3284,3284,Hong Kong Spinners Industrial Building Phase 6,01feb70d-a7ad-4018-8c71-08c739b67857,01feb70d-a7ad-4018-8c71-08c739b67857,HK Spinners Industrial Building VI,84.0
+LH_19,19,19,Hong Kong Trade Centre,697936e7-9386-4c21-bbd3-3a48411a30b8,697936e7-9386-4c21-bbd3-3a48411a30b8,HK Trade Centre,83.4
+LH_365,365,365,Hopewell Centre,1212787b-107c-4ba1-b63c-bc984a09d901,1212787b-107c-4ba1-b63c-bc984a09d901,Hopewell Centre,90.0
+LH_7502,7502,7502,Horizon East,1c4bfaac-f6cc-4171-87d9-1b2c3244e462,1c4bfaac-f6cc-4171-87d9-1b2c3244e462,Horizon East (SKW),90.0
+LH_6182,6182,6182,Horizon Plaza,6847127e-66d6-46a2-a47b-bcfbb3ff12ad,6847127e-66d6-46a2-a47b-bcfbb3ff12ad,Horizon Plaza,100.0
+LH_2660,2660,2660,Houston Centre,6213fd73-81e4-405f-8740-57bb12412de1,6213fd73-81e4-405f-8740-57bb12412de1,Houston Centre,90.0
+LH_2967,2967,2967,Hua Chiao Commercial Centre,a565bde9-cd23-4784-a662-62f131e3e821,a565bde9-cd23-4784-a662-62f131e3e821,Hua Chiao Commercial Centre,90.0
+LH_6374,6374,6374,Hunghom Commercial Centre A,0d32098d-b4d4-4cee-9356-9ebb6b4a0739,0d32098d-b4d4-4cee-9356-9ebb6b4a0739,Hunghom Commercial Centre Tower A,90.0
+LH_6375,6375,6375,Hunghom Commercial Centre B,8c041ad3-4ed7-4a5d-ab0d-79b018e18840,8c041ad3-4ed7-4a5d-ab0d-79b018e18840,Hunghom Commercial Centre Tower B,90.0
+LH_1387,1387,1387,Hysan Place,8bf26ee3-4fb7-4676-9ca9-e001a8ade456,8bf26ee3-4fb7-4676-9ca9-e001a8ade456,Hysan Place,90.0
+LH_5,5,5,Infinitus Plaza,c4176b51-0569-40eb-a17e-8f2473d65f5f,c4176b51-0569-40eb-a17e-8f2473d65f5f,Infinitus Plaza,90.0
+LH_2616,2616,2616,Inter-Continental Plaza,e9c085c4-124c-4bc1-a5da-4e4cf9371459,e9c085c4-124c-4bc1-a5da-4e4cf9371459,Inter-Continental Plaza,90.0
+LH_15083,15083,15083,International Plaza,fe07f822-6ac1-4fe7-a119-17befd7f02f8,fe07f822-6ac1-4fe7-a119-17befd7f02f8,International Plaza,90.0
+LH_1665,1665,1665,Island Place Tower,11adfb88-7cca-4369-ac3d-1cd1cfa2e61b,11adfb88-7cca-4369-ac3d-1cd1cfa2e61b,Island Place Tower,90.0
+LH_1198,1198,1198,Jardine House,cc71bc41-39bb-44b8-b7f7-53adeea6f5bf,cc71bc41-39bb-44b8-b7f7-53adeea6f5bf,Jardine House,90.0
+LH_1903,1903,1903,K. Wah Centre,568a10cf-dc1a-4da8-a294-8011fe550c5b,568a10cf-dc1a-4da8-a294-8011fe550c5b,K Wah Centre,90.0
+LH_4519,4519,4519,K83,5dd5880b-ffd9-4a12-8887-da1a2b64b02a,5dd5880b-ffd9-4a12-8887-da1a2b64b02a,K83,90.0
+LH_11204,11204,11204,Kin Sang Commercial Centre,bf74f716-1926-4dee-a92e-6d9ed62da1d6,bf74f716-1926-4dee-a92e-6d9ed62da1d6,Kin Sang Commercial Centre,90.0
+LH_11203,11203,11203,King Palace Plaza,76b8984d-e610-4f0a-a81a-f4da45b05a03,76b8984d-e610-4f0a-a81a-f4da45b05a03,King Palace Plaza,90.0
+LH_7788,7788,7788,Kings Tower,22e4bcb3-86f3-4ad1-b279-c41a73550a4f,22e4bcb3-86f3-4ad1-b279-c41a73550a4f,Kings Tower,90.0
+LH_16557,16557,16557,Kings Wing Plaza 1,268afb9a-b72d-4645-a983-804d509eb367,268afb9a-b72d-4645-a983-804d509eb367,Kings Wing Plaza 1,90.0
+LH_16558,16558,16558,Kings Wing Plaza 2,0e7b1170-b691-4ede-a4ba-fb14a65c11cf,0e7b1170-b691-4ede-a4ba-fb14a65c11cf,Kings Wing Plaza 2,90.0
+LH_5234,5234,5234,Kingston International Centre,d0b0d5d3-9ba1-4090-88b1-866680332996,d0b0d5d3-9ba1-4090-88b1-866680332996,Kingston International Centre,90.0
+LH_2055,2055,2055,Kodak House II,268b8de9-d8a4-4cf4-ae2d-82ccd159ec77,268b8de9-d8a4-4cf4-ae2d-82ccd159ec77,Kodak House II,90.0
+LH_7257,7257,7257,Kowloon Bay International Trade & Exhibition Centre,549568cf-a22a-42d4-818e-d3f4dc4ef80d,549568cf-a22a-42d4-818e-d3f4dc4ef80d,Kowloonbay Int'l Trade & Exhibition Ctr.,77.4
+LH_2986,2986,2986,Kowloon Building,521382ee-d2c1-401d-8bad-180adb2e6a4a,521382ee-d2c1-401d-8bad-180adb2e6a4a,Kowloon Building,90.0
+LH_6836,6836,6836,Kowloon Commerce Centre Tower A,9bd016d3-5c2f-4f1e-8476-3f49c6cf150e,9bd016d3-5c2f-4f1e-8476-3f49c6cf150e,Kowloon Commerce Centre Tower A,88.6
+LH_6837,6837,6837,Kowloon Commerce Centre Tower B,c36d48f9-1fd5-4fa1-acfa-acd851884316,c36d48f9-1fd5-4fa1-acfa-acd851884316,Kowloon Commerce Centre Tower B,90.0
+LH_13444,13444,13444,Kowloon Investment Building,9e5c1203-1b97-43f6-9aae-9f26635f4857,9e5c1203-1b97-43f6-9aae-9f26635f4857,"Kowloon Investment Co. Ltd., Fty Bldg (No.18 Bute Street)",79.2
+LH_3317,3317,3317,Kowloon Plaza,eb93266d-3ceb-42ba-bdbc-304a2e640c1d,eb93266d-3ceb-42ba-bdbc-304a2e640c1d,Kowloon Plaza,90.0
+LH_4582,4582,4582,Kwun Tong View,02d8a231-e851-400c-9f6e-432cb917201e,02d8a231-e851-400c-9f6e-432cb917201e,Kwun Tong View,90.0
+LH_974,974,974,Kyoto Plaza,c886bb05-9d0a-4fa4-b08d-0a77c79a56ef,c886bb05-9d0a-4fa4-b08d-0a77c79a56ef,Kyoto Plaza,90.0
+LH_7362,7362,7362,Laford Centre,bbe86816-2d8f-4ce2-8aad-037260206751,bbe86816-2d8f-4ce2-8aad-037260206751,Laford Centre,90.0
+LH_4603,4603,4603,Landmark East Tower 2 - AIA Kowloon Tower,a4a62919-e984-40d6-81c9-d91219e846d7,a4a62919-e984-40d6-81c9-d91219e846d7,Landmark East - AIA Tower(Twr2),84.0
+LH_6594,6594,6594,Landmark North,f7347837-0845-4113-83ca-d0219cf3888d,f7347837-0845-4113-83ca-d0219cf3888d,Landmark North,90.0
+LH_3155,3155,3155,Langham Place Office Tower,e17437bc-5a39-447a-995b-4f6f0a1b8599,e17437bc-5a39-447a-995b-4f6f0a1b8599,Langham Place,90.0
+LH_6308,6308,6308,Laws Commercial Plaza,5e829022-3fe2-4cb7-a901-b69f58216065,5e829022-3fe2-4cb7-a901-b69f58216065,Laws Commercial Plaza,88.4
+LH_6343,6343,6343,Lee Garden Five,a371348c-d44b-4c16-8a77-adc0fde23777,a371348c-d44b-4c16-8a77-adc0fde23777,Lee Garden Five,90.0
+LH_6342,6342,6342,Lee Garden One,639dff46-0802-4634-9329-330796a492cd,639dff46-0802-4634-9329-330796a492cd,Lee Garden One,90.0
+LH_1072,1072,1072,Lee Garden Six,f13f20a1-c8a5-403d-8fff-6e7832f4c6ed,f13f20a1-c8a5-403d-8fff-6e7832f4c6ed,Lee Garden Six,90.0
+LH_6345,6345,6345,Lee Garden Three,3fc43ada-ce48-418a-9d8b-f0a98d59f1b1,3fc43ada-ce48-418a-9d8b-f0a98d59f1b1,Lee Garden Three,90.0
+LH_1635,1635,1635,Lee Garden Two,ffb37dc5-b79d-4529-aa39-6cc440b666cb,ffb37dc5-b79d-4529-aa39-6cc440b666cb,Lee Garden Two,90.0
+LH_7016,7016,7016,Legend Tower,fd296af1-37d9-463b-b65b-09a50b617464,fd296af1-37d9-463b-b65b-09a50b617464,Legend Tower,90.0
+LH_1076,1076,1076,Leighton Centre,69a4e67b-2eb2-4e37-ad33-c013c5fa9c9d,69a4e67b-2eb2-4e37-ad33-c013c5fa9c9d,Leighton Centre,90.0
+LH_11202,11202,11202,Lever Tech Centre,84ec2c84-8dd7-4354-b01c-c183aceab1cf,84ec2c84-8dd7-4354-b01c-c183aceab1cf,Lever Tech Centre,90.0
+LH_20,20,20,Li Po Chun Chambers,f1f0e750-9869-4ada-b641-e4080457c29f,f1f0e750-9869-4ada-b641-e4080457c29f,Li Po Chun Chambers,88.6
+LH_6258,6258,6258,LiFung Tower,76838f9b-e1a0-49ca-b894-aeae95f14cc9,76838f9b-e1a0-49ca-b894-aeae95f14cc9,Li & Fung Tower,76.4
+LH_1124,1124,1124,Lippo Centre Tower 1,a5c52d7e-e865-40b4-b594-ba7a33a0e899,a5c52d7e-e865-40b4-b594-ba7a33a0e899,"Lippo Centre, Tower 1",90.0
+LH_1125,1125,1125,Lippo Centre Tower 2,ea0d8e9f-0de0-4b04-ac83-53e6c602859a,ea0d8e9f-0de0-4b04-ac83-53e6c602859a,"Lippo Centre, Tower 2",90.0
+LH_2297,2297,2297,Lippo Sun Plaza,07ae82c7-ab6d-4171-bbe1-ef46799deb2f,07ae82c7-ab6d-4171-bbe1-ef46799deb2f,Lippo Sun Plaza,90.0
+LH_4847,4847,4847,Lu Plaza,7c97fc1a-7698-41f4-b9b1-9e05cfe04d4c,7c97fc1a-7698-41f4-b9b1-9e05cfe04d4c,Lu Plaza,88.8
+LH_1147,1147,1147,Luk Kwok Centre,d2dae82b-2afb-489c-98ee-27951f5d048d,d2dae82b-2afb-489c-98ee-27951f5d048d,Luk Kwok Centre,90.0
+LH_3735,3735,3735,Lyndhurst Tower,869738a7-f8a8-4a28-8128-a3e3ed00ea55,869738a7-f8a8-4a28-8128-a3e3ed00ea55,1 Lyndhurst Tower,90.0
+LH_6826,6826,6826,Mai Wo Industrial Building,3a58cf39-fb80-47f7-99c6-93d064f0db61,3a58cf39-fb80-47f7-99c6-93d064f0db61,Mai Wo Industrial Building,90.0
+LH_2041,2041,2041,Malahon Centre,675c9561-d4eb-4209-8166-5a2552553774,675c9561-d4eb-4209-8166-5a2552553774,Malahon Centre,87.4
+LH_10,10,10,Man Yee Building,17891180-96d0-44be-8d28-c36cbd037700,17891180-96d0-44be-8d28-c36cbd037700,Man Yee Building,88.8
+LH_5256,5256,5256,Manhattan Place,bed2ae2d-6aed-4022-acdf-3dc63a3ffa48,bed2ae2d-6aed-4022-acdf-3dc63a3ffa48,Manhattan Place,90.0
+LH_6317,6317,6317,Manley Tower,24e959dc-3be9-413f-9f51-0283ab3e089c,24e959dc-3be9-413f-9f51-0283ab3e089c,Manley Tower,90.0
+LH_4962,4962,4962,Manulife Financial Centre,516272b3-de78-4584-ac80-f21855002984,516272b3-de78-4584-ac80-f21855002984,Manulife Financial Centre - Tower B,90.0
+LH_4587,4587,4587,Manulife Place,0563e2fc-28aa-4a5f-8ed0-813e0af0d5cc,0563e2fc-28aa-4a5f-8ed0-813e0af0d5cc,Manulife Place,90.0
+LH_11524,11524,11524,Marina 8,235a8eaf-4dd9-45d0-9bfc-62d1ccc3cf5d,235a8eaf-4dd9-45d0-9bfc-62d1ccc3cf5d,MARINA 8,100.0
+LH_7919,7919,7919,Maxgrand Plaza,bb4daf9a-0dbf-4585-8e51-48989f8c9c84,bb4daf9a-0dbf-4585-8e51-48989f8c9c84,Maxgrand Plaza,90.0
+LH_4499,4499,4499,Mega Cube,31482bdb-ba0e-4833-9985-4b06ab83a511,31482bdb-ba0e-4833-9985-4b06ab83a511,Mega Cube,90.0
+LH_147,147,147,Melbourne Plaza,7d870bdf-73fd-495d-8f73-6e018fafbdc4,7d870bdf-73fd-495d-8f73-6e018fafbdc4,Melbourne Plaza,88.4
+LH_3440,3440,3440,Metroplaza Tower 1,9fd391b6-b266-4b00-b81f-692fccc49075,9fd391b6-b266-4b00-b81f-692fccc49075,Metroplaza I,84.6
+LH_7223,7223,7223,Metropole Square,422e8f07-ac2d-4a6e-b71d-bfbb8b1990e8,422e8f07-ac2d-4a6e-b71d-bfbb8b1990e8,Metropole Square,90.0
+LH_5367,5367,5367,MG Tower,336374e3-7994-4653-b3a2-67228e244252,336374e3-7994-4653-b3a2-67228e244252,MG Tower,90.0
+LH_4586,4586,4586,Millennium City 1 - Standard Chartered Tower,737f5ec8-62e5-45d2-9520-5c5e67f65020,737f5ec8-62e5-45d2-9520-5c5e67f65020,Millennium City 1 Standard Chartered Twr,90.0
+LH_4585,4585,4585,Millennium City 2,db094c66-03e0-4cee-b399-f127d1316e55,db094c66-03e0-4cee-b399-f127d1316e55,Millennium City 2,90.0
+LH_4583,4583,4583,Millennium City 3,f398a985-3801-4aee-8a6d-71e4c92acb4b,f398a985-3801-4aee-8a6d-71e4c92acb4b,Millennium City Phase 3,90.0
+LH_4584,4584,4584,Millennium City 5 - BEA Tower,1e715a46-50e8-480b-aa50-a8ffa361e83c,1e715a46-50e8-480b-aa50-a8ffa361e83c,Millennium City 5 - BEA Tower,90.0
+LH_4581,4581,4581,Millennium City 6,e2ec1ab7-5336-4a15-ac34-d5692b8fb5d4,e2ec1ab7-5336-4a15-ac34-d5692b8fb5d4,Millennium City Phase 6,90.0
+LH_2991,2991,2991,Mira Place Tower A,a3fc9b46-7b62-445a-83fb-516c6493d9be,a3fc9b46-7b62-445a-83fb-516c6493d9be,Mira Place Tower A,87.6
+LH_2661,2661,2661,Mirror Tower,4afce66a-35a1-43dc-87ce-269bdeea8915,4afce66a-35a1-43dc-87ce-269bdeea8915,Mirror Tower,90.0
+LH_7332,7332,7332,Montery Plaza,aa19d62e-3c8a-453a-a1db-e25a642ac188,aa19d62e-3c8a-453a-a1db-e25a642ac188,Montery Plaza,88.6
+LH_2535,2535,2535,Nam Wo Hong Building,6ee15f10-d931-462c-b547-6d6b2fce2e30,6ee15f10-d931-462c-b547-6d6b2fce2e30,Nam Wo Hong Building,90.0
+LH_13714,13714,13714,Nan Fung Centre,a2b73feb-5fcd-4a0d-b416-15bfe5993563,a2b73feb-5fcd-4a0d-b416-15bfe5993563,Nan Fung Centre,90.0
+LH_6565,6565,6565,Nan Fung Commercial Centre,22b5cd0b-05cc-422f-b99d-3595eced049f,22b5cd0b-05cc-422f-b99d-3595eced049f,Nan Fung Commercial Centre,90.0
+LH_4735,4735,4735,Nanyang Plaza,cca42e11-66f0-484e-8788-77d8a9924282,cca42e11-66f0-484e-8788-77d8a9924282,Nanyang Plaza,90.0
+LH_2992,2992,2992,Nathan Centre,503421d4-36b3-4dad-98e6-57c0041aa482,503421d4-36b3-4dad-98e6-57c0041aa482,Nathan Centre,87.2
+LH_12878,12878,12878,New City Centre,84bd248a-a8f3-470f-ad05-00fde645421f,84bd248a-a8f3-470f-ad05-00fde645421f,New City Centre,90.0
+LH_3102,3102,3102,New East Ocean Centre,aa730363-5e92-4e0c-9819-0064a0b5436c,aa730363-5e92-4e0c-9819-0064a0b5436c,New East Ocean Centre,90.0
+LH_3103,3103,3103,New Mandarin Plaza Twr A,dc2de8a6-fe1d-416d-85a3-aed3bee743a3,dc2de8a6-fe1d-416d-85a3-aed3bee743a3,New Mandarin Plaza Tower A,90.0
+LH_3104,3104,3104,New Mandarin Plaza Twr B,5e7884ba-bce9-4b03-b9f7-007defaffe63,5e7884ba-bce9-4b03-b9f7-007defaffe63,New Mandarin Plaza Tower B,90.0
+LH_11455,11455,11455,New Treasure Centre,a16580e8-b456-424b-a8ac-751204f33f3a,a16580e8-b456-424b-a8ac-751204f33f3a,New Treasure Centre,90.0
+LH_6239,6239,6239,New Trend Centre,8d89098f-8e62-4ad2-a006-0885b278ab79,8d89098f-8e62-4ad2-a006-0885b278ab79,New Trend Centre,90.0
+LH_149,149,149,New World Tower 1,1ecb2dc8-b91e-4cdc-9faf-24f2829786c2,1ecb2dc8-b91e-4cdc-9faf-24f2829786c2,New World Tower II,86.4
+LH_114,114,114,Nexxus Building,22238d4d-35cc-43e8-9133-23cf318f8414,22238d4d-35cc-43e8-9133-23cf318f8414,Nexxus Building,90.0
+LH_7790,7790,7790,Nina Tower Tower 2,1ad68cf9-e921-4bf0-b08e-62bd77f83152,1ad68cf9-e921-4bf0-b08e-62bd77f83152,Nina Tower,90.0
+LH_5186,5186,5186,Ocean Building,f1d6c2c8-4a5c-4eef-9bd3-939fd7d40e39,f1d6c2c8-4a5c-4eef-9bd3-939fd7d40e39,Ocean Building,90.0
+LH_2286,2286,2286,Ocean Centre,ed728432-96d6-4f10-8dcd-13b8cc16aaac,ed728432-96d6-4f10-8dcd-13b8cc16aaac,Ocean Centre,90.0
+LH_2539,2539,2539,OfficePlus @Sheung Wan,ece3545b-59a4-4618-abf5-3db2f92f0e9f,ece3545b-59a4-4618-abf5-3db2f92f0e9f,Officeplus @sheung Wan,90.0
+LH_1399,1399,1399,OfficePlus @Wan Chai,c471d242-56c6-43bf-a00f-95b1a80e1b54,c471d242-56c6-43bf-a00f-95b1a80e1b54,Officeplus @Wan Chai,90.0
+LH_3088,3088,3088,Omega Plaza,b200e028-aa4e-476d-aa3f-e99fe016f252,b200e028-aa4e-476d-aa3f-e99fe016f252,Omega Plaza,89.0
+LH_16294,16294,16294,On Hang Industrial Centre,5008f44b-01ef-4add-80fb-b3860a3f10ee,5008f44b-01ef-4add-80fb-b3860a3f10ee,On Hang Industrial Centre,90.0
+LH_5399,5399,5399,On Tin Centre,13326884-aa67-4fe9-ad35-32d184e165d5,13326884-aa67-4fe9-ad35-32d184e165d5,On Tin Centre,89.0
+LH_2089,2089,2089,One Capital Place,3f690e64-6495-4158-a844-d04a17bf6fdd,3f690e64-6495-4158-a844-d04a17bf6fdd,One Capital Place,90.0
+LH_92,92,92,One Chinachem Central,e8534471-ee70-4828-b584-5d00747245ec,e8534471-ee70-4828-b584-5d00747245ec,One Chinachem Central,88.6
+LH_1196,1196,1196,One Exchange Square,6bc854b5-5e4c-4e9b-837c-64efdddbb9cd,6bc854b5-5e4c-4e9b-837c-64efdddbb9cd,One Exchange Square,90.0
+LH_5353,5353,5353,One Harbour Square,08e7cb1c-b6bf-4455-a878-39607eaea92d,08e7cb1c-b6bf-4455-a878-39607eaea92d,One Harbour Square,90.0
+LH_6344,6344,6344,One Hysan Avenue,84d13b0a-ec63-4d40-b4f0-879291edad73,84d13b0a-ec63-4d40-b4f0-879291edad73,One Hysan Avenue,90.0
+LH_14071,14071,14071,One International Finance Centre,2e823c53-9b23-42e8-97f2-47dcf9d52819,2e823c53-9b23-42e8-97f2-47dcf9d52819,One International Finance Centre,90.0
+LH_1929,1929,1929,One Island East,f5bded18-ad7c-4668-824d-e64f3ed98886,f5bded18-ad7c-4668-824d-e64f3ed98886,One Island East,90.0
+LH_11527,11527,11527,One Island South,26aa392f-d08a-490c-9c5d-4285281a3896,26aa392f-d08a-490c-9c5d-4285281a3896,One Island South,100.0
+LH_7771,7771,7771,One Kowloon,98fd5165-7f3e-483e-aa52-e9fa05cd828c,98fd5165-7f3e-483e-aa52-e9fa05cd828c,One Kowloon,90.0
+LH_4562,4562,4562,One Pacific Centre,f05e5829-1b61-4c19-be57-7aef79643bbe,f05e5829-1b61-4c19-be57-7aef79643bbe,One Pacific Centre,90.0
+LH_1121,1121,1121,One Pacific Place,f2e95b3c-0214-4534-9fd5-44cf9dfafb21,f2e95b3c-0214-4534-9fd5-44cf9dfafb21,One Pacific Place,90.0
+LH_6870,6870,6870,One Peking,497da631-f581-4d21-a5a8-e1c1182b723c,497da631-f581-4d21-a5a8-e1c1182b723c,One Peking,90.0
+LH_7920,7920,7920,One Portside,a0c3e2eb-702e-426d-8f43-4c4a66f03d94,a0c3e2eb-702e-426d-8f43-4c4a66f03d94,One Portside,90.0
+LH_4731,4731,4731,One Sky Parc,3a91af9e-99a8-4141-8878-638afacdcc12,3a91af9e-99a8-4141-8878-638afacdcc12,One Sky Parc,90.0
+LH_4964,4964,4964,Pan Asia Centre,50cac799-03a4-4121-a7ae-078a31c4e323,50cac799-03a4-4121-a7ae-078a31c4e323,Pan Asia Centre,90.0
+LH_1845,1845,1845,Park Avenue Tower,93774f88-477b-4f2e-a73c-d48448fac449,93774f88-477b-4f2e-a73c-d48448fac449,Park Avenue Tower,90.0
+LH_12493,12493,12493,Parklane Centre,cf40aad9-163e-42f2-9164-b789b053d121,cf40aad9-163e-42f2-9164-b789b053d121,Parklane Centre,90.0
+LH_3308,3308,3308,Peak Castle,cc9adc3c-361a-4ddb-83a9-b98b6f5f601e,cc9adc3c-361a-4ddb-83a9-b98b6f5f601e,483D-483E Castle Peak Road,78.0
+LH_2039,2039,2039,Pearl Oriental House,b6e298dd-671b-423e-bbe9-63084c42622d,b6e298dd-671b-423e-bbe9-63084c42622d,Pearl Oriental House,77.2
+LH_2657,2657,2657,Peninsula Centre,54aa2844-9f6d-4622-a3e3-2705ab761986,54aa2844-9f6d-4622-a3e3-2705ab761986,Peninsula Centre,90.0
+LH_6490,6490,6490,Peninsula Square,6d556724-4c36-40ba-b573-930571869ac9,6d556724-4c36-40ba-b573-930571869ac9,Peninsula Square,90.0
+LH_3304,3304,3304,Peninsula Tower,56a2e236-5e03-418f-9d70-2f356815c87f,56a2e236-5e03-418f-9d70-2f356815c87f,Peninsula Tower,90.0
+LH_1161,1161,1161,Pico Tower,0a90b0c9-2899-4e09-8cc1-bed78811f185,0a90b0c9-2899-4e09-8cc1-bed78811f185,Pico Tower,90.0
+LH_2982,2982,2982,Pioneer Centre,4a02fc35-6453-45cf-bbea-8e6886945a7f,4a02fc35-6453-45cf-bbea-8e6886945a7f,Pioneer Centre,87.6
+LH_3738,3738,3738,Plaza 2000,8b2642e5-689b-41c7-826f-c4cb99ebdb71,8b2642e5-689b-41c7-826f-c4cb99ebdb71,Plaza 2000,90.0
+LH_2993,2993,2993,Prestige Tower,2df7d5ae-767a-4db6-82be-9807a9d96ea1,2df7d5ae-767a-4db6-82be-9807a9d96ea1,Prestige Tower,90.0
+LH_3018,3018,3018,Prince Edward The Lamma City,a62ac762-08f9-4661-942d-419f8b964f62,a62ac762-08f9-4661-942d-419f8b964f62,Prince Edward The Lamma City,90.0
+LH_1194,1194,1194,Prince's Building,1e45c499-975d-4f1c-ae55-6e38afdd9fb2,1e45c499-975d-4f1c-ae55-6e38afdd9fb2,Prince's Building,90.0
+LH_1965,1965,1965,Printing House,da9ddbb2-b265-4375-952e-389b21dcebbb,da9ddbb2-b265-4375-952e-389b21dcebbb,Printing House,90.0
+LH_7338,7338,7338,Prosperity Center,906b8c1f-d799-4144-b5a5-972b2badf057,906b8c1f-d799-4144-b5a5-972b2badf057,Prosperity Center,90.0
+LH_2303,2303,2303,Prosperity Centre,a76efe96-5434-4813-8647-5fd04f35d434,a76efe96-5434-4813-8647-5fd04f35d434,Prosperity Centre,90.0
+LH_172,172,172,Prosperity Tower,4096e5f0-d37f-47b3-84d4-725a1d183e85,4096e5f0-d37f-47b3-84d4-725a1d183e85,Prosperity Tower,90.0
+LH_11,11,11,Prosperous Building,ffbad26e-3434-415a-85af-0d971b045dd9,ffbad26e-3434-415a-85af-0d971b045dd9,Prosperous Building,90.0
+LH_853,853,853,Prosperous Commercial Building,d0cd0bc5-9979-4257-9e5e-055ee6db044c,d0cd0bc5-9979-4257-9e5e-055ee6db044c,Prosperous Commercial Building,90.0
+LH_8072,8072,8072,R&T Centre,fe5518a4-dbe4-481a-9243-e3e01f9880db,fe5518a4-dbe4-481a-9243-e3e01f9880db,R & T Centre,90.0
+LH_3208,3208,3208,Railway Plaza,d98d3f34-ab2a-491e-a29a-4b07b3f49a54,d98d3f34-ab2a-491e-a29a-4b07b3f49a54,Railway Plaza,90.0
+LH_13708,13708,13708,Reason Group Tower,ed2be46e-f5a3-4c33-93d4-51a92acf6458,ed2be46e-f5a3-4c33-93d4-51a92acf6458,Reason Group Tower,84.0
+LH_3836,3836,3836,Remex Centre,3a38989e-ab15-48b0-a79d-7bde13bb53d3,3a38989e-ab15-48b0-a79d-7bde13bb53d3,Remex Centre,100.0
+LH_4739,4739,4739,Remington Centre,58843155-32cc-4611-a35a-84c520d6b6df,58843155-32cc-4611-a35a-84c520d6b6df,Remington Centre,90.0
+LH_3157,3157,3157,Richmond Commercial Building,1b44b52b-35db-4230-97b5-4e4f8691ed32,1b44b52b-35db-4230-97b5-4e4f8691ed32,Richmond Commercial Building,90.0
+LH_2964,2964,2964,Righteous Centre,003bfbd9-39e6-4d55-81da-638dbf67984c,003bfbd9-39e6-4d55-81da-638dbf67984c,Righteous Centre,90.0
+LH_6567,6567,6567,Rightful Centre,c417aa60-3104-4b69-8962-ee0bd8d5dbfb,c417aa60-3104-4b69-8962-ee0bd8d5dbfb,Rightful Centre,88.4
+LH_7488,7488,7488,Rise Commercial Building,2e7571dc-f2bb-4eac-8bc4-de5665ee9a3b,2e7571dc-f2bb-4eac-8bc4-de5665ee9a3b,Rise Commercial Building,90.0
+LH_2717,2717,2717,Ritz Plaza,082cbc03-739c-43f3-8eaf-1a2fd38d0678,082cbc03-739c-43f3-8eaf-1a2fd38d0678,Ritz Plaza,90.0
+LH_5364,5364,5364,Rykadan Capital Tower,c10669b6-bfd2-40aa-977b-bda3618b15ae,c10669b6-bfd2-40aa-977b-bda3618b15ae,Rykadan Capital Tower,87.8
+LH_8020,8020,8020,Saxon Tower,163e757e-2d95-4866-9891-7bf95c70eb6a,163e757e-2d95-4866-9891-7bf95c70eb6a,Saxon Tower,90.0
+LH_120,120,120,Shun Tak Centre China Merchants Tower,72c593d0-1118-4240-ab1f-e87b600f4873,72c593d0-1118-4240-ab1f-e87b600f4873,"Shun Tak Centre, China Merchants Tower",88.6
+LH_135,135,135,Shun Tak Centre West Tower,043d8424-e0ba-4ee5-bf02-8572555b899a,043d8424-e0ba-4ee5-bf02-8572555b899a,"Shun Tak Centre, West Tower",90.0
+LH_8070,8070,8070,Silicon Tower,d8150aa1-c70a-4e8a-9558-20b8ac9cd750,d8150aa1-c70a-4e8a-9558-20b8ac9cd750,Silicon Tower,90.0
+LH_2298,2298,2298,Silvercord Tower 1,d379dcdc-d725-407c-a24d-f63fa932ce5d,d379dcdc-d725-407c-a24d-f63fa932ce5d,Silvercord Tower 1,90.0
+LH_2299,2299,2299,Silvercord Tower 2,9d024282-39cd-45c8-8edb-39120b46eac3,9d024282-39cd-45c8-8edb-39120b46eac3,Silvercord Tower 2,90.0
+LH_2990,2990,2990,Silvercorp International Tower,9b9aa339-5737-46c1-9075-35a94ca96434,9b9aa339-5737-46c1-9075-35a94ca96434,Silvercorp International Tower,90.0
+LH_2984,2984,2984,Sino Centre,a2f5f73d-f900-4b66-94b5-2be2f8f8cd6e,a2f5f73d-f900-4b66-94b5-2be2f8f8cd6e,Sino Centre,90.0
+LH_3550,3550,3550,Sino Cheer Plaza,ddabb5bc-cd65-47da-8462-7dbb21799ec5,ddabb5bc-cd65-47da-8462-7dbb21799ec5,Sino Cheer Plaza,90.0
+LH_1149,1149,1149,Sino Plaza,c2c7e001-31c7-4e89-bc3f-9f85defd75a8,c2c7e001-31c7-4e89-bc3f-9f85defd75a8,Sino Plaza,90.0
+LH_981,981,981,Siu On Centre,d21a587e-7341-49d6-a3da-68abb52e534d,d21a587e-7341-49d6-a3da-68abb52e534d,Siu On Centre,90.0
+LH_1508,1508,1508,Siu On Plaza,6c85b645-4ba0-4625-a6d9-66af6709947a,6c85b645-4ba0-4625-a6d9-66af6709947a,Siu On Plaza,90.0
+LH_6805,6805,6805,Skyline Tower,99205b53-2a87-471f-9682-91716e3e63ad,99205b53-2a87-471f-9682-91716e3e63ad,Skyline Tower,88.2
+LH_4497,4497,4497,Skyline Tower,a7d78c55-b01e-465e-a9e9-b6fa8c32ea6a,a7d78c55-b01e-465e-a9e9-b6fa8c32ea6a,Skyline Tower (Kowloon Bay),90.0
+LH_6010,6010,6010,Soundwill Plaza,ffa65c31-00b4-4740-8ebe-8b503979142a,ffa65c31-00b4-4740-8ebe-8b503979142a,Soundwill Plaza,78.4
+LH_1982,1982,1982,South China Building,f13d894b-00e8-41a2-858f-982a70792e08,f13d894b-00e8-41a2-858f-982a70792e08,South China Industrial Building,80.2
+LH_3813,3813,3813,South Island Place,f6ed87da-229c-4502-b9a5-8fc3020f2077,f6ed87da-229c-4502-b9a5-8fc3020f2077,South Island Place,100.0
+LH_2658,2658,2658,South Seas Centre Tower 1,cebf9295-7a6f-43e6-b378-c183d3cd0c4e,cebf9295-7a6f-43e6-b378-c183d3cd0c4e,South Seas Centre Tower II,87.6
+LH_3790,3790,3790,Southmark Tower A,0f2b5990-b303-4af6-9062-ee2e6f40be7f,0f2b5990-b303-4af6-9062-ee2e6f40be7f,Southmark Pacific Link Tower (Tower A),100.0
+LH_3791,3791,3791,Southmark Tower B,548f0a3f-ca31-4176-8649-bd4dbf9841c3,548f0a3f-ca31-4176-8649-bd4dbf9841c3,Southmark Tower B,100.0
+LH_2683,2683,2683,Star House,e3b47746-b432-4d89-b97c-1badd1f8125b,e3b47746-b432-4d89-b97c-1badd1f8125b,Star House,90.0
+LH_6240,6240,6240,Stelux House,b0f7283b-1ce5-4e7f-a345-757ff6d41e8a,b0f7283b-1ce5-4e7f-a345-757ff6d41e8a,Stelux House,90.0
+LH_4752,4752,4752,Sui Tai Wai Kee Plaza,3aa7b9c2-4f2c-44b8-b015-baa02faa9675,3aa7b9c2-4f2c-44b8-b015-baa02faa9675,Sui Tai Wai Kee Plaza,90.0
+LH_2955,2955,2955,Summit Insurance Building,f885e757-8b59-4092-bb7f-592a115c79e5,f885e757-8b59-4092-bb7f-592a115c79e5,Summit Insurance Building,90.0
+LH_2009,2009,2009,Sun Hung Kai Centre,89b02d4b-74a5-4c96-9f86-74d86e3c7335,89b02d4b-74a5-4c96-9f86-74d86e3c7335,Sun Hung Kai Centre,90.0
+LH_2357,2357,2357,Sunbeam Plaza,77ec08af-900d-4181-880b-a25ff2a99830,77ec08af-900d-4181-880b-a25ff2a99830,Sunbeam Plaza,90.0
+LH_6632,6632,6632,Supreme House,ac78c149-b6a4-43c1-8d14-05baf24e2647,ac78c149-b6a4-43c1-8d14-05baf24e2647,Supreme House,89.2
+LH_2958,2958,2958,Tai Shing Commercial (Yaumatei) Building,931cf37f-8fcc-4b6e-92bc-e3ca4e4935b2,931cf37f-8fcc-4b6e-92bc-e3ca4e4935b2,Tai Shing Commercial (Yaumati) Building,89.4
+LH_2159,2159,2159,Tai Tung Building,13504470-fcf6-482f-95d2-bd52c9d1a443,13504470-fcf6-482f-95d2-bd52c9d1a443,Tai Tung Building,90.0
+LH_1572,1572,1572,Tai Yau Building,3358715a-602d-4ed6-8ece-27cabd7eb850,3358715a-602d-4ed6-8ece-27cabd7eb850,Tai Yau Building,90.0
+LH_4551,4551,4551,Telford House,190e24d0-5cd4-4412-b3b6-3c0676973ceb,190e24d0-5cd4-4412-b3b6-3c0676973ceb,Telford House,90.0
+LH_3509,3509,3509,Tern Plaza,ec96b456-a144-4800-b6e3-1791cd9909ce,ec96b456-a144-4800-b6e3-1791cd9909ce,Tern Plaza,90.0
+LH_7018,7018,7018,TG Place,175b52bc-107e-4096-814d-e53ae3a6cafb,175b52bc-107e-4096-814d-e53ae3a6cafb,TG Place,90.0
+LH_4619,4619,4619,The Bay Hub,a41be833-5bec-4d4a-a9fa-0c1aae385e89,a41be833-5bec-4d4a-a9fa-0c1aae385e89,The Bay Hub,90.0
+LH_161,161,161,The Center,fb72724a-7a3b-46e1-b8f2-bc3dad468204,fb72724a-7a3b-46e1-b8f2-bc3dad468204,The Center,90.0
+LH_1977,1977,1977,The Centrium,b9540fc8-d13f-4207-b034-467a65f83fbc,b9540fc8-d13f-4207-b034-467a65f83fbc,The Centrium,90.0
+LH_2295,2295,2295,The Gateway Tower 1,b8cb5146-eb40-4bfd-b8a0-73f066dda980,b8cb5146-eb40-4bfd-b8a0-73f066dda980,The Gateway Tower 3 - Prudential Tower,86.4
+LH_2296,2296,2296,The Gateway Tower 2,a2a8737d-2c50-446a-b7d7-297efc4d47dd,a2a8737d-2c50-446a-b7d7-297efc4d47dd,The Gateway Tower 2,90.0
+LH_2311,2311,2311,The Gateway Tower 5,d1a3edea-36b8-4730-b63e-8e181a54732b,d1a3edea-36b8-4730-b63e-8e181a54732b,The Gateway Tower 5,90.0
+LH_2312,2312,2312,The Gateway Tower 6,5f0957a1-837f-4bbd-90c4-4040f629be6f,5f0957a1-837f-4bbd-90c4-4040f629be6f,The Gateway Tower 6,90.0
+LH_5556,5556,5556,The Globe,7f11e965-a1d9-439b-a07f-eb8ed0681f9e,7f11e965-a1d9-439b-a07f-eb8ed0681f9e,The Globe,90.0
+LH_1377,1377,1377,The Goldmark,eac083a8-d936-4f64-b5a0-b4d2a04d2d01,eac083a8-d936-4f64-b5a0-b4d2a04d2d01,Goldmark,90.0
+LH_4915,4915,4915,The Grid,b5ba9d94-6d30-4ab9-a8be-8e35739e7171,b5ba9d94-6d30-4ab9-a8be-8e35739e7171,The Grid,90.0
+LH_1192,1192,1192,The Hong Kong Club Building,c8aa0fc0-9b5f-4730-9ee5-5921077eb9b8,c8aa0fc0-9b5f-4730-9ee5-5921077eb9b8,The Hong Kong Club Building,89.2
+LH_199,199,199,The L.Plaza,beb5f76b-1db8-441b-b58f-ad749d172798,beb5f76b-1db8-441b-b58f-ad749d172798,The L. Plaza (QRC),90.0
+LH_7494,7494,7494,The Metropolis Tower,258860c5-97bb-4e2f-a2f1-21b9f7680a37,258860c5-97bb-4e2f-a2f1-21b9f7680a37,Metropolis Tower,89.0
+LH_6446,6446,6446,The Octagon,0164ed1f-242c-4e4e-9934-a74e0df5bb9a,0164ed1f-242c-4e4e-9934-a74e0df5bb9a,The Octagon,88.8
+LH_6501,6501,6501,The Peninsula Office Tower,267faf9f-b418-4540-b959-44a41d610b33,267faf9f-b418-4540-b959-44a41d610b33,The Peninsula Office Tower,90.0
+LH_5362,5362,5362,The Quayside,5da76ff0-aa62-4ae6-95ad-ecf8f2a64f9c,5da76ff0-aa62-4ae6-95ad-ecf8f2a64f9c,The Quayside,90.0
+LH_17004,17004,17004,The Rainbow,25d50310-cddb-43d6-aeef-181d787e3e6c,25d50310-cddb-43d6-aeef-181d787e3e6c,The Rainbow,90.0
+LH_1171,1171,1171,The Sun's Group Centre,afddeef3-93f8-498c-ab49-37f04683f79c,afddeef3-93f8-498c-ab49-37f04683f79c,The Sun's Group Centre,88.0
+LH_2301,2301,2301,The Toy House,25bc5cc4-fd9e-43eb-bdf3-df159607ef5b,25bc5cc4-fd9e-43eb-bdf3-df159607ef5b,The Toy House,90.0
+LH_1234,1234,1234,The Wellington,e184f422-8d1e-4508-8db3-edf76819c4de,e184f422-8d1e-4508-8db3-edf76819c4de,The Wellington,88.2
+LH_1199,1199,1199,Three Exchange Square,5510fde4-660b-4427-a41f-70aceb30a8e2,5510fde4-660b-4427-a41f-70aceb30a8e2,Three Exchange Square,90.0
+LH_1294,1294,1294,Three Garden Road - Champion Tower,4dd27749-7810-4e41-9f12-060859f7c28d,4dd27749-7810-4e41-9f12-060859f7c28d,Champion Tower,90.0
+LH_1293,1293,1293,Three Garden Road - ICBC Tower,e04e7221-1f55-41c9-8690-023d3b1116fc,e04e7221-1f55-41c9-8690-023d3b1116fc,ICBC Tower (Garden Road),90.0
+LH_353,353,353,Three Pacific Place,a18fd18c-b4a5-4138-aeaa-92f5fca268c3,a18fd18c-b4a5-4138-aeaa-92f5fca268c3,Three Pacific Place,90.0
+LH_6157,6157,6157,Times Square Tower One,f9bc6a5f-bb9d-4e6d-949f-5760a858c96e,f9bc6a5f-bb9d-4e6d-949f-5760a858c96e,"Times Square, Tower 1",87.0
+LH_6306,6306,6306,Times Tower,6f0d13c4-aa3f-4952-bf85-f6c68248cd28,6f0d13c4-aa3f-4952-bf85-f6c68248cd28,Times Tower (CSW),90.0
+LH_1507,1507,1507,Times Tower,2ea5bc6b-fdb7-4ccb-b655-eefc93e901c0,2ea5bc6b-fdb7-4ccb-b655-eefc93e901c0,Times Tower,90.0
+LH_7361,7361,7361,Tins Enterprises Centre,9b55358b-e90e-4fb6-8b03-2cbafe8b551a,9b55358b-e90e-4fb6-8b03-2cbafe8b551a,Tin's Enterprises Centre,86.4
+LH_1480,1480,1480,Tower 535,9d5039c7-3897-4bec-a4de-9eab0d9b2bf7,9d5039c7-3897-4bec-a4de-9eab0d9b2bf7,Tower 535,90.0
+LH_6310,6310,6310,Trade Square,c0599227-eeeb-44d0-a066-711df674cd6c,c0599227-eeeb-44d0-a066-711df674cd6c,Trade Square,90.0
+LH_3309,3309,3309,Trendy Centre,48d2989f-eafc-49d2-b434-51567216820d,48d2989f-eafc-49d2-b434-51567216820d,Trendy Centre,90.0
+LH_2662,2662,2662,Tsim Sha Tsui Centre,84a3ada9-5da0-4ad7-960b-593224794a20,84a3ada9-5da0-4ad7-960b-593224794a20,Tsim Sha Tsui Centre,90.0
+LH_11760,11760,11760,Tuen Mun Central Square,c4234337-d47d-4f4e-8421-93e7cafd9b50,c4234337-d47d-4f4e-8421-93e7cafd9b50,Tuen Mun Central Square,90.0
+LH_15,15,15,Tung Hip Commercial Building,aa36891d-ccd2-4752-be59-24f0fd50c603,aa36891d-ccd2-4752-be59-24f0fd50c603,Tung Hip Commercial Building,88.6
+LH_4967,4967,4967,Tungtex Building,8855a6cc-3a4f-4a55-81e7-ed0d0f9ed520,8855a6cc-3a4f-4a55-81e7-ed0d0f9ed520,Tungtex Building,90.0
+LH_93,93,93,Two Chinachem Central,1a2dd93e-fdca-4759-9a7e-be91ff9cbadb,1a2dd93e-fdca-4759-9a7e-be91ff9cbadb,Two Chinachem Central,90.0
+LH_132,132,132,Two Chinachem Plaza,5bc62c40-5659-4617-ac3d-1383479b18c9,5bc62c40-5659-4617-ac3d-1383479b18c9,Two Chinachem Plaza,90.0
+LH_1197,1197,1197,Two Exchange Square,12511064-0b98-4e5a-b1b3-aa2ed036db1c,12511064-0b98-4e5a-b1b3-aa2ed036db1c,Two Exchange Square,90.0
+LH_4924,4924,4924,Two Harbour Square,57712665-5f99-4519-bd95-bcb8ac35240f,57712665-5f99-4519-bd95-bcb8ac35240f,Two Harbour Square,90.0
+LH_10605,10605,10605,Two International Finance Centre,84309e3e-ff8f-4406-9c3a-cbef2b47bcf0,84309e3e-ff8f-4406-9c3a-cbef2b47bcf0,Two International Finance Centre,90.0
+LH_1122,1122,1122,Two Pacific Place,2eefdbb6-4028-4632-aa50-d499942f7176,2eefdbb6-4028-4632-aa50-d499942f7176,Two Pacific Place,90.0
+LH_12438,12438,12438,Two Portside,c92689ec-0b3d-4e1c-bc61-d2e0f4cd2ce5,c92689ec-0b3d-4e1c-bc61-d2e0f4cd2ce5,Two Portside,90.0
+LH_4733,4733,4733,Two Sky Parc,8d8161c5-e310-4f74-9137-910fdfb4c50c,8d8161c5-e310-4f74-9137-910fdfb4c50c,Two Sky Parc,90.0
+LH_969,969,969,United Asia Finance Centre,9619b786-6735-40e0-9bc6-9061bb1c8516,9619b786-6735-40e0-9bc6-9061bb1c8516,United Asia Finance Centre,90.0
+LH_1123,1123,1123,United Centre,8945cdfc-f462-48e6-a917-b6e0be4709bf,8945cdfc-f462-48e6-a917-b6e0be4709bf,United Centre,90.0
+LH_2281,2281,2281,Universal Trade Centre,14fbcde1-c486-4eae-860b-7f9c6bb25979,14fbcde1-c486-4eae-860b-7f9c6bb25979,Universal Trade Centre,88.2
+LH_137,137,137,V Heun Building,65deb996-da0a-451a-b847-6c29dc918dde,65deb996-da0a-451a-b847-6c29dc918dde,V Heun Building,90.0
+LH_11522,11522,11522,Vertical SQ,aacfd1af-fe02-44d7-90c1-5c1432439e4b,aacfd1af-fe02-44d7-90c1-5c1432439e4b,Vertical Sq,100.0
+LH_7221,7221,7221,W Luxe,6080e9b4-86ab-4fb6-b331-58af3ed40593,6080e9b4-86ab-4fb6-b331-58af3ed40593,W Luxe,88.8
+LH_3811,3811,3811,W50,7bda95c4-ce09-46ed-a948-90015c9d2943,7bda95c4-ce09-46ed-a948-90015c9d2943,W50,100.0
+LH_2980,2980,2980,Wai Fung Plaza,7d0d8731-5a44-4367-aff7-37095c8113b1,7d0d8731-5a44-4367-aff7-37095c8113b1,Wai Fung Plaza,90.0
+LH_635,635,635,Wayson Commercial Building,0efc380f-0f8c-44ff-9b3d-441e8e7ffffa,0efc380f-0f8c-44ff-9b3d-441e8e7ffffa,Wayson Commercial Building,90.0
+LH_12498,12498,12498,Wealth Commercial Centre,1e1c09e3-b231-4cc5-a7e3-cf15095998be,1e1c09e3-b231-4cc5-a7e3-cf15095998be,Wealth Commercial Centre,90.0
+LH_5558,5558,5558,West Gate Tower,5ae31d3b-3ec1-49c1-ab06-a69b6f2eef0e,5ae31d3b-3ec1-49c1-ab06-a69b6f2eef0e,West Gate Tower,90.0
+LH_5598,5598,5598,Westley Square,9e53dcc2-2c33-40d4-81bc-370cbfe90e55,9e53dcc2-2c33-40d4-81bc-370cbfe90e55,Westley Square,90.0
+LH_2287,2287,2287,Wharf T&T Centre,e2e58825-797d-48d7-94e5-5ec776aa672c,e2e58825-797d-48d7-94e5-5ec776aa672c,Wharf T & T Centre,88.0
+LH_1281,1281,1281,Wheelock House,6390fc5c-de54-4241-aeac-ce8745c1b9e9,6390fc5c-de54-4241-aeac-ce8745c1b9e9,Wheelock House,90.0
+LH_6553,6553,6553,Win Century Centre,b7b4a4f4-2d5e-4a8a-b456-77a93dd3e7b5,b7b4a4f4-2d5e-4a8a-b456-77a93dd3e7b5,Win Century Centre,89.4
+LH_1150,1150,1150,Windsor House - Chubb Tower,502d1b42-7b73-4da6-b38e-bae5caff4f28,502d1b42-7b73-4da6-b38e-bae5caff4f28,WINDSOR HOUSE - CHUBB TOWER,90.0
+LH_134,134,134,Wing On Centre,60475b5a-1892-4690-a27e-de9fb6c9705d,60475b5a-1892-4690-a27e-de9fb6c9705d,Wing On Centre,78.6
+LH_1,1,1,Wing On House,5bd7548f-da26-4e74-8805-196966cd6764,5bd7548f-da26-4e74-8805-196966cd6764,Wing On House,90.0
+LH_2940,2940,2940,Wing On Kowloon Centre,36cc324e-0851-4765-b38d-d0acaf029a36,36cc324e-0851-4765-b38d-d0acaf029a36,Wing On Kowloon Centre,76.4
+LH_2665,2665,2665,Wing On Plaza,7678bb06-98f3-4258-b5b6-eba33f49bad2,7678bb06-98f3-4258-b5b6-eba33f49bad2,Wing On Plaza,90.0
+LH_1411,1411,1411,Winland Square,2c6e3e89-67b5-4e9d-b7e9-0e30f04959da,2c6e3e89-67b5-4e9d-b7e9-0e30f04959da,Winland Square,90.0
+LH_5600,5600,5600,Wong Tze Building,747704a8-872b-4828-8581-ce244b8c368e,747704a8-872b-4828-8581-ce244b8c368e,Wong Tze Building,90.0
+LH_2288,2288,2288,World Commerce Centre,55761d16-d582-4933-bf79-a3d6069e0e56,55761d16-d582-4933-bf79-a3d6069e0e56,World Commerce Centre,90.0
+LH_2290,2290,2290,World Finance Centre North,60d5f1c5-8a92-4bd1-9949-7481c7bec1e3,60d5f1c5-8a92-4bd1-9949-7481c7bec1e3,World Finance Centre (North Tower),90.0
+LH_2289,2289,2289,World Finance Centre South,22d5e3ba-5fe6-44c8-a8d8-fffb77902523,22d5e3ba-5fe6-44c8-a8d8-fffb77902523,World Finance Centre (South Tower),90.0
+LH_7913,7913,7913,World Peace Centre,d71f3278-5d9c-4f5c-b4e6-9144fbde18b3,d71f3278-5d9c-4f5c-b4e6-9144fbde18b3,World Peace Centre,90.0
+LH_1166,1166,1166,World Trade Centre,9656cb88-dc3e-4b2c-9f60-0f3347c1d186,9656cb88-dc3e-4b2c-9f60-0f3347c1d186,World Trade Centre,90.0
+LH_6,6,6,World-Wide House,38502278-5872-4e7f-9bc8-5823f6f672c6,38502278-5872-4e7f-9bc8-5823f6f672c6,World-Wide House,90.0
+LH_7118,7118,7118,Y Centre,3c6e7596-5151-4d07-9deb-b50ff5532396,3c6e7596-5151-4d07-9deb-b50ff5532396,Kin Fat Industrial Centre,75.0
+LH_628,628,628,Yardley Commercial Building,fbb499b1-7224-45d1-a8a9-723ecad9af35,fbb499b1-7224-45d1-a8a9-723ecad9af35,Yardley Commercial Building,90.0
+LH_5602,5602,5602,Yen Sheng Centre,35b73796-8b96-43c0-9d8b-e4e7e5614365,35b73796-8b96-43c0-9d8b-e4e7e5614365,Yen Sheng Centre,90.0
+LH_1145,1145,1145,YF Life Centre,52234dba-084c-4576-9e02-c3914382c9a3,52234dba-084c-4576-9e02-c3914382c9a3,YF Life Centre,90.0
+LH_970,970,970,YF Life Tower,56ad9d3c-d2a5-4498-836d-b0927fca8768,56ad9d3c-d2a5-4498-836d-b0927fca8768,YF Life Tower,90.0
+LH_15094,15094,15094,YHC Tower,480e9267-78f9-4bb7-bbaf-6db9e22c0d6c,480e9267-78f9-4bb7-bbaf-6db9e22c0d6c,YHC Tower,90.0
+LH_148,148,148,York House,928324ca-bb2c-44a5-9cee-fa928cfd6821,928324ca-bb2c-44a5-9cee-fa928cfd6821,York House,90.0
+LH_1372,1372,1372,Yue Hing Building,69218c6e-752c-4bc2-823e-5cff7c6b19a1,69218c6e-752c-4bc2-823e-5cff7c6b19a1,Yue Hing Building,90.0
+LH_972,972,972,Yue Xiu Building,895c6861-b9a3-4c29-9771-85b9f0956417,895c6861-b9a3-4c29-9771-85b9f0956417,Yue Xiu Building,90.0

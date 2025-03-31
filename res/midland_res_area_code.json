@@ -1,0 +1,1041 @@
+[
+    {
+        "id": "10",
+        "name": "Hong Kong Island",
+        "int_district": [
+            {
+                "id": "53ND10001",
+                "name": "Central And Western",
+                "seq": 1,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10001",
+                        "name": "Mid-Levels West",
+                        "seq": 1
+                    },
+                    {
+                        "id": "130ND10002",
+                        "name": "Sai Ying Poon",
+                        "seq": 2
+                    },
+                    {
+                        "id": "130ND10003",
+                        "name": "Kennedy Town",
+                        "seq": 3
+                    },
+                    {
+                        "id": "130ND10004",
+                        "name": "Central / Sheung Wan",
+                        "seq": 4
+                    }
+                ]
+            },
+            {
+                "id": "53ND10002",
+                "name": "Mid-Levels Central",
+                "seq": 2,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10005",
+                        "name": "Admiralty Mid-Levels",
+                        "seq": 5
+                    },
+                    {
+                        "id": "130ND10006",
+                        "name": "Mid-Levels Central",
+                        "seq": 6
+                    }
+                ]
+            },
+            {
+                "id": "53ND10003",
+                "name": "The Peak",
+                "seq": 3,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10007",
+                        "name": "The Peak",
+                        "seq": 7
+                    }
+                ]
+            },
+            {
+                "id": "53ND10004",
+                "name": "Mid-Levels East / Happy Valley",
+                "seq": 4,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10011",
+                        "name": "Happy Valley",
+                        "seq": 8
+                    },
+                    {
+                        "id": "130ND10008",
+                        "name": "Stubbs Road",
+                        "seq": 9
+                    },
+                    {
+                        "id": "130ND10009",
+                        "name": "Tai Hang Road",
+                        "seq": 10
+                    },
+                    {
+                        "id": "130ND10010",
+                        "name": "Jardine's Lookout",
+                        "seq": 11
+                    }
+                ]
+            },
+            {
+                "id": "53ND10005",
+                "name": "Wahchai / Causeway Bay",
+                "seq": 5,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10012",
+                        "name": "Wanchai",
+                        "seq": 12
+                    },
+                    {
+                        "id": "130ND10013",
+                        "name": "Causeway Bay",
+                        "seq": 13
+                    }
+                ]
+            },
+            {
+                "id": "53ND10006",
+                "name": "North Point",
+                "seq": 6,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10014",
+                        "name": "Tin Hau",
+                        "seq": 14
+                    },
+                    {
+                        "id": "130ND10015",
+                        "name": "North Point / Fortress Hill",
+                        "seq": 15
+                    }
+                ]
+            },
+            {
+                "id": "53ND10007",
+                "name": "North Point Mid-Levels",
+                "seq": 7,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10016",
+                        "name": "North Point Mid-Levels",
+                        "seq": 16
+                    },
+                    {
+                        "id": "130ND10017",
+                        "name": "Braemar Hill",
+                        "seq": 17
+                    }
+                ]
+            },
+            {
+                "id": "53ND10008",
+                "name": "Eastern",
+                "seq": 8,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10018",
+                        "name": "Chai Wan",
+                        "seq": 18
+                    },
+                    {
+                        "id": "130ND10019",
+                        "name": "Siu Sai Wan",
+                        "seq": 19
+                    },
+                    {
+                        "id": "130ND10020",
+                        "name": "Heng Fa Chuen",
+                        "seq": 20
+                    },
+                    {
+                        "id": "130ND10021",
+                        "name": "Shau Kei Wan",
+                        "seq": 21
+                    },
+                    {
+                        "id": "130ND10022",
+                        "name": "Sai Wan Ho",
+                        "seq": 22
+                    },
+                    {
+                        "id": "130ND10023",
+                        "name": "Taikoo",
+                        "seq": 23
+                    },
+                    {
+                        "id": "130ND10024",
+                        "name": "Quarry Bay",
+                        "seq": 24
+                    }
+                ]
+            },
+            {
+                "id": "53ND10009",
+                "name": "Ap Lei Chau / Aberdeen / Tin Wan / Wah Fu",
+                "seq": 9,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10025",
+                        "name": "Ap Lei Chau",
+                        "seq": 25
+                    },
+                    {
+                        "id": "130ND10026",
+                        "name": "Wah Fu",
+                        "seq": 26
+                    },
+                    {
+                        "id": "130ND10027",
+                        "name": "Aberdeen / Tin Wan",
+                        "seq": 27
+                    }
+                ]
+            },
+            {
+                "id": "53ND10010",
+                "name": "Wong Chuk Hang / Sham Wan",
+                "seq": 10,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10028",
+                        "name": "Wong Chuk Hang / Sham Wan",
+                        "seq": 28
+                    }
+                ]
+            },
+            {
+                "id": "53ND10011",
+                "name": "Chung Hom Kok / Stanley / Tai Tam / Shek O / Redhill Peninsula",
+                "seq": 11,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10029",
+                        "name": "Tai Tam / Redhill Peninsula",
+                        "seq": 29
+                    },
+                    {
+                        "id": "130ND10030",
+                        "name": "Shek O",
+                        "seq": 30
+                    },
+                    {
+                        "id": "130ND10031",
+                        "name": "Chung Hom Kok",
+                        "seq": 31
+                    },
+                    {
+                        "id": "130ND10032",
+                        "name": "Stanley",
+                        "seq": 32
+                    }
+                ]
+            },
+            {
+                "id": "53ND10012",
+                "name": "Repulse Bay / Hong Kong Parkview / South Bay",
+                "seq": 12,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10033",
+                        "name": "Repulse Bay / Hong Kong Parkview",
+                        "seq": 33
+                    },
+                    {
+                        "id": "130ND10034",
+                        "name": "South Bay / Headland Road",
+                        "seq": 34
+                    }
+                ]
+            },
+            {
+                "id": "53ND10013",
+                "name": "Deep Water Bay / Shouson Hill",
+                "seq": 13,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10035",
+                        "name": "Deep Water Bay",
+                        "seq": 35
+                    },
+                    {
+                        "id": "130ND10036",
+                        "name": "Shouson Hill",
+                        "seq": 36
+                    }
+                ]
+            },
+            {
+                "id": "53ND10014",
+                "name": "Residence Bel-Air / Pokfulam",
+                "seq": 14,
+                "int_sm_district": [
+                    {
+                        "id": "130ND10037",
+                        "name": "Pokfulam",
+                        "seq": 37
+                    },
+                    {
+                        "id": "130ND10038",
+                        "name": "Residence Bel-Air",
+                        "seq": 38
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "20",
+        "name": "Kowloon",
+        "int_district": [
+            {
+                "id": "53ND20001",
+                "name": "Kai Tak",
+                "seq": 15,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20001",
+                        "name": "Kai Tak",
+                        "seq": 39
+                    }
+                ]
+            },
+            {
+                "id": "53ND20002",
+                "name": "To Kwa Wan / Kowloon City",
+                "seq": 16,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20002",
+                        "name": "Ma Tau Wai",
+                        "seq": 40
+                    },
+                    {
+                        "id": "130ND20003",
+                        "name": "To Kwa Wan",
+                        "seq": 41
+                    },
+                    {
+                        "id": "130ND20004",
+                        "name": "Kowloon City",
+                        "seq": 42
+                    }
+                ]
+            },
+            {
+                "id": "53ND20003",
+                "name": "Kowloon Tong",
+                "seq": 17,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20005",
+                        "name": "Kowloon Tong",
+                        "seq": 43
+                    },
+                    {
+                        "id": "130ND20006",
+                        "name": "New Beacon Hill",
+                        "seq": 44
+                    },
+                    {
+                        "id": "130ND20007",
+                        "name": "Beacon Hill",
+                        "seq": 45
+                    }
+                ]
+            },
+            {
+                "id": "53ND20004",
+                "name": "Yau Yat Chuen",
+                "seq": 18,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20008",
+                        "name": "Yau Yat Chuen",
+                        "seq": 46
+                    }
+                ]
+            },
+            {
+                "id": "53ND20005",
+                "name": "Ho Man Tin / Kingspark",
+                "seq": 19,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20009",
+                        "name": "Kingspark",
+                        "seq": 47
+                    },
+                    {
+                        "id": "130ND20010",
+                        "name": "Ho Man Tin",
+                        "seq": 48
+                    }
+                ]
+            },
+            {
+                "id": "53ND20006",
+                "name": "Kadoorie Hill",
+                "seq": 20,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20011",
+                        "name": "Kadoorie Hill",
+                        "seq": 49
+                    }
+                ]
+            },
+            {
+                "id": "53ND20007",
+                "name": "Hung Hom / Whampoa / Laguna",
+                "seq": 21,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20012",
+                        "name": "Hung Hom Station",
+                        "seq": 50
+                    },
+                    {
+                        "id": "130ND20013",
+                        "name": "Laguna",
+                        "seq": 51
+                    },
+                    {
+                        "id": "130ND20014",
+                        "name": "Whampoa",
+                        "seq": 52
+                    },
+                    {
+                        "id": "130ND20015",
+                        "name": "Hung Hom",
+                        "seq": 53
+                    }
+                ]
+            },
+            {
+                "id": "53ND20008",
+                "name": "Tsim Sha Tsui / Jordan",
+                "seq": 22,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20016",
+                        "name": "Tsim Sha Tsui",
+                        "seq": 54
+                    },
+                    {
+                        "id": "130ND20017",
+                        "name": "Jordan",
+                        "seq": 55
+                    }
+                ]
+            },
+            {
+                "id": "53ND20009",
+                "name": "Kowloon Station",
+                "seq": 23,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20018",
+                        "name": "Kowloon Station",
+                        "seq": 56
+                    }
+                ]
+            },
+            {
+                "id": "53ND20010",
+                "name": "Olympic Station",
+                "seq": 24,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20019",
+                        "name": "Olympic Station",
+                        "seq": 57
+                    }
+                ]
+            },
+            {
+                "id": "53ND20011",
+                "name": "Nam Cheong Station",
+                "seq": 25,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20020",
+                        "name": "Nam Cheong Station",
+                        "seq": 58
+                    }
+                ]
+            },
+            {
+                "id": "53ND20012",
+                "name": "Yau Ma Tei / Mongkok / Prince Edward / Tai Kok Tsui",
+                "seq": 26,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20021",
+                        "name": "Yau Ma Tei",
+                        "seq": 59
+                    },
+                    {
+                        "id": "130ND20022",
+                        "name": "Tai Kok Tsui",
+                        "seq": 60
+                    },
+                    {
+                        "id": "130ND20023",
+                        "name": "Mongkok",
+                        "seq": 61
+                    },
+                    {
+                        "id": "130ND20024",
+                        "name": "Prince Edward",
+                        "seq": 62
+                    }
+                ]
+            },
+            {
+                "id": "53ND20013",
+                "name": "Cheung Sha Wan / Sham Shui Po",
+                "seq": 27,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20025",
+                        "name": "Sham Shui Po",
+                        "seq": 63
+                    },
+                    {
+                        "id": "130ND20026",
+                        "name": "Cheung Sha Wan",
+                        "seq": 64
+                    }
+                ]
+            },
+            {
+                "id": "53ND20014",
+                "name": "Four Little Dragons / Lai Chi Kok",
+                "seq": 28,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20028",
+                        "name": "Four Little Dragons / Lai Chi Kok",
+                        "seq": 66
+                    }
+                ]
+            },
+            {
+                "id": "53ND20015",
+                "name": "Mei Foo Station / Lai King Station / Wonderland",
+                "seq": 29,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20029",
+                        "name": "Lai King Station / Wonderland",
+                        "seq": 67
+                    },
+                    {
+                        "id": "130ND20030",
+                        "name": "Mei Foo Station",
+                        "seq": 68
+                    }
+                ]
+            },
+            {
+                "id": "53ND20016",
+                "name": "Wong Tai Sin / Diamond Hill",
+                "seq": 30,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20031",
+                        "name": "Lok Fu",
+                        "seq": 69
+                    },
+                    {
+                        "id": "130ND20032",
+                        "name": "San Po Kong",
+                        "seq": 70
+                    },
+                    {
+                        "id": "130ND20033",
+                        "name": "Diamond Hill",
+                        "seq": 71
+                    },
+                    {
+                        "id": "130ND20034",
+                        "name": "Tsz Wan Shan",
+                        "seq": 72
+                    },
+                    {
+                        "id": "130ND20035",
+                        "name": "Wong Tai Sin",
+                        "seq": 73
+                    },
+                    {
+                        "id": "130ND20036",
+                        "name": "Choi Hung / Ngau Chi Wan",
+                        "seq": 74
+                    }
+                ]
+            },
+            {
+                "id": "53ND20017",
+                "name": "Kowloon Bay",
+                "seq": 31,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20037",
+                        "name": "Kowloon Bay",
+                        "seq": 75
+                    },
+                    {
+                        "id": "130ND20038",
+                        "name": "Ngau Tau Kok",
+                        "seq": 76
+                    }
+                ]
+            },
+            {
+                "id": "53ND20018",
+                "name": "Kwun Tong",
+                "seq": 32,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20039",
+                        "name": "Kwun Tong",
+                        "seq": 77
+                    },
+                    {
+                        "id": "130ND20040",
+                        "name": "Anderson",
+                        "seq": 78
+                    }
+                ]
+            },
+            {
+                "id": "53ND20019",
+                "name": "Lam Tin / Yau Tong",
+                "seq": 33,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20041",
+                        "name": "Lam Tin",
+                        "seq": 79
+                    },
+                    {
+                        "id": "130ND20042",
+                        "name": "Yau Tong",
+                        "seq": 80
+                    }
+                ]
+            },
+            {
+                "id": "53ND20020",
+                "name": "Tseung Kwan O",
+                "seq": 34,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20043",
+                        "name": "Lohas Park",
+                        "seq": 81
+                    },
+                    {
+                        "id": "130ND20044",
+                        "name": "Hang Hau",
+                        "seq": 82
+                    },
+                    {
+                        "id": "130ND20045",
+                        "name": "Po Lam",
+                        "seq": 83
+                    },
+                    {
+                        "id": "130ND20046",
+                        "name": "Tseung Kwan O Town Centre",
+                        "seq": 84
+                    },
+                    {
+                        "id": "130ND20047",
+                        "name": "Tiu Keng Leng",
+                        "seq": 85
+                    }
+                ]
+            },
+            {
+                "id": "53ND20021",
+                "name": "Sai Kung",
+                "seq": 35,
+                "int_sm_district": [
+                    {
+                        "id": "130ND20048",
+                        "name": "Clear Water Bay",
+                        "seq": 86
+                    },
+                    {
+                        "id": "130ND20049",
+                        "name": "Sai Kung",
+                        "seq": 87
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "30",
+        "name": "New Territories",
+        "int_district": [
+            {
+                "id": "53ND30001",
+                "name": "Tsuen Wan",
+                "seq": 36,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30001",
+                        "name": "Riviera Area",
+                        "seq": 88
+                    },
+                    {
+                        "id": "130ND30002",
+                        "name": "Tsuen Wan West",
+                        "seq": 89
+                    },
+                    {
+                        "id": "130ND30003",
+                        "name": "Tsuen Wan Town Centre",
+                        "seq": 90
+                    },
+                    {
+                        "id": "130ND30004",
+                        "name": "Tai Wo Hau",
+                        "seq": 91
+                    }
+                ]
+            },
+            {
+                "id": "53ND30002",
+                "name": "Sham Tseng / Tsing Lung Tau / Castle Peak Road / So Kwun Wat",
+                "seq": 37,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30005",
+                        "name": "Siu Lam / So Kwun Wat / Castle Peak Bay",
+                        "seq": 92
+                    },
+                    {
+                        "id": "130ND30006",
+                        "name": "Sham Tseng / Tsing Lung Tau",
+                        "seq": 93
+                    },
+                    {
+                        "id": "130ND30007",
+                        "name": "Belvedere / Ting Kau",
+                        "seq": 94
+                    }
+                ]
+            },
+            {
+                "id": "53ND30003",
+                "name": "Ma Wan / Park Island",
+                "seq": 38,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30008",
+                        "name": "Park Island",
+                        "seq": 95
+                    }
+                ]
+            },
+            {
+                "id": "53ND30004",
+                "name": "Kwai Chung / Tsing Yi",
+                "seq": 39,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30009",
+                        "name": "Tsing Yi",
+                        "seq": 96
+                    },
+                    {
+                        "id": "130ND30010",
+                        "name": "Kwai Chung",
+                        "seq": 97
+                    }
+                ]
+            },
+            {
+                "id": "53ND30005",
+                "name": "Tuen Mun",
+                "seq": 40,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30011",
+                        "name": "Lam Tei",
+                        "seq": 98
+                    },
+                    {
+                        "id": "130ND30012",
+                        "name": "Tuen Mun Ferry",
+                        "seq": 99
+                    },
+                    {
+                        "id": "130ND30013",
+                        "name": "Tuen Mun Town Centre",
+                        "seq": 100
+                    }
+                ]
+            },
+            {
+                "id": "53ND30006",
+                "name": "Yuen Long",
+                "seq": 41,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30014",
+                        "name": "Yuen Long Town Centre",
+                        "seq": 101
+                    },
+                    {
+                        "id": "130ND30015",
+                        "name": "Kam Tin",
+                        "seq": 102
+                    },
+                    {
+                        "id": "130ND30016",
+                        "name": "Long Ping",
+                        "seq": 103
+                    }
+                ]
+            },
+            {
+                "id": "53ND30007",
+                "name": "Tin Shui Wai",
+                "seq": 42,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30017",
+                        "name": "Tin Shui Wai",
+                        "seq": 104
+                    },
+                    {
+                        "id": "130ND30018",
+                        "name": "Lau Fau Shan",
+                        "seq": 105
+                    }
+                ]
+            },
+            {
+                "id": "53ND30008",
+                "name": "Hung Shui Kiu",
+                "seq": 43,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30019",
+                        "name": "South Hung Shui Kiu New Development",
+                        "seq": 106
+                    },
+                    {
+                        "id": "130ND30020",
+                        "name": "North Hung Shui Kiu New Development",
+                        "seq": 107
+                    }
+                ]
+            },
+            {
+                "id": "53ND30009",
+                "name": "Palm Springs / Fairview",
+                "seq": 44,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30021",
+                        "name": "Palm Springs / Fairview",
+                        "seq": 108
+                    }
+                ]
+            },
+            {
+                "id": "53ND30010",
+                "name": "Sheung Shui / Fanling / Kwu Tung",
+                "seq": 45,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30022",
+                        "name": "Kwu Tung",
+                        "seq": 109
+                    },
+                    {
+                        "id": "130ND30023",
+                        "name": "Fanling / Fanling North / Sha Tau Kok / Ta Ku Ling",
+                        "seq": 110
+                    },
+                    {
+                        "id": "130ND30024",
+                        "name": "Sheung Shui",
+                        "seq": 111
+                    },
+                    {
+                        "id": "130ND30044",
+                        "name": "Northern Lux. Res.",
+                        "seq": 131
+                    }
+                ]
+            },
+            {
+                "id": "53ND30011",
+                "name": "Shatin",
+                "seq": 46,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30025",
+                        "name": "Shatin Town Centre",
+                        "seq": 112
+                    },
+                    {
+                        "id": "130ND30026",
+                        "name": "Siu Lek Yuen",
+                        "seq": 113
+                    },
+                    {
+                        "id": "130ND30027",
+                        "name": "City One / Shek Mun",
+                        "seq": 114
+                    }
+                ]
+            },
+            {
+                "id": "53ND30012",
+                "name": "Ma On Shan",
+                "seq": 47,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30028",
+                        "name": "Wu Kai Sha",
+                        "seq": 115
+                    },
+                    {
+                        "id": "130ND30029",
+                        "name": "Ma On Shan",
+                        "seq": 116
+                    }
+                ]
+            },
+            {
+                "id": "53ND30013",
+                "name": "Tai Wai",
+                "seq": 48,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30030",
+                        "name": "Tai Wai Mid-Levels",
+                        "seq": 117
+                    },
+                    {
+                        "id": "130ND30031",
+                        "name": "Tai Wai",
+                        "seq": 118
+                    }
+                ]
+            },
+            {
+                "id": "53ND30014",
+                "name": "Fo Tan / Kau To Shan",
+                "seq": 49,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30032",
+                        "name": "Fo Tan",
+                        "seq": 119
+                    },
+                    {
+                        "id": "130ND30033",
+                        "name": "Kau To Shan",
+                        "seq": 120
+                    }
+                ]
+            },
+            {
+                "id": "53ND30015",
+                "name": "Tai Po",
+                "seq": 50,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30034",
+                        "name": "Tai Po Town Centre",
+                        "seq": 121
+                    },
+                    {
+                        "id": "130ND30035",
+                        "name": "Tai Po Market / Tai Wo",
+                        "seq": 122
+                    }
+                ]
+            },
+            {
+                "id": "53ND30016",
+                "name": "Tai Po Lux. Res. / Pak Shek Kok",
+                "seq": 51,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30036",
+                        "name": "Hong Lok Yuen",
+                        "seq": 123
+                    },
+                    {
+                        "id": "130ND30037",
+                        "name": "Pak Shek Kok",
+                        "seq": 124
+                    },
+                    {
+                        "id": "130ND30038",
+                        "name": "Tai Po Mid-Levels",
+                        "seq": 125
+                    },
+                    {
+                        "id": "130ND30039",
+                        "name": "Ting Kok Road Lux. Res.",
+                        "seq": 126
+                    }
+                ]
+            },
+            {
+                "id": "53ND30017",
+                "name": "Lantau Island / Discovery Bay",
+                "seq": 52,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30040",
+                        "name": "Discovery Bay",
+                        "seq": 127
+                    },
+                    {
+                        "id": "130ND30041",
+                        "name": "South Lantau Island",
+                        "seq": 128
+                    },
+                    {
+                        "id": "130ND30042",
+                        "name": "Other Islands",
+                        "seq": 129
+                    }
+                ]
+            },
+            {
+                "id": "53ND30018",
+                "name": "Tung Chung",
+                "seq": 53,
+                "int_sm_district": [
+                    {
+                        "id": "130ND30043",
+                        "name": "Tung Chung",
+                        "seq": 130
+                    }
+                ]
+            }
+        ]
+    }
+]

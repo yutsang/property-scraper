@@ -159,3 +159,9 @@ venv.bak/
 
 # mlflow local runs
 mlruns/*
+
+# Large files
+ici/2025-02-27_centanet_ici_transaction.csv
+ici/2025-03-22_centanet_ici_transaction.csv
+res/midland_res_trans_lv3.csv
+res/midland_res_transaction_data.csv

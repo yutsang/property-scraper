@@ -1,0 +1,488 @@
+building_key,leasinghub_id,leasinghub_original_key,leasinghub_name,midland_id,midland_original_key,midland_name,match_score
+LH_1967,1967,1967,1 Duddell Street,B000018422,B000018422,1 Duddell Street,90.0
+LH_2139,2139,2139,10 Pottinger Street,B000018407,B000018407,10 Pottinger Street,83.2
+LH_190,190,190,100 Queen's Road Central,B000063697,B000063697,100 Queen's Road Central,90.0
+LH_1242,1242,1242,128 Wellington Street,B000060541,B000060541,128 Wellington Street,90.0
+LH_2772,2772,2772,148 Electric Road,B000041931,B000041931,148 Electric Road,90.0
+LH_17653,17653,17653,181 Queen's Road Central,B000063699,B000063699,181 Queen's Road Central,87.2
+LH_1609,1609,1609,208 Johnston Road,B000094314,B000094314,No. 208 Johnston Road,88.4
+LH_17520,17520,17520,228 Electric Road,B000112287,B000112287,No. 228 Electric Road,88.4
+LH_2963,2963,2963,26 Nathan Road,B000022389,B000022389,26 Nathan Road,90.0
+LH_966,966,966,3 Lockhart Road,B000054199,B000054199,3 Lockhart Road,90.0
+LH_1026,1026,1026,313 Lockhart Road,B000053973,B000053973,313 Lockhart Road,90.0
+LH_84,84,84,33 Des Voeux Road Central,B000007683,B000007683,33 Des Voeux Road Central,78.8
+LH_17495,17495,17495,333 Hennessy,B000095756,B000095756,333 Hennessy,86.6
+LH_1793,1793,1793,383 King's Road,B000113140,B000113140,383-385 King's Road,90.0
+LH_17298,17298,17298,39 King's Road,B000113453,B000113453,39 King's Road,90.0
+LH_17973,17973,17973,39 Sha Tsui Road,B000119995,B000119995,39 Sha Tsui Road,90.0
+LH_11521,11521,11521,41 Heung Yip Road,B000087080,B000087080,41 Heung Yip Road,90.0
+LH_6174,6174,6174,6 Wilmer Street,B000008325,B000008325,6 Wilmer Street,90.0
+LH_2848,2848,2848,726 Nathan Road,B000078384,B000078384,726 Nathan Road,90.0
+LH_6636,6636,6636,8 Hart Avenue,B000022194,B000022194,8 Hart Avenue,90.0
+LH_3728,3728,3728,8 Lyndhurst Terrace,B000006989,B000006989,8 Lyndhurst Terrace,90.0
+LH_12274,12274,12274,8 Observatory Road,B000081559,B000081559,8 Observatory Road,90.0
+LH_170,170,170,8 Queen's Road Central,B000006982,B000006982,No.8 Queen's Road Central,90.0
+LH_1167,1167,1167,80 Gloucester Road,B000022197,B000022197,80 Gloucester Road,90.0
+LH_2247,2247,2247,83 Wan Chai Road,B000050463,B000050463,83 Wan Chai Road,84.2
+LH_17686,17686,17686,83 Wing Hong Street,B000120992,B000120992,83 Wing Hong Street,90.0
+LH_1156,1156,1156,88 Gloucester Road,B000018630,B000018630,88 Gloucester Road,90.0
+LH_1844,1844,1844,88 Hing Fat Street,B000059844,B000059844,88 Hing Fat Street,90.0
+LH_1002,1002,1002,88 Lockhart Road,B000022198,B000022198,No.88 Lockhart Road,90.0
+LH_846,846,846,9 Des Voeux Road West,B000020721,B000020721,9 Des Voeux Road West,88.6
+LH_139,139,139,9 Queen's Road Central,B000019383,B000019383,9 Queen's Road Central,90.0
+LH_5555,5555,5555,9 Wing Hong Street,B000007904,B000007904,No.9 Wing Hong Street,90.0
+LH_6307,6307,6307,909 Cheung Sha Wan Road,B000024673,B000024673,909 Cheung Sha Wan Road,90.0
+LH_1131,1131,1131,Admiralty Centre Tower 1,B000063488,B000063488,Admiralty Centre Tower Ii,87.6
+LH_2773,2773,2773,AIA Tower,B000059840,B000059840,Aia Tower,88.4
+LH_5599,5599,5599,Aitken Vanson Centre,B000018064,B000018064,Aitken Vanson Centre,90.0
+LH_1157,1157,1157,Allied Kajima Building,B000018081,B000018081,Allied Kajima Building,76.0
+LH_2251,2251,2251,Amber Commercial Building,B000018086,B000018086,Amber Commercial Building,87.6
+LH_3804,3804,3804,Anton Building,B000018100,B000018100,Anton Building,88.0
+LH_5601,5601,5601,Apec Plaza,B000007098,B000007098,Apec Plaza,90.0
+LH_2988,2988,2988,Argyle Centre Phase 1,B000006978,B000006978,Argyle Centre Phase I,87.0
+LH_4681,4681,4681,Astoria Building,B000018124,B000018124,Astoria Building,76.8
+LH_2771,2771,2771,AT Tower,B000054003,B000054003,At Tower,90.0
+LH_1174,1174,1174,Aubin House,B000007605,B000007605,Aubin House,88.8
+LH_2743,2743,2743,Austin Commercial Centre,B000018131,B000018131,Austin Commercial Centre,88.2
+LH_2738,2738,2738,Austin Tower,B000081909,B000081909,Austin Tower Phase I,90.0
+LH_48,48,48,Bangkok Bank Building,B000007657,B000007657,Bangkok Bank Building,84.2
+LH_1133,1133,1133,Bank of America Tower,B000007648,B000007648,Bank Of America Tower,90.0
+LH_3045,3045,3045,Bank of China Mongkok Commercial Centre,B000020970,B000020970,Boc Mongkok Commercial Centre,83.4
+LH_1160,1160,1160,Bank of East Asia Harbour View Centre,B000007609,B000007609,Bank Of East Asia Harbour View Centre,88.4
+LH_1685,1685,1685,Bank Tower,B000007480,B000007480,Bank Tower,90.0
+LH_1429,1429,1429,Bayfield Building,B000007299,B000007299,Bayfield Building,88.2
+LH_5703,5703,5703,BCC Building,B000018167,B000018167,Bcc Building,90.0
+LH_4732,4732,4732,Benson Tower,B000059665,B000059665,Benson Tower,90.0
+LH_6592,6592,6592,Best-O-Best Commercial Centre,B000018202,B000018202,Best-o-best Commercial Centre,90.0
+LH_3203,3203,3203,Beverley Commercial Centre,B000018206,B000018206,Beverley Commercial Centre,90.0
+LH_4496,4496,4496,Billion Centre,B000066769,B000066769,Billion Centre Tower B,90.0
+LH_7437,7437,7437,Billion Plaza,B000052931,B000052931,Billion Plaza,90.0
+LH_7431,7431,7431,Billion Plaza II,B000078476,B000078476,Billion Plaza 2,85.8
+LH_6591,6591,6591,Boss Commercial Centre,B000018245,B000018245,Boss Commercial Centre,90.0
+LH_17446,17446,17446,Boton Technology Innovation Tower,B000101516,B000101516,Boton Technology Innovation Tower,90.0
+LH_6557,6557,6557,Bright Way Tower,B000007330,B000007330,Bright Way Tower,90.0
+LH_643,643,643,Bupa Centre,B000018273,B000018273,Bupa Centre,88.4
+LH_4968,4968,4968,C-BONS International Center,B000066942,B000066942,C-bons International Center,90.0
+LH_1374,1374,1374,C.C. Wu Building,B000018279,B000018279,C C Wu Building,88.6
+LH_1375,1375,1375,Caltex House,B000018289,B000018289,Caltex House,88.4
+LH_1376,1376,1376,Cameron Commercial Centre,B000007704,B000007704,Cameron Commercial Centre,90.0
+LH_1152,1152,1152,Capital Centre,B000007614,B000007614,Capital Centre,90.0
+LH_1904,1904,1904,Carnival Commercial Building,B000007701,B000007701,Carnival Commercial Building,90.0
+LH_11523,11523,11523,Casey Aberdeen House,B000080486,B000080486,Casey Aberdeen House,90.0
+LH_3174,3174,3174,Catic Plaza,B000007706,B000007706,Catic Plaza,90.0
+LH_2547,2547,2547,Causeway Bay Centre,B000007708,B000007708,Causeway Bay Centre,77.0
+LH_2546,2546,2546,Causeway Bay Commercial Building,B000007707,B000007707,Causeway Bay Commercial Building,77.4
+LH_1384,1384,1384,Causeway Bay Plaza 1,B000007762,B000007762,Causeway Bay Plaza,90.0
+LH_977,977,977,Causeway Bay Plaza 2,B000053974,B000053974,Causeway Bay Plaza 2,90.0
+LH_1282,1282,1282,Central Building,B000018361,B000018361,Central Building,82.2
+LH_2007,2007,2007,Central Plaza,B000063603,B000063603,Central Plaza,90.0
+LH_145,145,145,Central Tower,B000018367,B000018367,Central Tower,90.0
+LH_6852,6852,6852,Century House,B000018373,B000018373,Century House,90.0
+LH_2655,2655,2655,CFC Tower,B000018376,B000018376,Cfc Tower,87.8
+LH_3007,3007,3007,Champion Building,B000052953,B000052953,Champion Building,90.0
+LH_1412,1412,1412,Chang Pao Ching Building,B000007281,B000007281,Chang Pao Ching Building,88.6
+LH_3224,3224,3224,Cheuk Nang Centre,B000018482,B000018482,Cheuk Nang Centre,87.6
+LH_16759,16759,16759,Cheung Kei Center Tower A,B000007206,B000007206,Cheung Tat Centre,75.19999999999999
+LH_17517,17517,17517,Cheung Kong Center II,B000112476,B000112476,Cheung Kong Center Ii,88.2
+LH_6511,6511,6511,Cheung Lee Commercial Building,B000018520,B000018520,Cheung Lee Commercial Building,90.0
+LH_6311,6311,6311,Cheung Sha Wan Plaza Tower 1,B000054979,B000054979,Cheung Sha Wan Plaza Tower Ii,87.6
+LH_4552,4552,4552,Chevalier Commercial Centre,B000007220,B000007220,Chevalier Commercial Centre,90.0
+LH_3207,3207,3207,Chevalier House,B000018570,B000018570,Chevalier House,90.0
+LH_1690,1690,1690,China Harbour Building,B000007477,B000007477,China Harbour Building,88.6
+LH_2291,2291,2291,China Hong Kong City Tower 1,B000061846,B000061846,China Hong Kong City China Ferry Terminal Tower 1,90.0
+LH_2292,2292,2292,China Hong Kong City Tower 2,B000061847,B000061847,China Hong Kong City China Ferry Terminal Tower 2,90.0
+LH_2293,2293,2293,China Hong Kong City Tower 3,B000061848,B000061848,China Hong Kong City China Ferry Terminal Tower 3,90.0
+LH_2300,2300,2300,China Hong Kong City Tower 5,B000061849,B000061849,China Hong Kong City China Ferry Terminal Tower 5,90.0
+LH_2294,2294,2294,China Hong Kong City Tower 6,B000061850,B000061850,China Hong Kong City China Ferry Terminal Tower 6,90.0
+LH_22,22,22,China Insurance Group Building,B000007664,B000007664,China Insurance Group Building,80.2
+LH_1382,1382,1382,China Overseas Building,B000007311,B000007311,China Overseas Building,88.4
+LH_2006,2006,2006,China Resources Building,B000018626,B000018626,China Resources Building,90.0
+LH_6270,6270,6270,China Shipbuilding Tower,B000083965,B000083965,China Shipbuilding Tower,90.0
+LH_6153,6153,6153,China United Centre,B000053077,B000053077,China United Centre,90.0
+LH_1163,1163,1163,Chinachem Century Tower,B000063596,B000063596,Chinachem Century Tower,88.6
+LH_2663,2663,2663,Chinachem Golden Plaza,B000062493,B000062493,Chinachem Golden Plaza,80.2
+LH_1574,1574,1574,Chinachem Johnston Plaza,B000007450,B000007450,Chinachem Johnston Plaza,88.6
+LH_1502,1502,1502,Chinaweal Centre,B000007174,B000007174,Chinaweal Centre,88.4
+LH_38,38,38,Chung Nam House,B000054917,B000054917,Chung Nam House,86.2
+LH_1413,1413,1413,Chung Pont Commercial Building,B000018796,B000018796,Chung Pont Commercial Building,88.4
+LH_7628,7628,7628,Citic Telecom Tower,B000059871,B000059871,Citic Telecom Tower,90.0
+LH_1957,1957,1957,Citicorp Centre,B000054050,B000054050,Citicorp Centre,90.0
+LH_6470,6470,6470,Citimark,B000018826,B000018826,Citimark,90.0
+LH_1403,1403,1403,CKK Commercial Centre,B000062591,B000062591,Ckk Commercial Centre,88.4
+LH_1579,1579,1579,CNT House,B000007445,B000007445,Cnt House,88.4
+LH_1380,1380,1380,CNT Tower,B000054110,B000054110,Cnt Tower,90.0
+LH_1146,1146,1146,Cofco Tower,B000024129,B000024129,Cofco Tower,88.0
+LH_7436,7436,7436,Comweb Plaza,B000007242,B000007242,Comweb Plaza,90.0
+LH_1640,1640,1640,Concord Commercial Building,B000007416,B000007416,Concord Commercial Building,90.0
+LH_3105,3105,3105,Concordia Plaza,B000018865,B000018865,Seapower Tower concordia Plaza,90.0
+LH_2248,2248,2248,Connaught Commercial Building,B000018870,B000018870,Connaught Commercial Building,83.4
+LH_2005,2005,2005,Convention Plaza Office Tower,B000007608,B000007608,Office Tower Convention Plaza,90.0
+LH_3776,3776,3776,Corn Yan Centre,B000018879,B000018879,Corn Yan Centre,90.0
+LH_8169,8169,8169,Corporation Park,B000020502,B000020502,Corporation Park,90.0
+LH_7182,7182,7182,COS Centre,B000078832,B000078832,Cos Centre,88.4
+LH_164,164,164,Cosco Tower,B000062640,B000062640,Cosco Tower,84.4
+LH_5597,5597,5597,Crocodile Center,B000062696,B000062696,Crocodile Center,90.0
+LH_6052,6052,6052,D2 Place One,B000055081,B000055081,D2 Place One,90.0
+LH_8019,8019,8019,D2 Place Two,B000055082,B000055082,D2 Place 2,83.4
+LH_17962,17962,17962,De Hua Tower,B000122069,B000122069,De Hua Tower,90.0
+LH_17702,17702,17702,DL Tower,B000108713,B000108713,Dl Tower,88.6
+LH_366,366,366,Dominion Centre,B000054105,B000054105,Dominion Centre,90.0
+LH_4439,4439,4439,E-Trade Plaza,B000074219,B000074219,E-trade Plaza,90.0
+LH_1392,1392,1392,Easey Commercial Building,B000007284,B000007284,Easey Commercial Building,86.6
+LH_2619,2619,2619,East Ocean Centre,B000007294,B000007294,East Ocean Centre,90.0
+LH_1378,1378,1378,East Point Centre,B000007303,B000007303,East Point Centre,87.8
+LH_1381,1381,1381,Eastern Commercial Centre,B000007279,B000007279,Eastern Commercial Centre,76.2
+LH_12143,12143,12143,EDGE,B000064189,B000064189,Edge,90.0
+LH_1402,1402,1402,Effectual Building,B000007273,B000007273,Effectual Building,90.0
+LH_4738,4738,4738,EGL Tower,B000059664,B000059664,Egl Tower,90.0
+LH_4713,4713,4713,Elite Centre,B000071821,B000071821,Elite Centre,90.0
+LH_1386,1386,1386,Emperor Group Centre,B000054106,B000054106,Emperor Group Centre,87.8
+LH_2666,2666,2666,Empire Centre,B000019029,B000019029,Empire Centre,90.0
+LH_3206,3206,3206,Empress Plaza,B000019030,B000019030,Empress Plaza,90.0
+LH_2617,2617,2617,Energy Plaza,B000019032,B000019032,Energy Plaza,90.0
+LH_5237,5237,5237,Enterprise Square Five Tower 1,B000062009,B000062009,Enterprise Square Five Tower 1,90.0
+LH_5235,5235,5235,Enterprise Square Five Tower 2,B000062010,B000062010,Enterprise Square Five Tower 2,90.0
+LH_5238,5238,5238,Enterprise Square Three,B000059604,B000059604,Enterprise Square Three,90.0
+LH_15085,15085,15085,Enterprise Square Tower 1,B000007857,B000007857,Enterprise Square Tower 1,90.0
+LH_15086,15086,15086,Enterprise Square Tower 2,B000007859,B000007859,Enterprise Square Tower 2,90.0
+LH_15087,15087,15087,Enterprise Square Tower 3,B000007861,B000007861,Enterprise Square Tower 3,90.0
+LH_15084,15084,15084,Enterprise Square Two,B000059595,B000059595,Enterprise Square Two,90.0
+LH_3202,3202,3202,Eu Yan Sang Tower,B000060702,B000060702,Eu Yan Sang Tower,90.0
+LH_5351,5351,5351,Ever Gain Building (No.3),B000066961,B000066961,Ever Gain Building (no.3),90.0
+LH_7250,7250,7250,Ever Gain Plaza Tower 1,B000053017,B000053017,"Ver Gain Plaza, Tower One",83.4
+LH_1158,1158,1158,Everbright Centre,B000018914,B000018914,Everbright Centre,88.6
+LH_3298,3298,3298,Excel Centre,B000071134,B000071134,Excel Centre,90.0
+LH_5239,5239,5239,Exchange Tower,B000063754,B000063754,Exchange Tower,90.0
+LH_2003,2003,2003,Fairmont House,B000007649,B000007649,Fairmont House,90.0
+LH_27,27,27,Far East Consortium Building,B000007672,B000007672,Far East Consortium Building,77.6
+LH_1132,1132,1132,Far East Finance Centre,B000007650,B000007650,Far East Finance Centre,90.0
+LH_45,45,45,Finance Building,B000019121,B000019121,Finance Building,88.6
+LH_17800,17800,17800,First Group Centre,B000109128,B000109128,First Group Centre,90.0
+LH_1336,1336,1336,Five Pacific Place,B000076172,B000076172,Five Pacific Place,90.0
+LH_1594,1594,1594,FLK Tower,B000120993,B000120993,Flk Tower,90.0
+LH_1159,1159,1159,Fortis Tower,B000007606,B000007606,Fortis Bank Tower,88.6
+LH_16276,16276,16276,Fuk Shing Commercial Building,B000059831,B000059831,Fuk Shing Commercial Building,90.0
+LH_4736,4736,4736,Fullerton Centre,B000007047,B000007047,Fullerton Centre,90.0
+LH_1000,1000,1000,Gaylord Commercial Building,B000007387,B000007387,Gaylord Commercial Building,86.8
+LH_5669,5669,5669,Gee Luen Hing Industrial Building,B000019005,B000019005,Effort Industrial Building,75.2
+LH_17427,17427,17427,Global Plaza,B000100035,B000100035,Global Plaza,90.0
+LH_3829,3829,3829,Global Trade Square,B000077711,B000077711,Global Trade Square,90.0
+LH_1424,1424,1424,Golden Hill Commercial Mansion,B000007291,B000007291,Golden Hill Mansion,88.6
+LH_17577,17577,17577,Golden Resources Tower,B000107092,B000107092,Golden Resources Tower,88.0
+LH_991,991,991,Golden Star Building,B000007407,B000007407,Golden Star Building,88.6
+LH_2584,2584,2584,Goodfit Commercial Building,B000019507,B000019507,Goodfit Commercial Building,88.2
+LH_2004,2004,2004,Great Eagle Centre,B000007610,B000007610,Great Eagle Centre,90.0
+LH_2244,2244,2244,Great Smart Tower,B000019544,B000019544,Great Smart Tower,83.4
+LH_364,364,364,Greatmany Centre,B000019549,B000019549,Greatmany Centre,88.8
+LH_1675,1675,1675,Greenwich Centre,B000020293,B000020293,Greenwich Centre,90.0
+LH_3412,3412,3412,Guangdong Tours Centre,B000007713,B000007713,Guangdong Tours Centre,90.0
+LH_2160,2160,2160,Guardian House,B000019590,B000019590,Guardian House,88.2
+LH_1732,1732,1732,Hang Seng North Point Building,B000007479,B000007479,Hang Seng North Point Building,87.6
+LH_2620,2620,2620,Harbour Crystal Centre,B000007295,B000007295,Harbour Crystal Centre,90.0
+LH_1148,1148,1148,Harcourt House,B000007612,B000007612,Harcourt House,90.0
+LH_11220,11220,11220,Haven Commercial Building,B000007015,B000007015,Haven Commercial Building,90.0
+LH_1684,1684,1684,Henan Electric Development Building,B000019772,B000019772,Henan Electric Development Building,87.6
+LH_1023,1023,1023,Henfa Commercial Building,B000007356,B000007356,Henfa Commercial Building,88.6
+LH_360,360,360,Heng Shan Centre,B000019781,B000019781,Heng Shan Centre,87.2
+LH_3220,3220,3220,Hermes Commercial Centre,B000019801,B000019801,Hermes Commercial Centre,90.0
+LH_3431,3431,3431,Hong Kong Pacific Centre,B000020055,B000020055,Hk Pacific Centre,84.0
+LH_641,641,641,Hong Kong Plaza,B000020056,B000020056,Hong Kong Plaza,90.0
+LH_3284,3284,3284,Hong Kong Spinners Industrial Building Phase 6,B000007930,B000007930,"Hong Kong Spinners Industrial Building, Phase Vi",88.8
+LH_365,365,365,Hopewell Centre,B000020128,B000020128,Hopewell Centre,90.0
+LH_6182,6182,6182,Horizon Plaza,B000090803,B000090803,Horizon Plaza,90.0
+LH_2660,2660,2660,Houston Centre,B000020143,B000020143,Houston Centre,90.0
+LH_4609,4609,4609,Hung To Centre,B000024099,B000024099,Hung To Centre,86.8
+LH_993,993,993,Hung To Commercial Building,B000007398,B000007398,Hung To Commercial Building,88.6
+LH_6374,6374,6374,Hunghom Commercial Centre A,B000007889,B000007889,Hunghom Commercial Centre Tower A,90.0
+LH_6375,6375,6375,Hunghom Commercial Centre B,B000007890,B000007890,Hunghom Commercial Centre Tower B,90.0
+LH_1387,1387,1387,Hysan Place,B000054180,B000054180,Hysan Place,90.0
+LH_2616,2616,2616,Inter-Continental Plaza,B000020247,B000020247,Inter-continental Plaza (formerly Known As Asean Plaza),90.0
+LH_8230,8230,8230,International Commerce Centre,B000063541,B000063541,International Commerce Centre,90.0
+LH_17296,17296,17296,International Enterprise Centre I,B000099323,B000099323,International Enterprise Centre 1,85.8
+LH_15229,15229,15229,International Enterprise Centre III,B000090123,B000090123,International Enterprise Centre 3,88.19999999999999
+LH_15083,15083,15083,International Plaza,B000007520,B000007520,International Plaza,90.0
+LH_1856,1856,1856,Island Beverley,B000007714,B000007714,Island Beverley,90.0
+LH_1665,1665,1665,Island Place Tower,B000020264,B000020264,Island Place Tower,90.0
+LH_1906,1906,1906,Java Road 108 Commercial Centre,B000059846,B000059846,Java Road 108 Commercial Centre,90.0
+LH_1020,1020,1020,Jie Yang Building,B000007367,B000007367,Jie Yang Building,88.4
+LH_352,352,352,Jonsim Place,B000020320,B000020320,Jonsim Place,88.6
+LH_6001,6001,6001,Jubilee Centre,B000020339,B000020339,Jubilee Centre,82.8
+LH_3780,3780,3780,Jupiter Tower,B000020349,B000020349,Jupiter Tower,75.8
+LH_1903,1903,1903,K. Wah Centre,B000007017,B000007017,K. Wah Centre,90.0
+LH_4519,4519,4519,K83,B000088026,B000088026,K83,90.0
+LH_1388,1388,1388,Ka Nin Wah Commercial Building,B000007280,B000007280,Ka Nin Wah Commercial Building,90.0
+LH_1028,1028,1028,Kai Kwong Commercial Building,B000007346,B000007346,Kai Kwong Commercial Building,86.6
+LH_3432,3432,3432,Kai Seng Commercial Centre,B000020428,B000020428,Kaiseng Commercial Centre,88.8
+LH_1367,1367,1367,Kam Chung Commercial Building,B000007306,B000007306,Kam Chung Commercial Building,90.0
+LH_2576,2576,2576,Kam Fung Commercial Building,B000020471,B000020471,Kam Fung Commercial Building,90.0
+LH_6823,6823,6823,KC100,B000078692,B000078692,Kc100,90.0
+LH_6512,6512,6512,Kee Shing Centre,B000020600,B000020600,Kee Shing Centre,90.0
+LH_354,354,354,Keen Hung Commercial Building,B000063830,B000063830,Keen Hung Commercial Building,87.4
+LH_2960,2960,2960,Kelly Commercial Centre,B000006951,B000006951,Kelly Commercial Centre,90.0
+LH_6510,6510,6510,Kimberley House,B000020662,B000020662,Kimberley House,87.8
+LH_11204,11204,11204,Kin Sang Commercial Centre,B000076026,B000076026,Kin Sang Commercial Centre,90.0
+LH_1406,1406,1406,Kin Tak Fung Commercial Building,B000007317,B000007317,Kin Tak Fung Commercial Building,90.0
+LH_11203,11203,11203,King Palace Plaza,B000075970,B000075970,King Palace Plaza,90.0
+LH_1687,1687,1687,King's Commercial Centre,B000054308,B000054308,King's Commercial Centre,90.0
+LH_1503,1503,1503,Kingpower Commercial Building,B000019726,B000019726,Kingpower Commercial Building,88.4
+LH_7788,7788,7788,Kings Tower,B000055044,B000055044,Kings Tower,90.0
+LH_16557,16557,16557,Kings Wing Plaza 1,B000079981,B000079981,Kings Wing Plaza 1,90.0
+LH_16558,16558,16558,Kings Wing Plaza 2,B000080275,B000080275,Kings Wing Plaza 2,90.0
+LH_2810,2810,2810,Kingsfield Centre,B000054309,B000054309,Kingsfield Centre,88.2
+LH_995,995,995,Kingswell Commercial Tower,B000020778,B000020778,Kingswell Commercial Tower,90.0
+LH_988,988,988,Kiu Yin Commercial Building,B000007399,B000007399,Kiu Yin Commercial Building,90.0
+LH_6550,6550,6550,Knutsford Commercial Building,B000020808,B000020808,Knutsford Commercial Building,90.0
+LH_2055,2055,2055,Kodak House II,B000020827,B000020827,Kodak House Ii,90.0
+LH_6549,6549,6549,Koon Fook Centre,B000020842,B000020842,Koon Fook Centre,90.0
+LH_7257,7257,7257,Kowloon Bay International Trade & Exhibition Centre,B000020050,B000020050,Kowloon Bay International Trade & Exhibition Centre,90.0
+LH_4679,4679,4679,Kowloon Centre,B000020868,B000020868,Kowloon Centre,76.8
+LH_6836,6836,6836,Kowloon Commerce Centre Tower A,B000066161,B000066161,Kowloon Commerce Centre Tower A,88.6
+LH_6837,6837,6837,Kowloon Commerce Centre Tower B,B000061130,B000061130,Kowloon Commerce Centre Tower B,90.0
+LH_3317,3317,3317,Kowloon Plaza,B000007230,B000007230,Kowloon Plaza,90.0
+LH_1816,1816,1816,KP Tower,B000080453,B000080453,Kp Tower,90.0
+LH_4577,4577,4577,KTR350,B000116170,B000116170,Ktr350,90.0
+LH_3477,3477,3477,Kundamal House,B000020902,B000020902,Kundamal House,88.6
+LH_1659,1659,1659,Kwai Hung Holdings Centre,B000007413,B000007413,Kwai Hung Holdings Centre,90.0
+LH_8149,8149,8149,Kwan Chart Tower,B000054657,B000054657,Kwan Chart Tower,90.0
+LH_7362,7362,7362,Laford Centre,B000021067,B000021067,Laford Centre,90.0
+LH_3155,3155,3155,Langham Place Office Tower,B000062592,B000062592,Langham Place,90.0
+LH_6308,6308,6308,Laws Commercial Plaza,B000021167,B000021167,Laws Commercial Plaza,88.4
+LH_2915,2915,2915,Le Diamant,B000078690,B000078690,Le Diamant,87.6
+LH_6343,6343,6343,Lee Garden Five,B000088774,B000088774,Lee Garden Five,90.0
+LH_6342,6342,6342,Lee Garden One,B000086291,B000086291,Lee Garden One,90.0
+LH_1072,1072,1072,Lee Garden Six,B000088775,B000088775,Lee Garden Six,90.0
+LH_1635,1635,1635,Lee Garden Two,B000088776,B000088776,Lee Garden Two,78.8
+LH_7016,7016,7016,Legend Tower,B000019120,B000019120,Legend Tower,90.0
+LH_1076,1076,1076,Leighton Centre,B000021247,B000021247,Leighton Centre,90.0
+LH_1124,1124,1124,Lippo Centre Tower 1,B000022537,B000022537,Lippo Centre Tower Two,87.0
+LH_1078,1078,1078,Lippo Leighton Tower,B000007717,B000007717,Lippo Leighton Tower,90.0
+LH_2297,2297,2297,Lippo Sun Plaza,B000021343,B000021343,Lippo Sun Plaza,90.0
+LH_985,985,985,Lockhart Centre,B000007393,B000007393,Lockhart Centre,90.0
+LH_1098,1098,1098,Loong Wan Building,B000059865,B000059865,Loong Wan Building,88.4
+LH_989,989,989,Loyong Court Commercial Building,B000007335,B000007335,Loyong Court Commercial Building,88.6
+LH_7331,7331,7331,LT Tower,B000059634,B000059634,Lt Tower,90.0
+LH_2249,2249,2249,Lucky Centre,B000024150,B000024150,Lucky Centre,84.6
+LH_3735,3735,3735,Lyndhurst Tower,B000054688,B000054688,1 Lyndhurst Tower,82.8
+LH_6826,6826,6826,Mai Wo Industrial Building,B000021616,B000021616,Mai Wo Industrial Building,90.0
+LH_1151,1151,1151,Malaysia Building,B000021620,B000021620,Malaysia Building,88.4
+LH_178,178,178,Man Hing Commercial Building,B000007676,B000007676,Man Hing Commercial Building,90.0
+LH_6829,6829,6829,Manhattan Centre,B000007795,B000007795,Manhattan Centre,77.4
+LH_4587,4587,4587,Manulife Place,B000082795,B000082795,Manulife Place,90.0
+LH_6026,6026,6026,Mass Resources Development Building,B000021783,B000021783,Mass Resources Development Building,90.0
+LH_1686,1686,1686,Max Share Centre,B000007481,B000007481,Max Share Centre,90.0
+LH_7919,7919,7919,Maxgrand Plaza,B000080611,B000080611,Maxgrand Plaza,90.0
+LH_3430,3430,3430,Maxwell Centre,B000020248,B000020248,Maxwell Centre,90.0
+LH_1620,1620,1620,McDonald's Building,B000007718,B000007718,Mcdonald's Building,90.0
+LH_4499,4499,4499,Mega Cube,B000085262,B000085262,Mega Cube,90.0
+LH_1404,1404,1404,Methodist House,B000063608,B000063608,Methodist House,88.2
+LH_17718,17718,17718,Metro South Tower 1,B000022837,B000022837,Metro South Tower,88.8
+LH_3440,3440,3440,Metroplaza Tower 1,B000007788,B000007788,Tower Ii Metroplaza,86.4
+LH_6868,6868,6868,Metropole Building,B000007161,B000007161,Metropole Building,81.2
+LH_7223,7223,7223,Metropole Square,B000021870,B000021870,Metropole Square,90.0
+LH_17402,17402,17402,MG 162,B000113283,B000113283,Mg 162,88.4
+LH_5367,5367,5367,MG Tower,B000022558,B000022558,Mg Tower,90.0
+LH_6827,6827,6827,Millennium Trade Centre,B000059874,B000059874,Millennium Trade Centre,88.6
+LH_2577,2577,2577,Mirage Tower,B000063744,B000063744,Mirage Tower,88.2
+LH_2661,2661,2661,Mirror Tower,B000021935,B000021935,Mirror Tower,90.0
+LH_7332,7332,7332,Montery Plaza,B000080483,B000080483,Montery Plaza,90.0
+LH_2781,2781,2781,Morecrown Commercial Building,B000059842,B000059842,Morecrown Commercial Building,90.0
+LH_2254,2254,2254,Morrison Commercial Building,B000021973,B000021973,Morrison Commercial Building,90.0
+LH_2252,2252,2252,Morrison Plaza,B000021974,B000021974,Morrison Plaza,90.0
+LH_3481,3481,3481,Multifield Plaza,B000022003,B000022003,Multifield Plaza,88.0
+LH_2535,2535,2535,Nam Wo Hong Building,B000022040,B000022040,Nam Wo Hong Building,90.0
+LH_13714,13714,13714,Nan Fung Centre,B000006511,B000006511,Nan Fung Centre,82.8
+LH_6565,6565,6565,Nan Fung Commercial Centre,B000007221,B000007221,Nan Fung Commercial Centre,90.0
+LH_2992,2992,2992,Nathan Centre,B000006952,B000006952,Nathan Centre,88.4
+LH_7425,7425,7425,NCB Innovation Centre,B000093889,B000093889,Ncb Innovation Centre,90.0
+LH_1154,1154,1154,Neich Tower,B000007607,B000007607,Neich Tower,77.2
+LH_3102,3102,3102,New East Ocean Centre,B000022082,B000022082,New East Ocean Centre,90.0
+LH_3103,3103,3103,New Mandarin Plaza Twr A,B000053342,B000053342,Mandarin Plaza Tower A,90.0
+LH_3104,3104,3104,New Mandarin Plaza Twr B,B000053343,B000053343,Mandarin Plaza Tower B,90.0
+LH_6239,6239,6239,New Trend Centre,B000022103,B000022103,New Trend Centre,84.6
+LH_114,114,114,Nexxus Building,B000084322,B000084322,Nexxus Building,90.0
+LH_1689,1689,1689,North Cape Commercial Building,B000007478,B000007478,North Cape Commercial Building,87.6
+LH_2286,2286,2286,Ocean Centre,B000022214,B000022214,Harbour City Ocean Centre,90.0
+LH_1669,1669,1669,Olympia Plaza,B000022258,B000022258,Olympia Plaza,87.6
+LH_16294,16294,16294,On Hang Industrial Centre,B000022746,B000022746,Precious Industrial Centre,75.6
+LH_1390,1390,1390,On Hong Commercial Building,B000007312,B000007312,On Hong Commercial Buildin,87.2
+LH_1022,1022,1022,On Loong Commercial Building,B000022311,B000022311,On Loong Commercial Building,88.6
+LH_5399,5399,5399,On Tin Centre,B000080050,B000080050,On Tin Centre,89.0
+LH_12314,12314,12314,One Bedford Place,B000121585,B000121585,One Bedford Place,78.0
+LH_2089,2089,2089,One Capital Place,B000022365,B000022365,One Capital Place,88.0
+LH_2187,2187,2187,One Continental,B000111798,B000111798,One Continental,83.4
+LH_5353,5353,5353,One Harbour Square,B000059821,B000059821,One Harbour Square,90.0
+LH_5618,5618,5618,One Harbourfront,B000063833,B000063833,One Harbourfront,90.0
+LH_14071,14071,14071,One International Finance Centre,B000063825,B000063825,One International Finance Centre,90.0
+LH_11527,11527,11527,One Island South,B000024780,B000024780,One Island South,90.0
+LH_17751,17751,17751,One North Tower 1,B000108493,B000108493,One North Tower １,86.4
+LH_17752,17752,17752,One North Tower 2,B000108494,B000108494,One North Tower 2,90.0
+LH_1121,1121,1121,One Pacific Place,B000022405,B000022405,One Pacific Place,90.0
+LH_6870,6870,6870,One Peking,B000062494,B000062494,One Peking,90.0
+LH_7920,7920,7920,One Portside,B000059457,B000059457,One Portside,90.0
+LH_16368,16368,16368,One Vista Summit,B000089215,B000089215,One Vista Summit,86.4
+LH_3199,3199,3199,Oriental Centre,B000022375,B000022375,Oriental Centre,90.0
+LH_3198,3198,3198,Oriental Crystal Finance Centre,B000022377,B000022377,Oriental Crystal Finance Centre,90.0
+LH_1179,1179,1179,Overseas Trust Bank Building,B000007615,B000007615,Overseas Trust Bank Building,90.0
+LH_1845,1845,1845,Park Avenue Tower,B000007719,B000007719,Park Avenue Tower,90.0
+LH_1868,1868,1868,Park Commercial Centre,B000059839,B000059839,Park Commercial Building,77.2
+LH_6220,6220,6220,Parkview Centre,B000022495,B000022495,Parkview Centre,90.0
+LH_3101,3101,3101,Parkview Commercial Building,B000022496,B000022496,Parkview Commercial Building,88.2
+LH_2657,2657,2657,Peninsula Centre,B000022526,B000022526,Peninsula Centre,90.0
+LH_6490,6490,6490,Peninsula Square,B000007088,B000007088,Peninsula Square,90.0
+LH_3304,3304,3304,Peninsula Tower,B000022528,B000022528,Peninsula Tower,78.2
+LH_1161,1161,1161,Pico Tower,B000007620,B000007620,Pico Tower,88.4
+LH_1019,1019,1019,Ping Lam Commercial Building,B000007341,B000007341,Ping Lam Commercial Building,86.6
+LH_17444,17444,17444,Plaza 228,B000111715,B000111715,Plaza 228,83.4
+LH_2983,2983,2983,President Commercial Centre,B000006958,B000006958,President Commercial Centre,90.0
+LH_1869,1869,1869,Professional Building,B000007720,B000007720,Professional Building,90.0
+LH_6006,6006,6006,Progress Commercial Building,B000007722,B000007722,Progress Commercial Building,90.0
+LH_7338,7338,7338,Prosperity Center,B000022769,B000022769,Prosperity Center,90.0
+LH_853,853,853,Prosperous Commercial Building,B000022775,B000022775,Prosperous Commercial Building,88.6
+LH_631,631,631,Qualipak Tower,B000022787,B000022787,Qualipak Tower,88.4
+LH_358,358,358,Queen's Centre,B000007908,B000007908,Queens Centre,87.6
+LH_3208,3208,3208,Railway Plaza,B000022803,B000022803,Railway Plaza,77.8
+LH_13708,13708,13708,Reason Group Tower,B000079462,B000079462,Reason Group Tower,82.4
+LH_6057,6057,6057,Redana Centre,B000063778,B000063778,Redana Centre,90.0
+LH_4739,4739,4739,Remington Centre,B000007804,B000007804,Remington Centre,90.0
+LH_3157,3157,3157,Richmond Commercial Building,B000022866,B000022866,Richmond Commercial Building,90.0
+LH_6567,6567,6567,Rightful Centre,B000022881,B000022881,Rightful Centre,90.0
+LH_5364,5364,5364,Rykadan Capital Tower,B000076490,B000076490,Rykadan Capital Tower,90.0
+LH_3812,3812,3812,Rykadan One,B000095757,B000095757,Rykadan One,88.8
+LH_17589,17589,17589,S22,B000108492,B000108492,S22,88.4
+LH_1626,1626,1626,San Kei Tower,B000022984,B000022984,San Kei Tower,90.0
+LH_1165,1165,1165,Sang Woo Building,B000007617,B000007617,Sang Woo Building,86.8
+LH_8020,8020,8020,Saxon Tower,B000059580,B000059580,Saxon Tower,90.0
+LH_2809,2809,2809,Seabright Plaza,B000023060,B000023060,Seabright Plaza,83.0
+LH_1385,1385,1385,Shanghai Industrial Investment Building,B000023113,B000023113,Shanghai Industrial Investment Building,77.2
+LH_7258,7258,7258,Shatin Galleria,B000023117,B000023117,Shatin Galleria,90.0
+LH_1577,1577,1577,Shinyam Commercial Building,B000008427,B000008427,Shinyam Commercial Building,90.0
+LH_1576,1576,1576,Shiu Fung Commercial Building,B000007623,B000007623,Shiu Fung Building,90.0
+LH_2008,2008,2008,Shui On Centre,B000007618,B000007618,Shui On Centre,90.0
+LH_359,359,359,Shun Feng International Centre,B000007624,B000007624,Shun Feng International Centre,90.0
+LH_992,992,992,Shun Hei Causeway Bay Centre,B000061050,B000061050,Shun Hei Causeay Bay Centre,88.8
+LH_2579,2579,2579,Shun Pont Commercial Building,B000007625,B000007625,Shun Pont Commercial Building,90.0
+LH_120,120,120,Shun Tak Centre China Merchants Tower,B000023308,B000023308,Shun Tak Centre-china Merchants Tower,90.0
+LH_135,135,135,Shun Tak Centre West Tower,B000054008,B000054008,Shun Tak Centre West Tower,90.0
+LH_861,861,861,Siki Centre,B000062597,B000062597,Siki Centre,90.0
+LH_8070,8070,8070,Silicon Tower,B000023343,B000023343,Silicon Tower,88.2
+LH_1239,1239,1239,Silver Fortune Plaza,B000023353,B000023353,Silver Fortune Plaza,90.0
+LH_2298,2298,2298,Silvercord Tower 1,B000023363,B000023363,Silvercord Tower 1,90.0
+LH_2299,2299,2299,Silvercord Tower 2,B000060508,B000060508,Silvercord Tower 2,90.0
+LH_2990,2990,2990,Silvercorp International Tower,B000007538,B000007538,Silvercorp International Tower,90.0
+LH_1582,1582,1582,Simsons Commercial Building,B000007459,B000007459,Simsons Commercial Building,88.6
+LH_1168,1168,1168,Sing Ho Finance Building,B000007619,B000007619,Sing-ho Finance Building,88.8
+LH_642,642,642,Singga Commercial Centre,B000023407,B000023407,Singga Commercial Centre,83.8
+LH_2984,2984,2984,Sino Centre,B000006953,B000006953,Sino Centre,90.0
+LH_4913,4913,4913,Sitoy Tower,B000079980,B000079980,Sitoy Tower,90.0
+LH_981,981,981,Siu On Centre,B000007332,B000007332,Siu On Centre,90.0
+LH_17571,17571,17571,Six Pacific Place,B000112288,B000112288,Six Pacific Place,88.0
+LH_1982,1982,1982,South China Building,B000023455,B000023455,South China Industrial Building,80.2
+LH_2658,2658,2658,South Seas Centre Tower 1,B000053345,B000053345,South Seas Centre Tower Ii,87.6
+LH_2085,2085,2085,Southern Commercial Building,B000007626,B000007626,Southern Commercial Building,88.0
+LH_978,978,978,SPA Centre,B000023470,B000023470,Spa Centre,90.0
+LH_2683,2683,2683,Star House,B000023509,B000023509,Star House,90.0
+LH_1405,1405,1405,Success Commercial Building,B000007627,B000007627,Success Commercial Building,90.0
+LH_2009,2009,2009,Sun Hung Kai Centre,B000023578,B000023578,Sun Hung Kai Centre,90.0
+LH_2357,2357,2357,Sunbeam Plaza,B000023620,B000023620,Sunbeam Plaza,90.0
+LH_983,983,983,Sunshine Plaza,B000007397,B000007397,Sunshine Plaza,76.8
+LH_1650,1650,1650,Supreme Commercial Building,B000008322,B000008322,Supreme Commercial Building,90.0
+LH_6632,6632,6632,Supreme House,B000023673,B000023673,Supreme House,90.0
+LH_2159,2159,2159,Tai Tung Building,B000063591,B000063591,Tai Tung Building,88.0
+LH_1572,1572,1572,Tai Yau Building,B000007462,B000007462,Tai Yau Building,90.0
+LH_2581,2581,2581,Tai Yip Building,B000063745,B000063745,Tai Yip Building,90.0
+LH_2245,2245,2245,Tak Lee Commercial Building,B000007628,B000007628,Tak Lee Commercial Building,85.6
+LH_4551,4551,4551,Telford House,B000007219,B000007219,Telford House,90.0
+LH_363,363,363,Tesbury Centre,B000018931,B000018931,Tesbury Centre,77.6
+LH_7018,7018,7018,TG Place,B000079638,B000079638,T G Place,79.19999999999999
+LH_4619,4619,4619,The Bay Hub,B000083127,B000083127,The Bay Hub,90.0
+LH_984,984,984,The Broadway,B000007409,B000007409,The Broadway,88.6
+LH_17793,17793,17793,The Burrow,B000111508,B000111508,The Burrow,88.4
+LH_161,161,161,The Center,B000023965,B000023965,The Center,90.0
+LH_2310,2310,2310,The Gateway Prudential Tower,B000062498,B000062498,Harbour City The Gateway Prudential Tower,77.4
+LH_2295,2295,2295,The Gateway Tower 1,B000019393,B000019393,Harbour City The Gateway Tower 1,90.0
+LH_2296,2296,2296,The Gateway Tower 2,B000062497,B000062497,Harbour City The Gateway Tower 2,90.0
+LH_2312,2312,2312,The Gateway Tower 6,B000062500,B000062500,Gateway Ii (gateway Towers 6),80.4
+LH_5556,5556,5556,The Globe,B000054388,B000054388,The Globe,90.0
+LH_17518,17518,17518,The Henderson,B000112477,B000112477,The Henderson,88.0
+LH_1369,1369,1369,The Hennessy,B000066787,B000066787,The Hennessy,88.4
+LH_6789,6789,6789,The Hub,B000085763,B000085763,The Hub,90.0
+LH_7494,7494,7494,The Metropolis Tower,B000064359,B000064359,The Metropolis,90.0
+LH_4598,4598,4598,The Millennity - Tower 1,B000112478,B000112478,The Millennity Tower 1,88.4
+LH_17682,17682,17682,The Millennity - Tower 2,B000112479,B000112479,The Millennity Tower 2,88.4
+LH_6446,6446,6446,The Octagon,B000079466,B000079466,The Octagon,90.0
+LH_1171,1171,1171,The Sun's Group Centre,B000007616,B000007616,The Sun's Group Centre,88.0
+LH_2578,2578,2578,Thomson Centre,B000059941,B000059941,Thomson Centre,88.4
+LH_2583,2583,2583,Thomson Commercial Building,B000007629,B000007629,Thomson Commercial Building,76.8
+LH_353,353,353,Three Pacific Place,B000062621,B000062621,Three Pacific Place,90.0
+LH_1170,1170,1170,Tien Chu Commercial Building,B000024007,B000024007,Tien Chu Commercial Building,88.8
+LH_2246,2246,2246,Times Media Centre,B000054454,B000054454,Times Media Centre,84.6
+LH_6157,6157,6157,Times Square Tower One,B000022066,B000022066,Time Square Tower One,88.8
+LH_6156,6156,6156,Times Square Tower Two,B000023156,B000023156,Time Square- Tower Two,88.8
+LH_6306,6306,6306,Times Tower,B000007233,B000007233,Times Tower,88.4
+LH_1507,1507,1507,Times Tower,B000007436,B000007436,Times Tower,90.0
+LH_1368,1368,1368,Toi Shan Association Building,B000054197,B000054197,Toi Shan Association Building,88.6
+LH_1578,1578,1578,Toi Shan Centre,B000024115,B000024115,Toi Shan Centre,86.6
+LH_1337,1337,1337,Tower 188,B000024666,B000024666,Tower 188,88.6
+LH_3309,3309,3309,Trendy Centre,B000023109,B000023109,Trendy Centre,90.0
+LH_2662,2662,2662,Tsim Sha Tsui Centre,B000024174,B000024174,Tsim Sha Tsui Centre,90.0
+LH_1005,1005,1005,Tung Chiu Commercial Centre,B000053960,B000053960,Tung Chiu Commercial Centre,88.6
+LH_15,15,15,Tung Hip Commercial Building,B000024275,B000024275,Tung Hip Commercial Building,88.6
+LH_2158,2158,2158,Tung Wai Commercial Building,B000007621,B000007621,Tung Wai Commercial Building,90.0
+LH_1662,1662,1662,Two Chinachem Exchange Square,B000059860,B000059860,Two Chinachem Exchange Square,90.0
+LH_5617,5617,5617,Two Harbourfront,B000063784,B000063784,Two Harbourfront,90.0
+LH_10605,10605,10605,Two International Finance Centre,B000058939,B000058939,Two International Finance Centre,90.0
+LH_1122,1122,1122,Two Pacific Place,B000054569,B000054569,Two Pacific Place,90.0
+LH_969,969,969,United Asia Finance Centre,B000062599,B000062599,United Asia Finance Centre,88.4
+LH_1398,1398,1398,United Building,B000007723,B000007723,United Building,87.8
+LH_1123,1123,1123,United Centre,B000007651,B000007651,United Centre,90.0
+LH_6867,6867,6867,Universal Commercial Building,B000007162,B000007162,Universal Commercial Building,90.0
+LH_1169,1169,1169,Universal House,B000007622,B000007622,Universal House,88.8
+LH_2281,2281,2281,Universal Trade Centre,B000007685,B000007685,Universal Trade Centre,88.2
+LH_3475,3475,3475,Valiant Commercial Building,B000024395,B000024395,Valiant Commercial Building,90.0
+LH_2255,2255,2255,Valley Centre,B000024399,B000024399,Valley Centre,88.8
+LH_11522,11522,11522,Vertical SQ,B000080282,B000080282,Vertical Sq,90.0
+LH_17579,17579,17579,Viva Place,B000114344,B000114344,Viva Place,90.0
+LH_1073,1073,1073,Vulcan House,B000007725,B000007725,Vulcan House,90.0
+LH_7221,7221,7221,W Luxe,B000088915,B000088915,W Luxe,90.0
+LH_3811,3811,3811,W50,B000079814,B000079814,W50,90.0
+LH_1416,1416,1416,Wah Hen Commercial Centre,B000007277,B000007277,Wah Hen Commercial Centre,88.6
+LH_971,971,971,Wah Hing Commercial Building,B000053971,B000053971,Wah Hing Commercial Building,88.6
+LH_967,967,967,Wan Chai Central Building,B000024732,B000024732,Wanchai Central Building,81.6
+LH_1573,1573,1573,Wanchai Commercial Centre,B000007451,B000007451,Wanchai Commercial Centre,87.8
+LH_1497,1497,1497,Way On Commercial Building,B000024791,B000024791,Way On Commercial Building,87.6
+LH_980,980,980,Wayson Commercial House,B000007410,B000007410,Wayson Commercial House,90.0
+LH_1415,1415,1415,Wellable Commercial Building,B000024815,B000024815,Wellable Commercial Building,87.8
+LH_1905,1905,1905,Wellborne Commercial Centre,B000024817,B000024817,Wellborne Commercial Centre,90.0
+LH_5558,5558,5558,West Gate Tower,B000024831,B000024831,West Gate Tower,90.0
+LH_345,345,345,Weswick Commercial Building,B000007630,B000007630,Weswick Commercial Building,88.8
+LH_2287,2287,2287,Wharf T&T Centre,B000025167,B000025167,New T & T Centre,78.0
+LH_5406,5406,5406,Win Plaza,B000066796,B000066796,Win Plaza,90.0
+LH_1150,1150,1150,Windsor House - Chubb Tower,B000024886,B000024886,Windsor House,90.0
+LH_2665,2665,2665,Wing On Plaza,B000025000,B000025000,Wing On Plaza,90.0
+LH_1411,1411,1411,Winland Square,B000018151,B000018151,Winland Square,90.0
+LH_990,990,990,Winner Commercial Building,B000007405,B000007405,Winner Commercial Building,90.0
+LH_2582,2582,2582,Winsan Tower,B000025076,B000025076,Winsan Tower,90.0
+LH_6149,6149,6149,Workingberg Commercial Building,B000007596,B000007596,Workingberg Commercial Building,88.4
+LH_1498,1498,1498,Workingfield Commercial Building,B000007430,B000007430,Workingfield Commercial Building,90.0
+LH_2288,2288,2288,World Commerce Centre,B000025163,B000025163,World Commerce Centre,90.0
+LH_2290,2290,2290,World Finance Centre North,B000061853,B000061853,World Finance Centre (north),90.0
+LH_2289,2289,2289,World Finance Centre South,B000061852,B000061852,World Finance Centre (south),90.0
+LH_1166,1166,1166,World Trade Centre,B000024002,B000024002,The World Trade Centre Building,90.0
+LH_6,6,6,World-Wide House,B000025173,B000025173,World-wide House,90.0
+LH_367,367,367,Wu Chung House,B000007632,B000007632,Wu Chung House,90.0
+LH_1979,1979,1979,Wyndham Place,B000025191,B000025191,Wyndham Place,88.4
+LH_1496,1496,1496,Xiu Hua Commercial Building,B000007633,B000007633,Xiu Hua Commercial Building,90.0
+LH_2585,2585,2585,Yam Tze Commercial Building,B000025207,B000025207,Yue Tze Commercial Building,84.0
+LH_628,628,628,Yardley Commercial Building,B000008409,B000008409,Yardley Commercial Building,90.0
+LH_28,28,28,Yat Chau Building,B000025239,B000025239,Yat Chau Building,88.6
+LH_5602,5602,5602,Yen Sheng Centre,B000007958,B000007958,Yen Sheng Centre,90.0
+LH_1495,1495,1495,Yeung Iu Chi Commercial Building,B000025347,B000025347,Yeung Iu Chi Commercial Building,88.0
+LH_1145,1145,1145,YF Life Centre,B000063595,B000063595,Yf Life Tower,78.6
+LH_15094,15094,15094,YHC Tower,B000078780,B000078780,Yhc Tower,90.0
+LH_3946,3946,3946,Yue Fai Commercial Centre,B000025494,B000025494,Yue Fai Commercial Centre,90.0
+LH_1372,1372,1372,Yue Hing Building,B000025503,B000025503,Yue Hing Building,90.0
+LH_968,968,968,Yue On Commercial Building,B000007403,B000007403,Yue On Commercial Building,90.0
+LH_972,972,972,Yue Xiu Building,B000007391,B000007391,Yue Xiu Building,90.0
+LH_5386,5386,5386,Zhongda Building,B000025617,B000025617,Zhongda Building,90.0
+LH_1001,1001,1001,ZJ 300,B000007343,B000007343,Zj 300,86.8
+LH_1074,1074,1074,Zoroastrian Building,B000025619,B000025619,The Zoroastrian Building,90.0
