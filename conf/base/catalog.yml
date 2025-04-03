@@ -1,6 +1,6 @@
 # CSV Datasets for Midland Residential Pipeline
 midland_res_area_code:
-  type: pandas.CSVDataSet
+  type: pandas.CSVDataset
   filepath: data/midland_res_area_code.csv
   load_args:
     sep: ","
@@ -9,7 +9,7 @@ midland_res_area_code:
 
 
 midland_res_transactions:
-  type: pandas.CSVDataSet
+  type: pandas.CSVDataset
   filepath: data/01_raw/midland_res_transactions.csv
   load_args:
     dtype: {
@@ -18,7 +18,7 @@ midland_res_transactions:
     }
 
 midland_res_estates:
-  type: pandas.CSVDataSet 
+  type: pandas.CSVDataset 
   filepath: data/02_intermediate/midland_res_estates.csv
   save_args:
     date_format: "%Y-%m-%d"

@@ -1,4 +1,3 @@
-# src/midland_property/pipelines/midland_area_codes/pipeline.py
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import fetch_district_codes
 
@@ -9,7 +8,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     Returns:
         Pipeline: A pipeline to fetch district codes
     """
-    return pipeline(
+    return Pipeline(
         [
             node(
                 func=fetch_district_codes,

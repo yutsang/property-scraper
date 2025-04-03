@@ -9,7 +9,7 @@ def create_pipeline(**kwargs) -> Pipeline:
     Returns:
         Pipeline: A pipeline to fetch transaction data
     """
-    return pipeline(
+    return Pipeline(
         [
             node(
                 func=fetch_transactions,
