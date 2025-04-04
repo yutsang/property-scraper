@@ -1,24 +1,52 @@
 # CSV Datasets for Midland Residential Pipeline
+
 midland_res_area_code:
   type: pandas.CSVDataset
-  filepath: data/midland_res_area_code.csv
+  filepath: data/01_raw/midland_res_area_code.csv
   load_args:
     sep: ","
   save_args:
     index: False
 
+cleaned_district_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/cleaned_district_data.parquet
+
+raw_estate_data:
+    type: pandas.JSONDataset
+    filepath: data/02_intermediate/raw_estate_data.json
+    load_args:
+        lines: True
+    save_args:
+        orient: records
+        lines: True
 
 midland_res_transactions:
   type: pandas.CSVDataset
   filepath: data/01_raw/midland_res_transactions.csv
   load_args:
-    dtype: {
-      subdistrict_code: string,
+    dtype:
+      subdistrict_code: string
       parent_district_id: string
-    }
+  save_args:
+    index: False
+    date_format: "%Y-%m-%d"
 
 midland_res_estates:
-  type: pandas.CSVDataset 
+  type: pandas.CSVDataset
   filepath: data/02_intermediate/midland_res_estates.csv
   save_args:
+    index: False
     date_format: "%Y-%m-%d"
+
+merged_property_data:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/merged_property_data.csv
+  save_args:
+    index: False
+
+processed_property_data:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/processed_property_data.csv
+  save_args:
+    index: False
