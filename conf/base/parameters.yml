@@ -1,0 +1,36 @@
+# Parameters for Centaline Residential Pipeline
+scraper:
+  use_edge: True  # True = Edge, False = Chrome
+  headless: False
+  #control_date: "2025-01-03"
+  control_date: "2025-03-03"
+  min_delay: 0
+  max_delay: 2
+  max_retries: 5
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
+  page_load_timeout: 30
+  # Add these new parameters
+  chrome_args:
+    - "--window-size=1920,1080"
+    - "--no-sandbox"
+    - "--disable-dev-shm-usage"
+    - "--disable-web-security"
+    - "--disable-site-isolation-trials"
+    - "--enable-features=NetworkService"
+    - "--enable-unsafe-swiftshader"
+    - "--ignore-certificate-errors"
+    - "--allow-insecure-localhost"
+
+processing:
+  #floor_keywords: ["Upper Floor", "Middle Floor", "Lower Floor"]
+  price_threshold: 1000000
+  phase_keywords: ["Phase", "Site", "(Block"]
+  block_keywords: ['Tower', 'Block', 'Path', 'Street', 'Browdway',
+                    'Celestial Avenue', 'Carpark', 'Road', 'Lane',
+                    'Drive', 'Vista Avenue', 'Mansion', 'House',
+                    'Sky One']
+  floor_keywords: ['Floor', '/F', 'LG', 'B/M', 'U/L', 'UCP', 'P3', 'P2',
+              'Podium', 'PODIUM', 'U/G', 'P7', 'P4', 'UG1']
+  flat_keywords: ['Flat', 'Apartment', 'Duplex']
+
+

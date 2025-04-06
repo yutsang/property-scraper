@@ -50,3 +50,46 @@ processed_property_data:
   filepath: data/03_primary/processed_property_data.csv
   save_args:
     index: False
+
+##################################################################
+
+# Data Catalog for Centaline pipeline
+
+# Raw Data
+area_codes:
+  type: pandas.CSVDataset  # Changed from ExcelDataSet
+  filepath: data/01_raw/Centanet_Res_Area_Code.csv  # Changed extension
+  load_args:
+    encoding: utf-8-sig
+
+# Rest of the catalog remains the same
+raw_estate_listings:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/estate_listings.csv
+
+estate_details_raw:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/estate_details_raw.csv
+
+raw_transaction_data:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/transaction_records.csv
+
+# Processed Data
+processed_transactions:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/transactions_processed.csv
+
+enriched_estate_data:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/estates_enriched.csv
+
+##################################################################
+
+
+
+##################################################################
+
+
+
+##################################################################
