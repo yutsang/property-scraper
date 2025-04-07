@@ -18,8 +18,8 @@ data/**
 !.gitkeep
 
 # also keep the example dataset
-!data/01_raw/companies.csv
-!data/01_raw/reviews.csv
+!data/01_raw/Centanet_Res_Area_Code.csv
+!data/01_raw/midland_res_area_code.csv
 !data/01_raw/shuttles.xlsx
 
 # ignore kedro-viz metadata
