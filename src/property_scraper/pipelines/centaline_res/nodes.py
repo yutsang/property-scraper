@@ -15,6 +15,13 @@ from tqdm import tqdm
 import configparser
 import re
 import string
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+import os
+import json
+from pathlib import Path
+from typing import Optional, Set
+import pickle
+import hashlib
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -97,12 +104,61 @@ def _initialize_edge_driver(params: Dict[str, Any]) -> webdriver.Edge:
     
     if params.get('headless', True):
         options.add_argument("--headless=new")
+        options.add_argument("--window-size=1920,1080")
     
     # Common configurations
     options.add_argument("--log-level=3")
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    # Anti-detection configuration  
+    options.add_argument("--disable-blink-features=AutomationControlled")  
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])  
+    options.add_argument("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36")  
     
-    return webdriver.Edge(options=options)
+    driver = webdriver.Edge(options=options)
+    
+     # Evasion scripts
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            })
+        """
+    })
+
+    return driver
+
+def adaptive_wait(driver, selector, timeout=30, poll=3):
+    """Hybrid waiting strategy with multiple fallback approaches"""
+    end_time = time.time() + timeout
+    last_exception = None
+    
+    while time.time() < end_time:
+        try:
+            # Try direct element location first
+            elements = driver.find_elements(By.CSS_SELECTOR, selector)
+            if elements:
+                return elements
+                
+            # Fallback to JavaScript DOM query
+            elements = driver.execute_script(
+                f"return document.querySelectorAll('{selector}')"
+            )
+            if elements:
+                return elements
+                
+            # Final fallback to WebDriverWait
+            return WebDriverWait(driver, timeout).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, selector))
+            )
+            
+        except Exception as e:
+            last_exception = e
+            time.sleep(poll + random.uniform(0, 2))
+    
+    raise TimeoutException(f"Element not found: {selector}") from last_exception
 
 
 def random_sleep(min_delay: float, max_delay: float) -> None:
@@ -131,7 +187,7 @@ def scrape_transaction_data(
     try:
         pbar = tqdm(total=len(area_df), desc="Processing areas", unit="area")
         
-        for area_idx, area_row in area_df[:5].iterrows():
+        for area_idx, area_row in area_df.iterrows():
             session_id = f"session_{area_idx}_{datetime.now().timestamp()}"
             subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
             url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
@@ -261,69 +317,360 @@ def process_transaction_data(
     address_components = trans_df['address'].apply(parse_address).apply(pd.Series)
     return pd.concat([trans_df, address_components], axis=1)
 
-def scrape_estate_listings(area_df, params):
-    driver = initialize_driver(params)
-    existing_links = set()
-    new_data = []
+# Persistent link tracking
+def load_existing_links(params: dict) -> Set[str]:
+    """Load previously scraped links from persistent storage"""
+    link_file = Path(params.get('link_db', 'scraper_links.db'))
+    try:
+        if link_file.exists():
+            with open(link_file, 'rb') as f:
+                return pickle.load(f)
+        return set()
+    except Exception as e:
+        logger.warning(f"Failed to load link database: {str(e)}")
+        return set()
+
+def save_existing_links(links: Set[str], params: dict):
+    """Save links to persistent storage with atomic write"""
+    link_file = Path(params.get('link_db', 'scraper_links.db'))
+    temp_file = link_file.with_suffix('.tmp')
     
     try:
-        if params.get('area_limit'):
-            area_df = area_df.head(params['area_limit'])
-            
-        for _, row in tqdm(area_df[:5].iterrows(), total=len(area_df)):
-            subdistrict_part = clean_subdistrict(row['Subdistrict'])
-            session_id = generate_session_id()
-            url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_part}_19-{row['Code']}?q={session_id}"
-            
-            driver.get(url)
-            random_sleep(params['min_delay'], params['max_delay'])
-            
-            current_page = 1
-            while True:
-                estate_items = WebDriverWait(driver, 20).until(
-                    EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.property-text.flex.def-property-box"))
-                )
+        with open(temp_file, 'wb') as f:
+            pickle.dump(links, f, protocol=pickle.HIGHEST_PROTOCOL)
+        temp_file.replace(link_file)
+    except Exception as e:
+        logger.error(f"Failed to save link database: {str(e)}")
+
+# Enhanced extraction with retry
+def extract_with_retry(element, selector: str, retries: int = 3) -> Optional[str]:
+    """
+    Robust text extraction with multiple fallback strategies
+    """
+    last_exception = None
+    for attempt in range(retries):
+        try:
+            # Primary extraction
+            target = element.find_element(By.CSS_SELECTOR, selector)
+            if not target.is_displayed():
+                raise StaleElementReferenceException("Element not visible")
                 
-                for item in estate_items:
-                    try:
-                        link = item.get_attribute("href")
-                        if link in existing_links:
-                            continue
-                            
-                        # Original data extraction logic
-                        entry = [
-                            item.find_element(By.CSS_SELECTOR, "div.main-text").text.strip(),
-                            item.find_element(By.CSS_SELECTOR, "div.address.f-middle").text.strip(),
-                            item.find_element(By.XPATH, ".//div[contains(text(), 'No. of Block(s)')]/following-sibling::div").text.strip(),
-                            item.find_element(By.XPATH, ".//div[contains(text(), 'No. of Units')]/following-sibling::div").text.strip(),
-                            item.find_element(By.XPATH, ".//div[contains(text(), 'Unit Rate of Saleable Area')]/following-sibling::div").text.strip(),
-                            link,
-                            row['Region'],
-                            row['District']
-                        ]
-                        new_data.append(entry)
-                        existing_links.add(link)
-                        
-                    except Exception as e:
-                        logger.debug(f"Skipping item: {str(e)}")
-                        
+            text = target.text.strip()
+            if text:
+                return text
+                
+            # Fallback to attribute if text empty
+            return target.get_attribute('innerText').strip() or \
+                   target.get_attribute('aria-label').strip()
+                   
+        except StaleElementReferenceException:
+            # Re-fetch element from DOM
+            parent = element.find_element(By.XPATH, './..')
+            new_element = parent.find_element(By.CSS_SELECTOR, selector)
+            return extract_with_retry(new_element, selector, retries-1)
+            
+        except Exception as e:
+            last_exception = e
+            time.sleep(0.5 * (attempt + 1))
+    
+    logger.debug(f"Extraction failed after {retries} attempts: {str(last_exception)}")
+    return None
+
+def process_items(driver, elements, row, existing_links: Set[str], params: dict):
+    """Enhanced item processing with link validation"""
+    batch = []
+    link_hashes = set()
+    
+    for i in range(len(elements)):
+        try:
+            # Dynamic re-lookup to avoid staleness
+            item = WebDriverWait(driver, 10).until(
+                EC.presence_of_all_elements_located((
+                    By.CSS_SELECTOR, 
+                    "a.property-text.flex.def-property-box, "
+                    "a[data-qa='property-item']"
+                ))
+            )[i]
+            
+            # Link validation
+            raw_link = item.get_attribute("href")
+            if not raw_link:
+                continue
+                
+            # Normalize URL
+            link = raw_link.split('?')[0].split('#')[0]
+            link_hash = hashlib.md5(link.encode()).hexdigest()
+            
+            if link_hash in existing_links or link_hash in link_hashes:
+                continue
+                
+            # Data extraction with fallback
+            entry = {
+                'name': extract_with_retry(item, "div.main-text, h1.listing-title") or "N/A",
+                'address': extract_with_retry(item, "div.address, span[itemprop='address']") or "N/A",
+                'blocks': extract_with_retry(item, "div.block-count, div:has(> meta[itemprop='numberOfBedrooms'])") or 0,
+                'units': extract_with_retry(item, "div.unit-count, div:has(> meta[itemprop='numberOfBathrooms'])") or 0,
+                'link': link,
+                'region': row['Region'],
+                'district': row['District'],
+                'hash': link_hash
+            }
+            
+            batch.append(entry)
+            link_hashes.add(link_hash)
+            
+        except (StaleElementReferenceException, IndexError) as e:
+            logger.debug(f"Skipping item {i}: {str(e)}")
+            continue
+            
+    # Update persistent link store
+    existing_links.update(link_hashes)
+    save_existing_links(existing_links, params)
+    
+    return batch
+
+def handle_pagination(driver, current_page):
+    """Smart pagination with multiple detection strategies"""
+    try:
+        next_btn = WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn-next"))
+        )
+        
+        # Pre-click validation
+        if "disabled" in next_btn.get_attribute("class"):
+            return False
+            
+        # Action simulation
+        driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth'});", next_btn)
+        driver.execute_script("arguments[0].click();", next_btn)
+        
+        # Post-click verification
+        WebDriverWait(driver, 30).until(
+            lambda d: d.find_element(By.CSS_SELECTOR, "li.active").text != str(current_page)
+        )
+        
+        return True
+        
+    except TimeoutException:
+        return False
+
+def recovery_procedure(driver, params):
+    """Comprehensive recovery sequence"""
+    logger.info("Executing recovery protocol")
+    
+    # Clear existing traces
+    driver.delete_all_cookies()
+    driver.execute_script("window.localStorage.clear();")
+    driver.execute_script("window.sessionStorage.clear();")
+    
+    # Rotate network identity
+    driver.execute_cdp_cmd("Network.setUserAgentOverride", {
+        #"userAgent": #random.choice(USER_AGENTS)
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
+    })
+    
+    # Reset viewport
+    driver.set_window_size(
+        random.randint(1200, 1920),
+        random.randint(800, 1080)
+    )
+    
+    randomized_delay(params, multiplier=2)
+
+def randomized_delay(params, multiplier=1):
+    """Randomized waiting with exponential backoff"""
+    base = random.uniform(params['min_delay'], params['max_delay'])
+    jitter = random.uniform(-0.5, 0.5)
+    delay = (base * multiplier) + jitter
+    time.sleep(max(0.5, delay))
+    
+def save_failure_state(driver, subdistrict, params):
+    """Comprehensive failure state preservation"""
+    session_id = params.get('session_id', 'default_session')
+    failure_dir = Path(params.get('failure_dir', 'failures')) / session_id
+    failure_dir.mkdir(parents=True, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    base_name = f"{subdistrict}_{timestamp}"
+    
+    try:
+        # Capture visual state
+        driver.save_screenshot(str(failure_dir / f"{base_name}.png"))
+        
+        # Save DOM state
+        with open(failure_dir / f"{base_name}.html", 'w', encoding='utf-8') as f:
+            f.write(driver.page_source)
+            
+        # Save technical details
+        tech_data = {
+            'url': driver.current_url,
+            'cookies': driver.get_cookies(),
+            'user_agent': driver.execute_script("return navigator.userAgent"),
+            'window_size': driver.get_window_size(),
+            'console_logs': driver.get_log('browser')
+        }
+        
+        with open(failure_dir / f"{base_name}.json", 'w') as f:
+            json.dump(tech_data, f)
+            
+        logger.info(f"Failure state saved for {subdistrict} in {failure_dir}")
+        
+    except Exception as e:
+        logger.error(f"Failed to save failure state: {str(e)}")
+
+def save_checkpoint(data, params, final=False):
+    """Robust checkpointing system with versioning"""
+    checkpoint_dir = Path(params.get('checkpoint_dir', 'checkpoints'))
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    
+    session_id = params.get('session_id', 'default_session')
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    
+    # Column definitions
+    COLUMN_NAMES = [
+        'Name', 'Address', 'Blocks', 'Units', 'UnitRate',
+        'Link', 'Region', 'District', 'ScrapedAt', 'SessionID'
+    ]
+    
+    try:
+        df = pd.DataFrame(data, columns=COLUMN_NAMES)
+        df['CheckpointAt'] = datetime.now()
+        
+        if final:
+            filename = checkpoint_dir / f"final_{session_id}_{timestamp}.parquet"
+        else:
+            filename = checkpoint_dir / f"interim_{session_id}_{timestamp}.parquet"
+            
+        # Append to existing data if available
+        if filename.exists():
+            existing = pd.read_parquet(filename)
+            df = pd.concat([existing, df], ignore_index=True)
+            
+        df.to_parquet(filename, index=False)
+        logger.info(f"Checkpoint saved: {filename.name}")
+        
+        # Maintain only last 5 checkpoints
+        checkpoints = sorted(checkpoint_dir.glob(f"*{session_id}*"), key=os.path.getmtime)
+        for old_file in checkpoints[:-5]:
+            old_file.unlink()
+            
+    except Exception as e:
+        logger.error(f"Checkpoint failed: {str(e)}")
+        # Fallback to CSV
+        try:
+            df.to_csv(checkpoint_dir / f"emergency_{session_id}.csv", mode='a')
+        except Exception as csv_error:
+            logger.critical(f"CSV fallback failed: {str(csv_error)}")
+
+def scrape_estate_listings(area_df, params):
+    """Robust property listing scraper with advanced error recovery"""
+    driver = initialize_driver(params)
+    existing_links = load_existing_links(params)
+    new_data = []
+    max_retries = params.get('max_retries', 3)
+    session_id = f"scr-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    # Column definitions
+    COLUMN_NAMES = [
+        'Name', 'Address', 'Blocks', 'Units', 'UnitRate',
+        'Link', 'Region', 'District', 'ScrapedAt', 'SessionID'
+    ]
+    
+    try:
+        # Pipeline state management
+        checkpoint_interval = params.get('checkpoint', 10)
+        last_checkpoint = 0
+        
+        for idx, row in tqdm(area_df.iterrows(), total=len(area_df), desc="Processing Areas"):
+            subdistrict = clean_subdistrict(row['Subdistrict'])
+            base_url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict}_{row['Code']}"
+            
+            for attempt in range(max_retries):
                 try:
-                    next_btn = WebDriverWait(driver, 10).until(
-                        EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn-next:not([disabled])"))
-                    )
-                    driver.execute_script("arguments[0].click();", next_btn)
-                    random_sleep(params['min_delay'], params['max_delay'])
-                    current_page += 1
-                except Exception:
-                    break
+                    # Rotate request parameters
+                    url = f"{base_url}?v={random.randint(1000,9999)}"
+                    driver.get(url)
                     
+                    # Progressive page loading
+                    WebDriverWait(driver, 45).until(
+                        lambda d: d.execute_script(
+                            "return document.readyState === 'complete' && "
+                            "window.performance.timing.loadEventEnd > 0"
+                        )
+                    )
+                    
+                    # Content validation
+                    if "No matching records found" in driver.page_source:
+                        logger.info(f"Skipping empty area: {subdistrict}")
+                        break
+                        
+                    current_page = 1
+                    previous_count = 0
+                    
+                    while True:
+                        try:
+                            # Hybrid element location
+                            estate_items = adaptive_wait(
+                                driver,
+                                "a.property-text.flex.def-property-box, "
+                                "a.property-listing-item",
+                                timeout=40
+                            )
+                            
+                            # Stability check
+                            if len(estate_items) == previous_count:
+                                logger.debug(f"Stable count at {len(estate_items)} items")
+                                break
+                            previous_count = len(estate_items)
+                            
+                            # Batch processing
+                            batch_data = process_items(driver, estate_items, row)
+                            new_data.extend(batch_data)
+                            
+                            # Pagination handling
+                            if not handle_pagination(driver, current_page):
+                                break
+                                
+                            current_page += 1
+                            randomized_delay(params)
+                            
+                        except StaleElementReferenceException:
+                            logger.warning("Stale elements detected, refreshing...")
+                            driver.refresh()
+                            randomized_delay(params)
+                            
+                    break  # Successful processing
+                    
+                except Exception as e:
+                    logger.warning(f"Attempt {attempt+1}/{max_retries} failed: {str(e)}")
+                    if attempt < max_retries - 1:
+                        recovery_procedure(driver, params)
+                    else:
+                        logger.error(f"Permanent failure for {subdistrict}")
+                        save_failure_state(driver, subdistrict, params)
+                        continue  # Continue to next area instead of failing
+                        
+            # Checkpoint saving
+            if idx - last_checkpoint >= checkpoint_interval:
+                save_checkpoint(new_data, params)
+                last_checkpoint = idx
+                
+    except Exception as e:
+        logger.critical(f"Fatal pipeline error: {str(e)}")
+        raise
     finally:
         driver.quit()
-    
-    return pd.DataFrame(new_data, columns=[
-        'Name', 'Address', 'Blocks', 'Units', 'UnitRate', 
-        'Link', 'Region', 'District'
-    ])
+        save_existing_links(existing_links, params)
+        save_checkpoint(new_data, params, final=True)
+        
+    return pd.DataFrame(new_data, columns=COLUMN_NAMES)
+
+def safe_get_text(element, selector):
+    """Helper function for fault-tolerant text extraction"""
+    try:
+        return element.find_element(By.CSS_SELECTOR, selector).text.strip()
+    except Exception:
+        return None
 
 # nodes.py (Kedro compatible version)
 def scrape_estate_details(
@@ -355,7 +702,7 @@ def scrape_estate_details(
         # Initialize progress bar
         pbar = tqdm(total=len(result_df), desc="Processing estate details")
         
-        for idx, row in result_df[:5].iterrows():
+        for idx, row in result_df.iterrows():
             url = row['Link']
             try:
                 driver.get(url)
