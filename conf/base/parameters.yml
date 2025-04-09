@@ -1,11 +1,11 @@
 # Parameters for Centaline Residential Pipeline
 scraper:
   use_edge: True  # True = Edge, False = Chrome
-  headless: False # Under Kedro, False Only
+  headless: False
   #control_date: "2025-01-03"
   control_date: "2025-03-03"
-  min_delay: 0.5
-  max_delay: 1.5
+  min_delay: 0
+  max_delay: 2
   max_retries: 5
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
   page_load_timeout: 30

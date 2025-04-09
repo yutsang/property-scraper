@@ -8,13 +8,4 @@ from .pipelines.centaline_res import create_pipeline as centaline_res_pipeline
     pipelines = {**autodiscovered_pipelines}
     # Optionally define a default pipeline
     pipelines.update({"__default__": pipelines.get("midland_res")})
-    return pipelines'''
-
-def register_pipelines():
-    midland_res = midland_res_pipeline()
-    centaline_res = centaline_res_pipeline()
-    return{
-        "midland_res": midland_res,
-        "centaline_res": centaline_res,
-        "__default__": midland_res + centaline_res
-    }
+    return pipelines

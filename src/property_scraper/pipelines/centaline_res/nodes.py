@@ -22,6 +22,13 @@ from pathlib import Path
 from typing import Optional, Set
 import pickle
 import hashlib
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+import os
+import json
+from pathlib import Path
+from typing import Optional, Set
+import pickle
+import hashlib
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -72,12 +79,61 @@ def _initialize_edge_driver(params: Dict[str, Any]) -> webdriver.Edge:
     
     if params.get('headless', True):
         options.add_argument("--headless=new")
+        options.add_argument("--window-size=1920,1080")
     
     # Common configurations
     options.add_argument("--log-level=3")
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    options.add_argument("--disable-blink-features=AutomationControlled")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    # Anti-detection configuration  
+    options.add_argument("--disable-blink-features=AutomationControlled")  
+    options.add_experimental_option("excludeSwitches", ["enable-automation"])  
+    options.add_argument("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36")  
     
-    return webdriver.Edge(options=options)
+    driver = webdriver.Edge(options=options)
+    
+     # Evasion scripts
+    driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+        "source": """
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined
+            })
+        """
+    })
+
+    return driver
+
+def adaptive_wait(driver, selector, timeout=30, poll=3):
+    """Hybrid waiting strategy with multiple fallback approaches"""
+    end_time = time.time() + timeout
+    last_exception = None
+    
+    while time.time() < end_time:
+        try:
+            # Try direct element location first
+            elements = driver.find_elements(By.CSS_SELECTOR, selector)
+            if elements:
+                return elements
+                
+            # Fallback to JavaScript DOM query
+            elements = driver.execute_script(
+                f"return document.querySelectorAll('{selector}')"
+            )
+            if elements:
+                return elements
+                
+            # Final fallback to WebDriverWait
+            return WebDriverWait(driver, timeout).until(
+                EC.presence_of_all_elements_located((By.CSS_SELECTOR, selector))
+            )
+            
+        except Exception as e:
+            last_exception = e
+            time.sleep(poll + random.uniform(0, 2))
+    
+    raise TimeoutException(f"Element not found: {selector}") from last_exception
 
 
 def random_sleep(min_delay: float, max_delay: float) -> None:
@@ -107,7 +163,7 @@ def scrape_transaction_data(
     try:
         pbar = tqdm(total=len(area_df), desc="Processing areas", unit="area")
         
-        for area_idx, area_row in area_df[:5].iterrows():
+        for area_idx, area_row in area_df.iterrows():
             session_id = f"session_{area_idx}_{datetime.now().timestamp()}"
             subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
             url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
@@ -239,7 +295,7 @@ def process_transaction_data(
 def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
 
     driver = initialize_driver(params)
-    existing_links = set()
+    existing_links = load_existing_links(params)
     new_data = []
     
     try:
@@ -295,11 +351,17 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
                     
     finally:
         driver.quit()
-    
-    return pd.DataFrame(new_data, columns=[
-        'Name', 'Address', 'Blocks', 'Units', 'UnitRate', 
-        'Link', 'Region', 'District'
-    ])
+        save_existing_links(existing_links, params)
+        save_checkpoint(new_data, params, final=True)
+        
+    return pd.DataFrame(new_data, columns=COLUMN_NAMES)
+
+def safe_get_text(element, selector):
+    """Helper function for fault-tolerant text extraction"""
+    try:
+        return element.find_element(By.CSS_SELECTOR, selector).text.strip()
+    except Exception:
+        return None
 
 # nodes.py (Kedro compatible version)
 def scrape_estate_details(
