@@ -1,4 +1,4 @@
-# CSV Datasets for Midland Residential Pipeline
+# Data Catalog for Midland Residential Pipeline
 
 midland_res_area_code:
   type: pandas.CSVDataset
@@ -22,38 +22,32 @@ raw_estate_data:
         lines: True
 
 midland_res_transactions:
-  type: pandas.CSVDataset
-  filepath: data/01_raw/midland_res_transactions.csv
-  load_args:
-    dtype:
-      subdistrict_code: string
-      parent_district_id: string
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/midland_res_transactions.parquet
   save_args:
     index: False
-    date_format: "%Y-%m-%d"
 
 midland_res_estates:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/midland_res_estates.csv
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/midland_res_estates.parquet
   save_args:
     index: False
-    date_format: "%Y-%m-%d"
 
 merged_property_data:
-  type: pandas.CSVDataset
-  filepath: data/03_primary/merged_property_data.csv
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/merged_property_data.parquet
   save_args:
     index: False
 
 processed_property_data:
-  type: pandas.CSVDataset
-  filepath: data/03_primary/processed_property_data.csv
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/processed_property_data.parquet
   save_args:
     index: False
 
 ##################################################################
 
-# Data Catalog for Centaline pipeline
+# Data Catalog for Centaline Residential Pipeline
 
 # Raw Data
 area_codes:
@@ -64,32 +58,34 @@ area_codes:
 
 # Rest of the catalog remains the same
 raw_estate_listings:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/estate_listings.csv
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/estate_listings.parquet
 
 estate_details_raw:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/estate_details_raw.csv
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/estate_details_raw.parquet
 
 raw_transaction_data:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/transaction_records.csv
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/transaction_records.parquet
 
 # Processed Data
 processed_transactions:
-  type: pandas.CSVDataset
-  filepath: data/03_primary/transactions_processed.csv
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/transactions_processed.parquet
 
 enriched_estate_data:
-  type: pandas.CSVDataset
-  filepath: data/03_primary/estates_enriched.csv
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/estates_enriched.parquet
 
 ##################################################################
 
+# Data Catalog for Midland ICI Pipeline
 
 
 ##################################################################
 
+# Data Catalog for Centaline ICI Pipeline
 
 
 ##################################################################

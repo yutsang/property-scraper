@@ -15,38 +15,16 @@ from tqdm import tqdm
 import configparser
 import re
 import string
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+import os
+import json
+from pathlib import Path
+from typing import Optional, Set
+import pickle
+import hashlib
 
 # Configure logging
 logger = logging.getLogger(__name__)
-
-# Configuration management
-CONFIG_FILE = 'scraper_config.ini'
-config = configparser.ConfigParser()
-
-def load_config():
-    """Initialize and load configuration"""
-    config.read(CONFIG_FILE)
-    
-    if not config.has_section('FileSettings'):
-        config.add_section('FileSettings')
-        config.set('FileSettings', 'base_name', 'centanet_res_estates')
-        config.set('FileSettings', 'backup_name', 'centanet_res_estates_backup')
-        config.set('FileSettings', 'update_frequency', 'monthly')
-        config.set('FileSettings', 'force_update', 'False')
-        config.set('FileSettings', 'min_file_size_ratio', '0.9')
-        
-    if not config.has_section('ScraperSettings'):
-        config.add_section('ScraperSettings')
-        config.set('ScraperSettings', 'headless', 'True')
-        config.set('ScraperSettings', 'min_delay', '0')
-        config.set('ScraperSettings', 'max_delay', '2')
-        config.set('ScraperSettings', 'area_limit', 'None')
-        config.set('ScraperSettings', 'max_retries', '5')
-
-    with open(CONFIG_FILE, 'w') as configfile:
-        config.write(configfile)
-
-load_config()
 
 def generate_session_id(length=10):
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
@@ -54,9 +32,6 @@ def generate_session_id(length=10):
 def clean_subdistrict(subdistrict):
     cleaned = re.sub(r'[^A-Za-z0-9]+', '-', subdistrict)
     return cleaned.strip('-').lower()
-
-def random_sleep(min_delay = 0, max_delay = 3):
-    time.sleep(random.uniform(min_delay, max_delay))
 
 # Helper functions
 # nodes.py (updated ChromeDriver configuration)
@@ -114,6 +89,7 @@ def scroll_down(driver: webdriver.Chrome) -> None:
     """Scroll to bottom of page to trigger lazy loading"""
     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     time.sleep(2)
+
 
 # Node functions
 def scrape_transaction_data(
@@ -209,7 +185,6 @@ def scrape_transaction_data(
     
     return pd.DataFrame(all_data)
 
-
 def process_transaction_data(
     trans_df: pd.DataFrame,
     params: Dict[str, Any]
@@ -261,7 +236,8 @@ def process_transaction_data(
     address_components = trans_df['address'].apply(parse_address).apply(pd.Series)
     return pd.concat([trans_df, address_components], axis=1)
 
-def scrape_estate_listings(area_df, params):
+def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
+
     driver = initialize_driver(params)
     existing_links = set()
     new_data = []
@@ -270,7 +246,7 @@ def scrape_estate_listings(area_df, params):
         if params.get('area_limit'):
             area_df = area_df.head(params['area_limit'])
             
-        for _, row in tqdm(area_df[:5].iterrows(), total=len(area_df)):
+        for _, row in tqdm(area_df[:10].iterrows(), total=len(area_df)):
             subdistrict_part = clean_subdistrict(row['Subdistrict'])
             session_id = generate_session_id()
             url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_part}_19-{row['Code']}?q={session_id}"
@@ -355,7 +331,7 @@ def scrape_estate_details(
         # Initialize progress bar
         pbar = tqdm(total=len(result_df), desc="Processing estate details")
         
-        for idx, row in result_df[:5].iterrows():
+        for idx, row in result_df[:10].iterrows():
             url = row['Link']
             try:
                 driver.get(url)
@@ -447,11 +423,36 @@ def scrape_estate_details(
                 continue
 
         pbar.close()
-        
+
+        # Update the Date 
+        from datetime import datetime
+        import yaml, os
+
+        # Get today's date
+        today_date = datetime.now().strftime("%Y-%m-%d")
+
+        #Load the parameters from the config file
+        params_path = "conf/base/parameters.yml"
+        with open(params_path, 'r') as file:
+            parameters = yaml.safe_load(file)
+
+        # Uodate the date in the parameters
+        parameters['Control_date']['centaline_estates'] = today_date
+
+        # Save updated parameters
+        with open(params_path, 'w') as file:
+            yaml.dump(parameters, file, default_flow_style=False)
+            
+        logger.info(f"Successfully updated centaline_estates control date to {today_date}")
+    
+        return result_df
+    
+    except Exception as e:
+        logger.error(f"Failed to update control date: {str(e)}")
+        raise
+
     finally:
         driver.quit()
-    
-    return result_df
 
 
 # Updated enrich_estate_data function
