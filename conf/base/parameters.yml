@@ -4,10 +4,10 @@ scraper:
   headless: False # only False during Kedro
   #control_date: "2025-01-03"
   control_date: "2025-03-03"
-  min_delay: 0
-  max_delay: 2
+  min_delay: 0.5
+  max_delay: 1.5
   max_retries: 5
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
   page_load_timeout: 30
   # Add these new parameters
   chrome_args:
@@ -23,7 +23,7 @@ scraper:
   # Record the update date, Default "1970-01-01"
   # Residential
   midland_estates: "1970-01-01"
-  centaline_estates: "2025-04-09"
+  centaline_estates: "1970-01-01"
 
   # ICI
   midland_building: "1970-01-01"
