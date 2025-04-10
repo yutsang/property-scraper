@@ -1,48 +1,65 @@
-# Parameters for Centaline Residential Pipeline
+centaline_estates: '2025-04-10'
+processing:
+  block_keywords:
+  - Tower
+  - Block
+  - Path
+  - Street
+  - Browdway
+  - Celestial Avenue
+  - Carpark
+  - Road
+  - Lane
+  - Drive
+  - Vista Avenue
+  - Mansion
+  - House
+  - Sky One
+  flat_keywords:
+  - Flat
+  - Apartment
+  - Duplex
+  floor_keywords:
+  - Floor
+  - /F
+  - LG
+  - B/M
+  - U/L
+  - UCP
+  - P3
+  - P2
+  - Podium
+  - PODIUM
+  - U/G
+  - P7
+  - P4
+  - UG1
+  phase_keywords:
+  - Phase
+  - Site
+  - (Block
 scraper:
-  use_edge: True  # True = Edge, False = Chrome
-  headless: False # only False during Kedro
-  #control_date: "2025-01-03"
-  control_date: "2025-03-03"
-  min_delay: 0.5
+  centaline_building: '1970-01-01'
+  centaline_estates: '1970-01-01'
+  chrome_args:
+  - --window-size=1920,1080
+  - --no-sandbox
+  - --disable-dev-shm-usage
+  - --disable-web-security
+  - --disable-site-isolation-trials
+  - --enable-features=NetworkService
+  - --enable-unsafe-swiftshader
+  - --ignore-certificate-errors
+  - --allow-insecure-localhost
+  control_date: '2025-03-03'
+  headless: false
+  leasinghub_building: '1970-01-01'
   max_delay: 1.5
   max_retries: 5
-  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
+  midland_building: '1970-01-01'
+  midland_estates: '1970-01-01'
+  min_delay: 0.5
   page_load_timeout: 30
-  # Add these new parameters
-  chrome_args:
-    - "--window-size=1920,1080"
-    - "--no-sandbox"
-    - "--disable-dev-shm-usage"
-    - "--disable-web-security"
-    - "--disable-site-isolation-trials"
-    - "--enable-features=NetworkService"
-    - "--enable-unsafe-swiftshader"
-    - "--ignore-certificate-errors"
-    - "--allow-insecure-localhost"
-  # Record the update date, Default "1970-01-01"
-  # Residential
-  midland_estates: "1970-01-01"
-  centaline_estates: "1970-01-01"
-
-  # ICI
-  midland_building: "1970-01-01"
-  centaline_building: "1970-01-01"
-  leasinghub_building: "1970-01-01"
-
-  ## Update Logic: Building list - Monthly
-
-processing:
-  # floor_keywords: ["Upper Floor", "Middle Floor", "Lower Floor"]
-  # price_threshold: 1000000
-  phase_keywords: ["Phase", "Site", "(Block"]
-  block_keywords: ['Tower', 'Block', 'Path', 'Street', 'Browdway',
-                    'Celestial Avenue', 'Carpark', 'Road', 'Lane',
-                    'Drive', 'Vista Avenue', 'Mansion', 'House',
-                    'Sky One']
-  floor_keywords: ['Floor', '/F', 'LG', 'B/M', 'U/L', 'UCP', 'P3', 'P2',
-              'Podium', 'PODIUM', 'U/G', 'P7', 'P4', 'UG1']
-  flat_keywords: ['Flat', 'Apartment', 'Duplex']
-
-
-
+  use_edge: true
+  user_agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0

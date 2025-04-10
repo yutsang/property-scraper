@@ -148,7 +148,7 @@ def scrape_transaction_data(
     try:
         pbar = tqdm(total=len(area_df), desc="Processing areas", unit="area")
         
-        for area_idx, area_row in area_df.iterrows():
+        for area_idx, area_row in area_df[:5].iterrows():
             session_id = f"session_{area_idx}_{datetime.now().timestamp()}"
             subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
             url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
@@ -302,7 +302,7 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
     new_or_updated_estates = []
     
     try:
-        for _, row in tqdm(area_df.iterrows(), total=len(area_df), desc="Processing areas"):
+        for _, row in tqdm(area_df[:5].iterrows(), total=len(area_df), desc="Processing areas"):
             subdistrict_part = clean_subdistrict(row['Subdistrict'])
             session_id = generate_session_id()
             url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_part}_19-{row['Code']}?q={session_id}"
@@ -471,153 +471,134 @@ def safe_get_text(element, selector):
         return None
 
 # nodes.py (Kedro compatible version)
-def scrape_estate_details(
-    listings_df: pd.DataFrame,
-    params: Dict[str, Any]
-) -> pd.DataFrame:
-    """Scrape estate details with incremental updates and change detection."""
+def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
+    """Scrape detailed estate information with full data fields using incremental updates."""
     logger = logging.getLogger(__name__)
-    
-    # Configuration parameters
     details_file = params.get('estate_details_file', 'data/02_intermediate/estate_details_raw.parquet')
-    temp_file = params.get('temp_file', 'data/02_intermediate/estate_details_temp.parquet')
-    driver = None
-    result_df = pd.DataFrame()
+    
+    # Load existing details
+    existing_details = pd.DataFrame()
+    if os.path.exists(details_file):
+        existing_details = pd.read_parquet(details_file)
+        logger.info(f"Loaded {len(existing_details)} existing estate details")
+    
+    # Get existing links and filter new listings
+    existing_items = set(existing_details['Name']) if 'Name' in existing_details.columns else set()
+    new_listings = listings_df[~listings_df['Name'].isin(existing_items)]
+    
+    if new_listings.empty:
+        logger.info("No new estates to scrape")
+        return existing_details
+
+    driver = initialize_driver(params)
+    new_details = []
+
+    print("Check Size", len(new_listings))
 
     try:
-        # Load existing details with column validation
-        existing_details = pd.DataFrame()
-        if os.path.exists(details_file):
+        for _, row in tqdm(new_listings.iterrows(), total=len(new_listings), desc="Scraping new estates"):
             try:
-                existing_details = pd.read_parquet(details_file)
-                logger.info(f"Loaded {len(existing_details)} existing estate details")
-                
-                # Ensure required columns exist
-                required_cols = ['link_hash', 'last_updated']
-                for col in required_cols:
-                    if col not in existing_details.columns:
-                        existing_details[col] = pd.NaT if col == 'last_updated' else None
-                        logger.warning(f"Added missing column '{col}' to existing details")
-
-            except Exception as e:
-                logger.error(f"Error loading existing details: {str(e)}")
-                existing_details = pd.DataFrame()
-
-        # Initialize new columns for listings dataframe
-        listings_df = listings_df.copy()
-        if 'link_hash' not in listings_df.columns:
-            listings_df['link_hash'] = listings_df['Link'].apply(
-                lambda x: hashlib.sha256(x.encode()).hexdigest()
-            )
-        
-        # Create merged dataframe with fallback values
-        merge_df = listings_df.copy()
-        if not existing_details.empty:
-            try:
-                merge_df = pd.merge(
-                    listings_df,
-                    existing_details[['link_hash', 'last_updated']],
-                    on='link_hash',
-                    how='left',
-                    suffixes=('', '_existing')
-                )
-            except KeyError as e:
-                logger.error(f"Merge failed: {str(e)}")
-                merge_df['last_updated'] = pd.NaT
-        else:
-            merge_df['last_updated'] = pd.NaT
-
-        # Filter based on existence and last update time
-        three_months_ago = pd.Timestamp.now() - pd.DateOffset(months=3)
-        to_scrape = merge_df[
-            (merge_df['last_updated'].isnull()) | 
-            (merge_df['last_updated'] < three_months_ago)
-        ]
-
-        logger.info(f"Scraping details for {len(to_scrape)}/{len(listings_df)} estates needing updates")
-
-        if to_scrape.empty:
-            logger.info("No estate details require updating")
-            return existing_details
-
-        # Initialize browser only when needed
-        driver = initialize_driver(params)
-        result_df = existing_details.copy()
-
-        # Process estates needing updates
-        pbar = tqdm(total=len(to_scrape), desc="Processing estate details")
-        for idx, row in to_scrape.iterrows():
-            try:
-                url = row['Link']
-                current_hash = row['link_hash']
-                
-                # Check if already processed in this session
-                if current_hash in result_df['link_hash'].values:
-                    pbar.update(1)
-                    continue
-
-                # Scrape details
-                driver.get(url)
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                driver.get(row['Link'])
                 random_sleep(params['min_delay'], params['max_delay'])
-
-                # Extract detailed information
+                
+                # Extract core information
                 detail_data = {
-                    'scraped_estate_name': extract_element_text(driver, ".estate-detail-banner-title"),
+                    'scraped_estate_name': WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, ".estate-detail-banner-title"))
+                    ).text.strip(),
                     'occupation_permit': extract_element_text(
                         driver, 
                         "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
                     ),
-                    'scraped_blocks': extract_numeric_value(
-                        driver, 
+                    'scraped_blocks': extract_element_text(
+                        driver,
                         "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
                     ),
-                    'scraped_units': extract_numeric_value(
-                        driver,
-                        "//div[contains(text(), 'No. of Units')]/following-sibling::div"
-                    ),
-                    'school_net_info': extract_school_net(driver),
-                    'estate_detailed_address': extract_element_text(driver, ".estate-detail-banner-position"),
-                    'developer': extract_element_text(
-                        driver,
-                        "//div[contains(.//text(), 'Developer')]/following-sibling::div"
-                    ),
-                    'last_updated': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    'link_hash': current_hash
+                    # New fields
+                    'school_net_info': None,
+                    'estate_detailed_address': None,
+                    'developer': None,
+                    'Link': row['Link'],
+                    'Region': row['Region'],
+                    'District': row['District']
                 }
 
-                # Merge with existing data or add new entry
-                new_row = {**row.to_dict(), **detail_data}
-                if current_hash in existing_details['link_hash'].values:
-                    result_df.loc[result_df['link_hash'] == current_hash] = pd.Series(new_row)
-                else:
-                    result_df = pd.concat([result_df, pd.DataFrame([new_row])], ignore_index=True)
+                # Extract School Net information
+                try:
+                    items_divs = driver.find_elements(By.CLASS_NAME, "item")
+                    for div in items_divs:
+                        try:
+                            label = div.find_element(By.CLASS_NAME, "label-item-left").text.strip()
+                            if "School Net" in label:
+                                links = div.find_elements(By.TAG_NAME, "a")
+                                if len(links) >= 2:
+                                    primary = links[0].text.strip()
+                                    secondary = links[1].text.strip()
+                                    detail_data['school_net_info'] = f"{primary} | {secondary}"
+                                break
+                        except Exception:
+                            continue
+                except Exception as e:
+                    logger.debug(f"School net extraction failed: {str(e)}")
 
-                # Intermediate save every 10 records
-                if idx % 10 == 0:
-                    result_df.to_parquet(temp_file, index=False)
+                # Extract Detailed Address
+                try:
+                    address_elem = driver.find_element(By.CLASS_NAME, "estate-detail-banner-position")
+                    detail_data['estate_detailed_address'] = address_elem.text.strip()
+                except Exception as e:
+                    logger.debug(f"Address extraction failed: {str(e)}")
 
-                pbar.update(1)
-                pbar.set_postfix_str(f"Processed: {new_row.get('scraped_estate_name', 'Unknown')}")
+                # Extract Developer
+                try:
+                    items = driver.find_elements(By.CLASS_NAME, "item")
+                    for item in items:
+                        try:
+                            label = item.find_element(By.CLASS_NAME, "label-item-left").text.strip()
+                            if "Developer" in label:
+                                developer = item.find_element(By.CLASS_NAME, "label-item-right").text.strip()
+                                detail_data['developer'] = developer
+                                break
+                        except Exception:
+                            continue
+                except Exception as e:
+                    logger.debug(f"Developer extraction failed: {str(e)}")
 
+                new_details.append(detail_data)
+                
             except Exception as e:
-                logger.error(f"Failed to process {url}: {str(e)}")
+                logger.error(f"Failed to process {row['Link']}: {str(e)}")
                 continue
 
-        pbar.close()
+        # Merge and save results
+        if new_details:
+            new_df = pd.DataFrame(new_details)
+            updated_df = pd.concat([existing_details, new_df], ignore_index=True)
+            updated_df.to_parquet(details_file, index=False)
+            logger.info(f"Added {len(new_df)} new estate details")
+            return updated_df
         
-        # Final save and update control date
-        result_df = result_df.drop(columns=['link_hash'], errors='ignore')
-        result_df.to_parquet(details_file, index=False)
-        update_control_date(params)
-        return result_df
+        return existing_details
 
-    except Exception as e:
-        logger.error(f"Critical error in scrape_estate_details: {str(e)}")
-        raise
     finally:
-        if driver:
-            driver.quit()
+        # Robust driver termination with exception handling
+        if driver is not None:
+            try:
+                driver.quit()
+            except Exception as e:
+                logger.debug(f"Driver termination exception: {str(e)}")
+
+def extract_element_text(driver, xpath: str) -> Optional[str]:
+    """Helper function to safely extract text from elements."""
+    try:
+        element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, xpath))
+        )
+        return element.text.strip()
+    except:
+        return None
+
+
+
 
 # Helper functions
 def extract_element_text(driver, selector: str) -> Optional[str]:
