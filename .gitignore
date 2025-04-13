@@ -20,7 +20,8 @@ data/**
 # also keep the example dataset
 !data/01_raw/Centanet_Res_Area_Code.csv
 !data/01_raw/midland_res_area_code.csv
-!data/01_raw/shuttles.xlsx
+!data/01_raw/centanet_oir_area_code.csv
+!data/01_raw/midland_ici_area_code.csv
 
 # ignore kedro-viz metadata
 .viz
