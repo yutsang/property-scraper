@@ -1,13 +1,15 @@
 # Parameters for Centaline Residential Pipeline
 scraper:
-  use_edge: True  # True = Edge, False = Chrome
-  headless: False
+  use_edge: False  # True = Edge, False = Chrome
+  headless: True
   control_date: "2025-01-03"
   min_delay: 0.5
   max_delay: 1.5
   max_retries: 5
   user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
   page_load_timeout: 30
+  estate_listings_file: data/02_intermediate/centaline_estate_lv_1.parquet
+  estate_details_file: data/02_intermediate/centaline_estate_lv_2.parquet
 
 processing:
   #floor_keywords: ["Upper Floor", "Middle Floor", "Lower Floor"]

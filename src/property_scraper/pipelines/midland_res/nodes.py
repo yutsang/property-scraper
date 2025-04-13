@@ -122,37 +122,38 @@ def fetch_estates_data(district_code: str, limit: int = 500) -> List[Dict]:
             'authorization': '''Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNC0xMi0wNy0tLVlWN0hKU2QxelRzOHpwVDhJNEdjdGxLcjQ1Z0l4cWhsdVp3SEdvZXVSX1o3RkU2cmh1Q1NjVVpqM1E3SXIzZWVQSmZpMy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjQtMTItMDctLS1ZVjdISlNkMXpUczh6cFQ4STRHY3RsS3I0NWdJeHFobHVad0hHb2V1Ul9aN0ZFNnJodUNTY1VaajNRN0lyM2VlUEpmaTMtSUkiLCJpYXQiOjE3MzM1NDk0MjUsImV4cCI6MTc2ODEwOTQyNSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.LOOVgc_Nw7OPNnAlB8iC1kRHL0W8UVNVa0GaJYaxTxVZtO33ZbkR64rxMHSifvZOzYr38aJENj-SDIbkq4Y75CxqMPegyBUgHtaub-Fez5qaH2W0Dz71pUdYijDG3rB4Dkbdf8k21QsHerJmOFnpryzTVnZDxv-3g8Lmjz2WUhmrqMamKox3w-T9wRJ4p_wzcJwvXWgtvxkapr3Ep0YSJy3fJsV-Nwm_QiJf2JR0V4rOAu7f-YLMSy7IYje3W-HvVqAZV2cDphg_cYnf6CpirJPu_ix2z6BtIMpYMXeSiZyZtKCHiWFNtUm6QTD2adArWtLl_NvbgcH9mhVYuWi8NcrZBdBh4c72bSNRm104oEbRb9-vb1AylH2oFkEz33xXXEAJRtbQxoQ3qZj_yoDIexrinOSlkJB50fSu98Xizv9eZstnbtzkgVjfKpOAWQFdHKennjN9Azq6yTlejDVspL7A0JsY4ZlO4HQNdkNhiOQDYypHgx8jQMm0B0rbaa0cEz1S0s43Lh01eNVBN9Is35jAWFsJIP-iLvHqXJ9d0pGoHe0N7PQk2dmLo9E5szP0U04MZxt4m9TEpJkn-0uS_ZDSVABlBU2KGIkTmuzm1VltsDhPhoNrbJBJVdxJJdublpDnVFk8aO1gFWKNzptw48ipmLfpRosynC_x3Ud6QMU'''
         }
     
-    with tqdm(total=1, desc=f"Processing District {district_code}") as pbar:
-        while True:
-            params = {
-                "ad": "true",
-                "lang": "en",
-                "currency": "HKD",
-                "unit": "feet",
-                "search_behavior": "normal",
-                "intsmdist_ids": district_code,
-                "page": page,
-                "limit": limit
-            }
-            
-            try:
-                response = requests.get(base_url, params=params, headers=headers)
-                response.raise_for_status()
-                data = response.json()
+    #pbar = tqdm(desc=f"Fetching pages for {district_code}", initial=0)
+    #try:
+    while True:
+        params = {
+            "ad": "true",
+            "lang": "en",
+            "currency": "HKD",
+            "unit": "feet",
+            "search_behavior": "normal",
+            "intsmdist_ids": district_code,
+            "page": page,
+            "limit": limit
+        }
+        try:
+            response = requests.get(base_url, params=params, headers=headers)
+            response.raise_for_status()
+            data = response.json()
                 
-                if 'result' in data and data['result']:
-                    processed_data = process_nested_data(data['result'])
-                    results.extend(processed_data)
-                    pbar.total = data.get('total_pages', 1)
-                    pbar.update(1)
-                    page += 1
-                else:
-                    break
-                    
-            except RequestException as e:
-                print(f"Stopped fetching data at page {page} for district code {district_code} due to error: {e}")
+            if 'result' in data and data['result']:
+                processed_data = process_nested_data(data['result'])
+                results.extend(processed_data)
+                #pbar.total = data.get('total_pages', 1)
+                #pbar.update(1)
+                page += 1
+            else:
                 break
-    
+                    
+        except RequestException as e:
+            print(f"Stopped fetching data at page {page} for district code {district_code} due to error: {e}")
+            break
+    #finally:
+    #     pbar.close()
     return results
 
 def process_nested_data(data: List[Dict]) -> List[Dict]:
@@ -201,14 +202,21 @@ def process_market_stats(record: Dict) -> List[Dict]:
 
 def process_estate_data(district_df: pd.DataFrame) -> pd.DataFrame:
     all_estate_data = []
-    with tqdm(total=len(district_df), desc="Fetching estate data") as pbar:
+    with tqdm(total=len(district_df), desc="Processing District") as pbar:
         for _, row in district_df.iterrows():
-            district_data = fetch_estates_data(row['subdistrict_code'], limit=5000)
+            current_district = row['subdistrict_code']
+            current_subdistrict = row['subdistrict_name']  # Assuming 'Subdistrict' column exists in `district_df`
+            
+            district_data = fetch_estates_data(current_district, limit=5000)
             all_estate_data.extend(district_data)
-            pbar.update(1)  # Update progress bar after each district is processed
+            
+            # Update progress bar
+            pbar.update(1)
+            pbar.set_postfix({
+                'current': current_subdistrict,
+                'estates': len(all_estate_data)
+            })
     return pd.DataFrame(all_estate_data)
-
-
 
 def deep_flatten_json(df: pd.DataFrame, column: str) -> pd.DataFrame:
     def flatten_record(record, parent_key='', sep='_'):
@@ -381,7 +389,8 @@ FIELD_MAP = {
     'location': ['location']
 }
 
-def scrape_data(district_ids: List, base_url: str, params: Dict) -> List[Dict]:
+#def scrape_data(district_ids: List, base_url: str, params: Dict) -> List[Dict]:
+def scrape_data(district_df: pd.DataFrame, base_url: str, params: Dict) -> List[Dict]:
     """
     Scrape transaction data for a list of district IDs
     
@@ -394,31 +403,44 @@ def scrape_data(district_ids: List, base_url: str, params: Dict) -> List[Dict]:
         List[Dict]: List of transaction data
     """
     all_data = []
-    for district_id in tqdm(district_ids, desc='Scraping district IDs:'):
-        params['intsmdist_ids'] = district_id
-        page = 1
-        while True:
-            params['page'] = page
-            try:
-                data = get_soup(base_url, params=params)
+    
+    district_ids = district_df['subdistrict_code'].dropna().unique().tolist()
+    
+    with tqdm(total=len(district_ids), desc='Scraping district IDs') as pbar:
+        for district_id in district_ids:
+            params['intsmdist_ids'] = district_id
+            page = 1
+            
+            while True:
+                params['page'] = page
+                try:
+                    data = get_soup(base_url, params=params)
+                    
+                    results = data.get('result', [])
+                    if not results:
+                        break
+                    
+                    for result in results:
+                        row = extract_fields(result, FIELD_MAP)
+                        if any(row.values()):  # Only append rows with valid data
+                            all_data.append(row)
+                    
+                    page += 1
+                    time.sleep(3)  # Avoid rate-limiting
                 
-                results = data.get('result', [])
-                if not results:
+                except Exception as e:
+                    print(f"Error occurred while scraping district ID {district_id}, page {page}: {e}")
                     break
-                
-                for result in results:
-                    row = extract_fields(result, FIELD_MAP)
-                    if any(row.values()):
-                        all_data.append(row)
-                
-                page += 1
-                time.sleep(3)  # Avoid rate-limiting
-                
-            except Exception as e:
-                print(f"Error occurred while scraping district ID {district_id}, page {page}: {e}")
-                break
+            
+            # Update progress bar after processing each district ID
+            pbar.update(1)
+            pbar.set_postfix({
+                'current_district': district_df[district_df['subdistrict_code'] == district_id]['subdistrict_name'].values[0],
+                'transactions': len(all_data)
+            })
 
     return all_data
+
 
 def fetch_transactions(district_codes_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -431,7 +453,7 @@ def fetch_transactions(district_codes_df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Transaction data
     """
     # Extract district IDs
-    district_ids = district_codes_df['subdistrict_code'].dropna().unique().tolist()
+    #district_ids = district_codes_df['subdistrict_code'].dropna().unique().tolist()
     
     # API configuration
     base_url = "https://data.midland.com.hk/search/v2/transactions"
@@ -442,12 +464,13 @@ def fetch_transactions(district_codes_df: pd.DataFrame) -> pd.DataFrame:
         "currency": "HKD",
         "unit": "feet",
         "search_behavior": "normal",
-        "tx_date": "3year",
+        #"tx_date": "3year",
         "limit": 1000  # Number of records per page
     }
     
     # Scrape data
-    transactions_data = scrape_data(district_ids, base_url, params)
+    #transactions_data = scrape_data(district_ids, base_url, params)
+    transactions_data = scrape_data(district_codes_df, base_url, params)
     
     # Convert to DataFrame
     df = pd.DataFrame(transactions_data)

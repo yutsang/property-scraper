@@ -15,7 +15,7 @@ from tqdm import tqdm
 import configparser
 import re
 import string
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, NoSuchElementException
 import os
 import json
 from pathlib import Path
@@ -23,7 +23,7 @@ from typing import Optional, Set
 import pickle
 import hashlib
 import yaml
-
+from bs4 import BeautifulSoup
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ def scrape_transaction_data(
     try:
         pbar = tqdm(total=len(area_df), desc="Processing areas", unit="area")
         
-        for area_idx, area_row in area_df[:5].iterrows():
+        for area_idx, area_row in area_df.iterrows():
             session_id = f"session_{area_idx}_{datetime.now().timestamp()}"
             subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
             url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
@@ -196,7 +196,7 @@ def scrape_transaction_data(
                             all_data.append(record)
                     
                     if date_reached:
-                        logger.info(f"Reached control date {control_date} in {area_row['Subdistrict']}")
+                        #logger.info(f"Reached control date {control_date} in {area_row['Subdistrict']}")
                         break
                         
                     # Pagination
@@ -278,190 +278,228 @@ def process_transaction_data(
     return pd.concat([trans_df, address_components], axis=1)
 
 def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
-    """Scrape estate listings with efficiency by comparing with existing data."""
+    """Robust estate scraper with district change tracking and zero-count handling"""
+    from tqdm.auto import tqdm
+    from datetime import datetime
+    
     driver = initialize_driver(params)
-    
-    # Load existing estate listings if available
+    required_columns = [
+        'Name', 'Address', 'Blocks', 'Units', 'UnitRate', 
+        'MoM', 'ForSale', 'ForRent', 'Link', 'Region',
+        'District', 'Subdistrict', 'Code', 'LastScraped'
+    ]
+
+    # Initialize data structures
+    district_changes = []
+    zero_count_districts = []
+    existing_listings = pd.DataFrame(columns=required_columns)
+    district_counts = {}
+
     try:
-        listings_file = params.get('estate_listings_file', 'data/02_intermediate/estate_listings.parquet')
+        listings_file = params.get('estate_listings_file', 'data/02_intermediate/centaline_estate_lv_1.parquet')
         if os.path.exists(listings_file):
-            existing_listings = pd.read_parquet(listings_file)
-            logger.info(f"Loaded {len(existing_listings)} existing estate listings")
-            # Create dictionary of existing estates for fast lookup
-            existing_estates = {row['Name']: row for _, row in existing_listings.iterrows()}
-        else:
-            existing_listings = pd.DataFrame()
-            existing_estates = {}
-            logger.info("No existing estates found. Will scrape all estates.")
+            try:
+                existing_listings = pd.read_parquet(listings_file)
+                logger.info(f"Loaded {len(existing_listings)} existing listings")
+                
+                # Clean and standardize data
+                existing_listings['Subdistrict'] = existing_listings['Subdistrict'].str.strip()
+                existing_listings['Code'] = existing_listings['Code'].astype(str).str.strip()
+                
+                # Create district count map
+                district_counts = existing_listings.groupby(['Subdistrict', 'Code']).size().to_dict()
+                logger.info(f"Loaded counts for {len(district_counts)} districts")
+
+            except Exception as e:
+                logger.error(f"Data loading failed: {str(e)}")
+                existing_listings = pd.DataFrame(columns=required_columns)
+
     except Exception as e:
-        logger.warning(f"Error loading existing listings: {str(e)}. Will scrape all estates.")
-        existing_listings = pd.DataFrame()
-        existing_estates = {}
-    
+        logger.error(f"Initialization error: {str(e)}")
+
     all_scraped_estates = []
     new_or_updated_estates = []
-    
+
     try:
-        for _, row in tqdm(area_df[:5].iterrows(), total=len(area_df), desc="Processing areas"):
-            subdistrict_part = clean_subdistrict(row['Subdistrict'])
-            session_id = generate_session_id()
-            url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_part}_19-{row['Code']}?q={session_id}"
-            
-            driver.get(url)
-            random_sleep(params['min_delay'], params['max_delay'])
-            
-            # Get total estate count on the page (for verification)
-            try:
-                estate_count_elem = WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.district-select-text"))
-                )
-                count_match = re.search(r'(\d+)\s+Estate\(s\)', estate_count_elem.text)
-                if count_match:
-                    expected_count = int(count_match.group(1))
-                    logger.info(f"Found {expected_count} estates in {row['Subdistrict']}")
-            except Exception:
-                expected_count = None
-            
-            # Extract all estates from all pages
-            current_page = 1
-            while True:
+        with tqdm(area_df.iterrows(), total=len(area_df), desc="Processing districts") as district_iter:
+            for _, row in district_iter:
+                subdistrict = str(row['Subdistrict']).strip()
+                code = str(row['Code']).strip()
+                district_key = (subdistrict, code)
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
                 try:
-                    estate_items = WebDriverWait(driver, 20).until(
-                        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "a.property-text.flex.def-property-box"))
-                    )
+                    # Generate session URL
+                    subdistrict_clean = clean_subdistrict(subdistrict)
+                    session_id = generate_session_id()
+                    url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_clean}_19-{code}?q={session_id}"
                     
-                    for item in estate_items:
-                        try:
-                            estate_name = item.find_element(By.CSS_SELECTOR, "div.main-text").text.strip()
-                            all_scraped_estates.append(estate_name)
-                            
-                            # Check if estate exists and if data has changed
-                            estate_changed = False
-                            
-                            # Extract all relevant data for comparison
-                            address = item.find_element(By.CSS_SELECTOR, "div.address.f-middle").text.strip()
-                            link = item.get_attribute("href")
-                            
-                            try:
-                                blocks = item.find_element(By.XPATH, 
-                                    ".//div[contains(text(), 'No. of Block(s)')]/following-sibling::div").text.strip()
-                            except:
-                                blocks = ""
-                                
-                            try:
-                                units = item.find_element(By.XPATH, 
-                                    ".//div[contains(text(), 'No. of Units')]/following-sibling::div").text.strip()
-                            except:
-                                units = ""
-                                
-                            try:
-                                unit_rate = item.find_element(By.XPATH, 
-                                    ".//div[contains(text(), 'Unit Rate of Saleable Area')]/following-sibling::div").text.strip()
-                            except:
-                                unit_rate = ""
-                                
-                            try:
-                                mom_change = item.find_element(By.XPATH, 
-                                    ".//div[contains(text(), 'MoM')]/following-sibling::div").text.strip()
-                            except:
-                                mom_change = ""
-                                
-                            try:
-                                for_sale = item.find_element(By.XPATH, 
-                                    ".//div[contains(text(), 'For Sale')]/following-sibling::div").text.strip()
-                            except:
-                                for_sale = ""
-                                
-                            try:
-                                for_rent = item.find_element(By.XPATH, 
-                                    ".//div[contains(text(), 'For Rent')]/following-sibling::div").text.strip()
-                            except:
-                                for_rent = ""
-                            
-                            # Check if estate exists and has changed
-                            if estate_name in existing_estates:
-                                existing_estate = existing_estates[estate_name]
-                                # Compare key fields to detect changes
-                                if (str(existing_estate.get('Address', '')) != address or
-                                    str(existing_estate.get('Blocks', '')) != blocks or
-                                    str(existing_estate.get('Units', '')) != units or
-                                    str(existing_estate.get('UnitRate', '')) != unit_rate or
-                                    str(existing_estate.get('ForSale', '')) != for_sale or
-                                    str(existing_estate.get('ForRent', '')) != for_rent):
-                                    estate_changed = True
-                            else:
-                                # New estate not in existing data
-                                estate_changed = True
-                            
-                            # Only add to the scraping list if new or changed
-                            if estate_changed:
-                                estate_data = {
-                                    'Name': estate_name,
-                                    'Address': address,
-                                    'Blocks': blocks,
-                                    'Units': units,
-                                    'UnitRate': unit_rate,
-                                    'MoM': mom_change,
-                                    'ForSale': for_sale,
-                                    'ForRent': for_rent,
-                                    'Link': link,
-                                    'Region': row['Region'],
-                                    'District': row['District']
-                                }
-                                new_or_updated_estates.append(estate_data)
-                                logger.debug(f"{'Updated' if estate_name in existing_estates else 'New'} estate: {estate_name}")
-                            
-                        except Exception as e:
-                            logger.debug(f"Error processing estate item: {str(e)}")
+                    # Navigate and get count
+                    driver.get(url)
+                    random_sleep(params['min_delay'], params['max_delay'])
                     
-                    # Check for next page
+                    # Robust count detection
+                    current_count = 0
                     try:
-                        next_btn = WebDriverWait(driver, 10).until(
-                            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.btn-next:not([disabled])"))
+                        count_element = WebDriverWait(driver, 15).until(
+                            EC.presence_of_element_located((By.CSS_SELECTOR, "h2.center span.text-red"))
                         )
-                        driver.execute_script("arguments[0].click();", next_btn)
-                        random_sleep(params['min_delay'], params['max_delay'])
-                        current_page += 1
-                    except:
-                        break  # No more pages
-                        
+                        count_text = count_element.text.strip().replace(',', '')
+                        current_count = int(count_text) if count_text.isdigit() else 0
+                    except Exception as e:
+                        logger.warning(f"Count check failed for {subdistrict}: {str(e)}")
+                    
+                    previous_count = district_counts.get(district_key, 0)
+                    status = "UNCHANGED"
+
+                    # Handle zero-count districts
+                    if current_count == 0 and previous_count == 0:
+                        zero_count_districts.append(district_key)
+                        status = "ZERO"
+                        logger.debug(f"Skipping zero-count district: {subdistrict} ({code})")
+                        continue
+                    
+                    # Skip unchanged districts
+                    if current_count == previous_count:
+                        status = "SKIPPED"
+                        #logger.info(f"Skipping unchanged district: {subdistrict} ({code}) [{current_count}]")
+                        continue
+
+                    # Track changed districts
+                    if current_count != previous_count:
+                        status = "MODIFIED"
+                        district_changes.append({
+                            'district': subdistrict,
+                            'code': code,
+                            'previous': previous_count,
+                            'current': current_count,
+                            'timestamp': current_time
+                        })
+                        logger.info(f"Processing changed district: {subdistrict} ({code}) {previous_count}→{current_count}")
+
+                    # Full scraping process
+                    current_page = 1
+                    scraped_estate_names = []
+                    
+                    with tqdm(desc="Scraping pages", leave=False) as page_bar:
+                        while True:
+                            try:
+                                WebDriverWait(driver, 20).until(
+                                    EC.presence_of_element_located((By.CSS_SELECTOR, "a.property-text.flex.def-property-box"))
+                                )
+                                soup = BeautifulSoup(driver.page_source, 'html.parser')
+                                estate_items = soup.select("a.property-text.flex.def-property-box")
+                                
+                                with tqdm(estate_items, desc="Processing estates", leave=False) as estate_iter:
+                                    for item in estate_iter:
+                                        try:
+                                            estate_data = process_estate_item(item, row)
+                                            scraped_estate_names.append(estate_data['Name'])
+                                            
+                                            existing_entry = existing_listings.get(estate_data['Name'], pd.Series(dtype=object))
+                                            if existing_entry.empty or estate_changed(existing_entry, estate_data):
+                                                new_or_updated_estates.append(estate_data)
+                                        except Exception as e:
+                                            logger.error(f"Error processing estate: {str(e)}")
+                                
+                                page_bar.update(1)
+                                
+                                # Pagination handling
+                                try:
+                                    next_btn = driver.find_element(By.CSS_SELECTOR, "button.btn-next:not([disabled])")
+                                    driver.execute_script("arguments[0].click();", next_btn)
+                                    random_sleep(params['min_delay'], params['max_delay'])
+                                    current_page += 1
+                                except NoSuchElementException:
+                                    break
+                                    
+                            except TimeoutException:
+                                logger.warning(f"Timeout in {subdistrict} page {current_page}")
+                                break
+                            except Exception as e:
+                                logger.error(f"Critical error: {str(e)}")
+                                break
+
+                    all_scraped_estates.extend(scraped_estate_names)
+
                 except Exception as e:
-                    logger.warning(f"Error processing page {current_page}: {str(e)}")
-                    break
+                    logger.error(f"District processing failed: {subdistrict} - {str(e)}")
+                    continue
+
+        # Generate final report
+        logger.info("\n=== District Change Report ===")
+        logger.info(f"Total districts processed: {len(area_df)}")
+        logger.info(f"Changed districts: {len(district_changes)}")
+        logger.info(f"Unchanged districts: {len(area_df) - len(district_changes) - len(zero_count_districts)}")
+        logger.info(f"Persistent zero-count districts: {len(zero_count_districts)}")
         
-        # Handle estates that have been removed
-        removed_estates = set(existing_estates.keys()) - set(all_scraped_estates)
-        if removed_estates:
-            logger.info(f"Found {len(removed_estates)} estates that are no longer available")
+        if district_changes:
+            logger.info("\nModified Districts (Previous → Current):")
+            for change in district_changes:
+                logger.info(f"  - {change['district']} ({change['code']}): {change['previous']} → {change['current']}")
         
-        # Create final DataFrame - keep existing data for unchanged estates
-        if new_or_updated_estates:
-            new_df = pd.DataFrame(new_or_updated_estates)
-            if not existing_listings.empty:
-                # Remove estates that no longer exist
-                filtered_existing = existing_listings[~existing_listings['Name'].isin(removed_estates)]
-                # Remove estates that will be updated
-                unchanged_existing = filtered_existing[~filtered_existing['Name'].isin([e['Name'] for e in new_or_updated_estates])]
-                # Combine unchanged existing with new/updated
-                final_df = pd.concat([unchanged_existing, new_df], ignore_index=True)
-            else:
-                final_df = new_df
-        else:
-            # No changes, just remove estates that no longer exist
-            if not existing_listings.empty:
-                final_df = existing_listings[~existing_listings['Name'].isin(removed_estates)]
-            else:
-                final_df = pd.DataFrame()
-        
-        # Save for next time
+        if zero_count_districts:
+            logger.info("\nZero-count Districts (Unchanged):")
+            for district in zero_count_districts[:5]:  # Show first 5 as sample
+                logger.info(f"  - {district[0]} ({district[1]})")
+
+        # Data consolidation
+        final_df = pd.concat([
+            existing_listings[existing_listings['Name'].isin(all_scraped_estates)],
+            pd.DataFrame(new_or_updated_estates)
+        ], ignore_index=True).reindex(columns=required_columns)
+
+        final_df = final_df[final_df['Name'].isin(all_scraped_estates)]
         final_df.to_parquet(listings_file, index=False)
         
-        logger.info(f"Total estates: {len(final_df)}, New/Updated: {len(new_or_updated_estates)}, Removed: {len(removed_estates)}")
+        logger.info(f"\nFinal counts: {len(final_df)} total estates ({len(new_or_updated_estates)} new/updated)")
         
-        return final_df
-        
+        return final_df[final_df['Name'].notnull()]
+
     finally:
         driver.quit()
+
+def estate_changed(existing: pd.Series, new: dict) -> bool:
+    """Safe comparison of individual values"""
+    comparison_fields = ['Address', 'Blocks', 'Units', 'UnitRate', 'ForSale', 'ForRent']
+    return any(
+        str(existing.get(field, '')) != str(new.get(field, ''))
+        for field in comparison_fields
+    )
+
+
+
+def process_estate_item(item, district_row) -> dict:
+    """Extract structured data from individual estate elements."""
+    return {
+        'Name': item.select_one("div.main-text").get_text(strip=True),
+        'Address': item.select_one("div.address.f-middle").get_text(strip=True),
+        'Blocks': safe_extract(item, "div:-soup-contains('No. of Block(s)') + div"),
+        'Units': safe_extract(item, "div:-soup-contains('No. of Units') + div"),
+        'UnitRate': safe_extract(item, "div:-soup-contains('Unit Rate of Saleable Area') + div"),
+        'MoM': safe_extract(item, "div:-soup-contains('MoM') + div"),
+        'ForSale': safe_extract(item, "div:-soup-contains('For Sale') + div"),
+        'ForRent': safe_extract(item, "div:-soup-contains('For Rent') + div"),
+        'Link': item.get('href'),
+        'Region': district_row['Region'],
+        'District': district_row['District'],
+        'Subdistrict': district_row['Subdistrict'],
+        'Code': district_row['Code'],
+        'LastScraped': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+def safe_extract(item, selector):
+    """Safe element text extraction with error handling."""
+    element = item.select_one(selector)
+    return element.get_text(strip=True) if element else ""
+
+def estate_changed(existing, new) -> bool:
+    """Compare key fields for change detection."""
+    return any(
+        str(existing.get(field, '')) != str(new.get(field, ''))
+        for field in ['Address', 'Blocks', 'Units', 'UnitRate', 'ForSale', 'ForRent']
+    )
+
 
 def safe_get_text(element, selector):
     """Helper function for fault-tolerant text extraction"""
@@ -474,12 +512,15 @@ def safe_get_text(element, selector):
 def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
     """Scrape detailed estate information with full data fields using incremental updates."""
     logger = logging.getLogger(__name__)
-    details_file = params.get('estate_details_file', 'data/02_intermediate/estate_details_raw.parquet')
+    details_file = params.get('estate_details_file', 'data/02_intermediate/centaline_estate_lv_2.parquet')
+    print("Details File:", details_file)
     
     # Load existing details
     existing_details = pd.DataFrame()
     if os.path.exists(details_file):
+        print("inside!!inside!!inside!!inside!!")
         existing_details = pd.read_parquet(details_file)
+        print('Checkpoint:', existing_details['Name'])
         logger.info(f"Loaded {len(existing_details)} existing estate details")
     
     # Get existing links and filter new listings
@@ -492,8 +533,6 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
 
     driver = initialize_driver(params)
     new_details = []
-
-    print("Check Size", len(new_listings))
 
     try:
         for _, row in tqdm(new_listings.iterrows(), total=len(new_listings), desc="Scraping new estates"):
@@ -575,9 +614,9 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
             updated_df = pd.concat([existing_details, new_df], ignore_index=True)
             updated_df.to_parquet(details_file, index=False)
             logger.info(f"Added {len(new_df)} new estate details")
-            return updated_df
+            return updated_df[updated_df['Name'].notnull()]
         
-        return existing_details
+        return existing_details[existing_details['Name'].notnull()]
 
     finally:
         # Robust driver termination with exception handling

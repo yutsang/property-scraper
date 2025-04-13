@@ -10,11 +10,11 @@ midland_res_area_code:
 
 cleaned_district_data:
   type: pandas.ParquetDataset
-  filepath: data/02_intermediate/cleaned_district_data.parquet
+  filepath: data/02_intermediate/midland_res_district_data.parquet
 
 raw_estate_data:
     type: pandas.JSONDataset
-    filepath: data/02_intermediate/raw_estate_data.json
+    filepath: data/02_intermediate/midland_res_raw_estate_data.json
     load_args:
         lines: True
     save_args:
@@ -23,7 +23,7 @@ raw_estate_data:
 
 midland_res_transactions:
   type: pandas.ParquetDataset
-  filepath: data/01_raw/midland_res_transactions.parquet
+  filepath: data/01_raw/midland_res_trans_lv_0.parquet
   save_args:
     index: False
 
@@ -35,13 +35,13 @@ midland_res_estates:
 
 merged_property_data:
   type: pandas.ParquetDataset
-  filepath: data/03_primary/merged_property_data.parquet
+  filepath: data/03_primary/midland_res_trans_lv_1.parquet
   save_args:
     index: False
 
 processed_property_data:
   type: pandas.ParquetDataset
-  filepath: data/03_primary/processed_property_data.parquet
+  filepath: data/03_primary/midland_res_trans_lv_2.parquet
   save_args:
     index: False
 
@@ -59,24 +59,28 @@ area_codes:
 # Rest of the catalog remains the same
 raw_estate_listings:
   type: pandas.ParquetDataset
-  filepath: data/02_intermediate/estate_listings.parquet
+  #filepath: data/02_intermediate/estate_listings.parquet
+  filepath: data/02_intermediate/centaline_estate_lv_1.parquet
 
 estate_details_raw:
   type: pandas.ParquetDataset
-  filepath: data/02_intermediate/estate_details_raw.parquet
+  #filepath: data/02_intermediate/estate_details_raw.parquet
+  filepath: data/02_intermediate/centaline_estate_lv_2.parquet
 
 raw_transaction_data:
   type: pandas.ParquetDataset
-  filepath: data/02_intermediate/transaction_records.parquet
+  filepath: data/02_intermediate/centaline_res_trans_lv_0.parquet
 
 # Processed Data
 processed_transactions:
   type: pandas.ParquetDataset
-  filepath: data/03_primary/transactions_processed.parquet
+  #filepath: data/03_primary/transactions_processed.parquet
+  filepath: data/02_intermediate/centaline_res_trans_lv_1.parquet
 
 enriched_estate_data:
   type: pandas.ParquetDataset
-  filepath: data/03_primary/estates_enriched.parquet
+  #filepath: data/03_primary/estates_enriched.parquet
+  filepath: data/02_intermediate/centaline_res_trans_lv_2.parquet
 
 ##################################################################
 
