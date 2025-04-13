@@ -86,10 +86,40 @@ enriched_estate_data:
 
 # Data Catalog for Midland ICI Pipeline
 
+ml_ici_area_code:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/midland_ici_area_code.csv
+  load_args:
+    sep: ","
+  save_args:
+    index: False
+
+midland_ici_building_listings:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/midland_ici_buildings.parquet
+
 
 ##################################################################
 
-# Data Catalog for Centaline ICI Pipeline
+# Data Catalog for Centaline OIR Pipeline
+
+# Input data
+cl_oir_area_code:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/centanet_oir_area_code.csv
+  load_args:
+    sep: ","
+    encoding: utf-8-sig
+  save_args:
+    index: False
+
+centanet_oir_buildings_listing:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centanet_oir_buildings.parquet
+
+centanet_oir_buildings_details:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centanet_oir_details.parquet
 
 
 ##################################################################

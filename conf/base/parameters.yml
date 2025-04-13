@@ -23,4 +23,67 @@ processing:
               'Podium', 'PODIUM', 'U/G', 'P7', 'P4', 'UG1']
   flat_keywords: ['Flat', 'Apartment', 'Duplex']
 
+centaline_oir:
+  # API URLs
+  transaction_api_url: "https://oir.centanet.com/api/Transaction/GetTransactionList"
+  property_api_url: "https://oir.centanet.com/api/Property/GetPropertyList"
+
+  # File Path for Reduce Scraping
+  cl_oir_building_listings_file: 'data/02_intermediate/centanet_oir_buildings.parquet'
+  
+  # Date range for transactions
+  start_date: "2010-01-01"
+  end_date: "2025-04-13"  # Current date
+  
+  # Pagination
+  page_size: 10000
+  
+  # Rate limiting
+  min_delay: 3
+  max_delay: 5
+  
+  # Additional options
+  retry_count: 3
+  timeout: 30
+  
+  # Processing options
+  price_threshold: 1000000  # Minimum valid price
+  
+  # API headers (if needed)
+  headers:
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    Accept: "application/json"
+  #headers = {
+  #  "sec-ch-ua": '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+  #  "sec-ch-ua-mobile": "?0",
+  #  "sec-ch-ua-platform": '"macOS"',
+  #  "sec-fetch-dest": "empty",
+  #  "sec-fetch-mode": "cors",
+  #  "sec-fetch-site": "same-origin",
+  #  "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+  #  "referer": "https://oir.centanet.com/en/property/search/?pageindex=2&depts=Any&districtids=WS012",
+  #}
+
+  # Cookies
+  cookies: {"gr_user_id": "24005ea2-e47e-4e55-baed-171d8f324a03",
+    # Add additional cookies if needed
+  }
+
+midland_ici:
+  request_delay: 0.5
+  max_retries: 3
+  save_incremental: True
+  incremental_save_frequency: 5
+  resume_from_existing: True
+  midland_ici_building_listings: 'data/02_intermediate/midland_ici_buildings.parquet'
+
+  # API URLs
+  buildings_url: "https://service.midlandici.com/building/graphql"
+  headers:  {
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+        "Origin": "https://www.midlandici.com.hk",
+        "Referer": "https://www.midlandici.com.hk/",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+    }
 

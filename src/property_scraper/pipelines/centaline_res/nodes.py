@@ -518,9 +518,9 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
     # Load existing details
     existing_details = pd.DataFrame()
     if os.path.exists(details_file):
-        print("inside!!inside!!inside!!inside!!")
+        #print("inside!!inside!!inside!!inside!!")
         existing_details = pd.read_parquet(details_file)
-        print('Checkpoint:', existing_details['Name'])
+        #print('Checkpoint:', existing_details['Name'])
         logger.info(f"Loaded {len(existing_details)} existing estate details")
     
     # Get existing links and filter new listings

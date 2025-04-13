@@ -56,20 +56,18 @@ Chai Wan,WS012,b92534b2-5e3f-4dbf-9cb2-4c79cf0d13b1,Prince Industrial Building (
 Chai Wan,WS012,bf52c59c-371d-44da-b42b-542d0e735ca1,Reality Tower,4 San On Street,,1977 Year,14 Floor(s),Chai Wan,Hong Kong,0,1,11
 Chai Wan,WS012,338c1a8e-e92b-4fe7-aa3b-b1eeb38f6cb9,Hong Kong (Chai Wan) Industrial Building,26 Lee Chung Street,,1965 Year,9 Floor(s),Chai Wan,Hong Kong,0,1,1
 Chai Wan,WS012,d5959dc5-22b7-4bed-8110-7150bda217a2,Glory Industrial Building,22 Lee Chung Street,,1968 Year,12 Floor(s),Chai Wan,Hong Kong,0,0,0
-Chai Wan,WS012,8b0aff5a-1d8c-4cd4-9bd8-082ab9c7ed29,Chung On Industrial Building,28 Lee Chung Street,,1965 Year,9 Floor(s),Chai Wan,Hong Kong,0,0,0
 Chai Wan,WS012,feb5cbee-9939-4363-8894-7ec100a07fd4,Gee Tung Chang Industrial Building,4 Fung Yip Street,,1982 Year,14 Floor(s),Chai Wan,Hong Kong,0,0,2
 Chai Wan,WS012,3b084017-747e-419f-81c8-25f85cae4472,Summit Industrial Building,9 Sun Yip Street,,1982 Year,14 Floor(s),Chai Wan,Hong Kong,0,0,1
 Chai Wan,WS012,255e18cd-1fa6-4f40-9858-fd7a5c2f662e,Gee Wing Chang Industrial Building,6 Fung Yip Street,,1983 Year,14 Floor(s),Chai Wan,Hong Kong,0,0,4
 Chai Wan,WS012,82df1bae-ae73-40c7-903d-c8de01d153a3,Yeung Yiu Chung (No. 7) Industrial Bldg.,2 Fung Yip Street,,1981 Year,15 Floor(s),Chai Wan,Hong Kong,0,0,5
 Chai Wan,WS012,7a729cac-351b-4bb9-865c-5275fa632b42,Luen Fat Loong Factory Building,19 Cheung Lee Street,,1965 Year,6 Floor(s),Chai Wan,Hong Kong,0,0,0
+Chai Wan,WS012,600f1ce0-80c7-4196-ac94-7e3671f7bafe,Fook Hing Factory Building,33 Lee Chung Street,,1972 Year,10 Floor(s),Chai Wan,Hong Kong,0,0,0
 Chai Wan,WS012,815a865a-25d7-4876-96ad-c5c82e13becb,Minico Building,18 Lee Chung Street,,1980 Year,13 Floor(s),Chai Wan,Hong Kong,0,0,0
 Chai Wan,WS012,e4a08a7b-531a-4308-9c4e-0c93c3452481,Shun Yee Factory Building,30-32 Lee Chung Street,,1966 Year,10 Floor(s),Chai Wan,Hong Kong,0,0,0
 Chai Wan,WS012,beb7895a-dd63-4c44-8198-1524501092e0,Mega-iAdvantage,399 Chai Wan Road,"Sun Hung Kai Properties Limited, Sanewing Investments Limited",2000 Year,34 Floor(s),Chai Wan,Hong Kong,0,0,0
-Tin Hau,WS046,d1b11d99-9990-4477-ac76-e99382b5cb35,Citicorp Centre,18 Whitfield Road,Cheung Kong (Holdings) Limited,1983 Year,37 Floor(s),Tin Hau,Hong Kong,2,8,2
 Tin Hau,WS046,f06161ac-4a01-4c89-858e-645c9d54d4be,Sea View Estate B,2-8 Watson Road,Laws Property Holdings Limited,1966 Year,14 Floor(s),Tin Hau,Hong Kong,3,4,5
 Tin Hau,WS046,b3e23d5a-da19-40b0-a588-4bb04dd3fd0f,Sea View Estate A,2-8 Watson Road,Laws Property Holdings Limited,1966 Year,14 Floor(s),Tin Hau,Hong Kong,4,1,6
 Tin Hau,WS046,725161f4-4606-4289-ab4c-5dab7e2991ea,Sea View Estate C,2-8 Watson Road,Laws Property Holdings Limited,1971 Year,14 Floor(s),Tin Hau,Hong Kong,1,1,2
-Shau Kei Wan,WS011,e4721ddf-76ad-42b0-ae58-5ae799c162ff,Centro-Sound Industrial Building,6 A Kung Ngam Village Road,,1978 Year,7 Floor(s),Shau Kei Wan,Hong Kong,2,3,0
 Shau Kei Wan,WS011,cbb55cad-4d08-419b-9e91-ddd9ae26f19f,Hop Lung Factory Building,1 Mong Lung Street,,1975 Year,21 Floor(s),Shau Kei Wan,Hong Kong,0,4,2
 Shau Kei Wan,WS011,5f0956d0-a45d-4bc3-83e4-1ac4e66b4283,Manson Industrial Building,8 A Kung Ngam Village Lane,,1976 Year,16 Floor(s),Shau Kei Wan,Hong Kong,0,0,1
 Shau Kei Wan,WS011,1c4bfaac-f6cc-4171-87d9-1b2c3244e462,Horizon East (SKW),3 Tung Wong Road,,2000 Year,21 Floor(s),Shau Kei Wan,Hong Kong,0,0,0
@@ -90,7 +88,6 @@ Causeway Bay,WS007,1850b2b5-ae9a-4bdd-99a8-38571b985300,East Point Centre,555 He
 Causeway Bay,WS007,54ac4e37-d352-49c7-ace6-74b49effa257,"China Tai Ping Tower, Phase I",8 Sunning Road,,1992 Year,26 Floor(s),Causeway Bay,Hong Kong,0,9,4
 Causeway Bay,WS007,88a8a107-d942-48d5-9ea7-c5d035edeac5,Hang Lung Centre,2-20 Paterson Street,Hang Lung Properties Limited,1975 Year,26 Floor(s),Causeway Bay,Hong Kong,0,9,10
 Causeway Bay,WS007,c886bb05-9d0a-4fa4-b08d-0a77c79a56ef,Kyoto Plaza,491-499 Lockhart Road,,1992 Year,23 Floor(s),Causeway Bay,Hong Kong,8,1,10
-Causeway Bay,WS007,0232753d-1be4-428b-9111-6db2e9cdb3ca,"Times Square, Tower 2",1 Matheson Street,Wheelock and Company Limited,1993 Year,39 Floor(s),Causeway Bay,Hong Kong,0,7,8
 Causeway Bay,WS007,af65a222-751f-483f-9ceb-62d8490c1e49,68 Yee Wo Street,68 Yee Wo Street,,1984 Year,24 Floor(s),Causeway Bay,Hong Kong,0,7,2
 Causeway Bay,WS007,6ca9d806-3094-4810-806d-88c8fd2491a9,"China Tai Ping Tower, Phase II",8 Sunning Road,,1997 Year,27 Floor(s),Causeway Bay,Hong Kong,0,7,4
 Causeway Bay,WS007,d0cd0bc5-9979-4257-9e5e-055ee6db044c,Prosperous Commercial Building,54-58 Jardine's Bazaar,Cheerwall Development Limited,1991 Year,26 Floor(s),Causeway Bay,Hong Kong,7,2,4
@@ -253,7 +250,6 @@ Southern District,WS002,0fb536aa-718b-4ca8-a193-231b85a5d69c,Ha Lung Industrial 
 Southern District,WS002,542f6c27-b172-4536-b5fb-3b854ba226dd,Sing Teck Factory Building,44 Wong Chuk Hang Road,,1974 Year,25 Floor(s),Southern District,Hong Kong,6,2,2
 Southern District,WS002,0ed78b19-0611-40af-af77-66be25b91731,Shui Ki Industrial Building,18 Wong Chuk Hang Road,,1973 Year,17 Floor(s),Southern District,Hong Kong,5,4,2
 Southern District,WS002,c09f93f4-0d6d-4fd0-b5c0-dddda9e043ae,Sun Ying Industrial Centre,9 Tin Wan Close,Nan Fung Development Limited,1988 Year,24 Floor(s),Southern District,Hong Kong,5,2,0
-Southern District,WS002,8496ec00-626d-4f8e-936a-375e10d1fd79,Kin Teck Industrial Building,26 Wong Chuk Hang Road,,1972 Year,17 Floor(s),Southern District,Hong Kong,4,2,1
 Southern District,WS002,9bc58c7a-8e88-4757-96ac-3b0de93ce29e,Yally Industrial Building,6 Yip Fat Street,,1974 Year,23 Floor(s),Southern District,Hong Kong,4,2,4
 Southern District,WS002,9a7ffc71-fafa-4609-a34a-8a3bb5377b34,Sun Hing Industrial Building (WCH),46 Wong Chuk Hang Road,,1984 Year,13 Floor(s),Southern District,Hong Kong,2,3,1
 Southern District,WS002,0ec800da-9ce8-4665-a2ee-77774d8702fa,Blue Box Factory Building,25 Hing Wo Street,,1974 Year,15 Floor(s),Southern District,Hong Kong,5,2,0
@@ -305,7 +301,6 @@ Wan Chai,WS006,8bc3f15e-61ca-4c04-865e-0647c5289706,China Overseas Building,139 
 Wan Chai,WS006,0a90b0c9-2899-4e09-8cc1-bed78811f185,Pico Tower,64-66 Gloucester Road,,1977 Year,23 Floor(s),Wan Chai,Hong Kong,6,1,6
 Wan Chai,WS006,2c6e3e89-67b5-4e9d-b7e9-0e30f04959da,Winland Square,314-324 Hennessy Road,,1978 Year,25 Floor(s),Wan Chai,Hong Kong,1,5,1
 Wan Chai,WS006,a7d5bec2-e5bf-434d-b432-e973e8a40640,Cnt House,120 Johnston Road,China Paint Group,1983 Year,24 Floor(s),Wan Chai,Hong Kong,2,3,3
-Wan Chai,WS006,d21a587e-7341-49d6-a3da-68abb52e534d,Siu On Centre,188 Lockhart Road,,1994 Year,30 Floor(s),Wan Chai,Hong Kong,0,4,1
 Wan Chai,WS006,d2dae82b-2afb-489c-98ee-27951f5d048d,Luk Kwok Centre,72 Gloucester Road,"The Luk Hoi Tong Co., Limited",1989 Year,29 Floor(s),Wan Chai,Hong Kong,0,4,2
 Wan Chai,WS006,05d068ee-6f8e-477b-8bd4-62d7a91ea529,Sing-Ho Finance Building,166-168 Gloucester Road,,1981 Year,25 Floor(s),Wan Chai,Hong Kong,2,2,8
 Wan Chai,WS006,ec56b894-52c5-4f79-9aa3-23717150771f,Great Eagle Centre,23 Harbour Road,The Great Eagle Company Limited,1983 Year,39 Floor(s),Wan Chai,Hong Kong,0,4,8
@@ -371,6 +366,7 @@ Cheung Sha Wan,WS015,fb0ccb52-7ff0-4600-ae14-8084fa712710,Hang Cheong Factory Bu
 Cheung Sha Wan,WS015,f4a38a75-d17d-48d5-8622-c0148bc1b3ae,China United Plaza,1008 Tai Nan West Street,,1995 Year,27 Floor(s),Cheung Sha Wan,Kowloon,10,3,14
 Cheung Sha Wan,WS015,4db31a92-3da2-498f-a9a5-e515a15de2b9,HK Spinners Industrial Building I & II,800 Cheung Sha Wan Road,,1965 Year,9 Floor(s),Cheung Sha Wan,Kowloon,3,12,5
 Cheung Sha Wan,WS015,ed67d510-32b5-4599-b1fb-67eae2246d9d,Cheung Lung Industrial Building,10 Cheung Yee Street,Sum Lung Investment Company Limited,1977 Year,12 Floor(s),Cheung Sha Wan,Kowloon,5,8,3
+Cheung Sha Wan,WS015,d2fe32ec-185e-4b79-97c1-9b3ad250c3ae,Trust Centre,912-914 Cheung Sha Wan Road,Sun Hung Kai Properties Limited,1994 Year,17 Floor(s),Cheung Sha Wan,Kowloon,9,2,6
 Cheung Sha Wan,WS015,8b578e11-5ca0-437b-a450-b4419e4733b1,Comweb Plaza,12 Cheung Yue Street,Sun Hung Kai Properties Limited,1996 Year,31 Floor(s),Cheung Sha Wan,Kowloon,10,2,11
 Cheung Sha Wan,WS015,a1d43884-c91a-456a-be26-d140a2c9d1ae,Goodluck Industrial Centre,808 Lai Chi Kok Road,Tian Teck Land Limited,1985 Year,12 Floor(s),Cheung Sha Wan,Kowloon,5,8,9
 Cheung Sha Wan,WS015,7a337442-7754-4919-9001-167e11e6f648,HK Industrial Centre Block B,489-491 Castle Peak Road,E. Wah Realty Limited,1982 Year,12 Floor(s),Cheung Sha Wan,Kowloon,6,6,13
@@ -597,7 +593,6 @@ Tai Kok Tsui,WS018,f6992977-fb80-40fb-a720-0be7c011244a,On Yip Factory Building,
 Tai Kok Tsui,WS018,0675f069-efc4-480d-a8cf-a5063db57561,Rodeo Centre,73-79 Larch Street,,1991 Year,14 Floor(s),Tai Kok Tsui,Kowloon,0,1,1
 Tai Kok Tsui,WS018,994d4093-075d-416f-b71e-d1b02bb2b37e,Fuk Sing Factory Building,2 Walnut Street,,1966 Year,13 Floor(s),Tai Kok Tsui,Kowloon,0,1,0
 Tai Kok Tsui,WS018,882ddf28-de2d-4063-af98-63a1cdc5c466,Larch Industrial Building,8-10 Larch Street,,1963 Year,7 Floor(s),Tai Kok Tsui,Kowloon,1,0,0
-Tai Kok Tsui,WS018,28edb0d8-30f9-427c-995f-dbdd0abb7bc6,Hing Lee Industrial Building,89 Bedford Road,,1988 Year,13 Floor(s),Tai Kok Tsui,Kowloon,1,0,0
 Tai Kok Tsui,WS018,ed4bbaf1-3c89-4647-a355-d8369b0e0fdf,Island Industrial Building,81-87 Tung Chau Street,,1980 Year,14 Floor(s),Tai Kok Tsui,Kowloon,1,0,0
 Tai Kok Tsui,WS018,3e08536e-89f2-468e-b108-a4146c48e709,Bedford Factory Building,51 Bedford Road,,1961 Year,10 Floor(s),Tai Kok Tsui,Kowloon,1,0,0
 Tai Kok Tsui,WS018,4a7e1044-f6eb-4e42-879b-b8b48000396d,Nam Wah Factory Building,40 Bedford Road,,1962 Year,7 Floor(s),Tai Kok Tsui,Kowloon,0,1,0
@@ -701,6 +696,7 @@ Hung Hom,WS027,b9e1e493-4aa8-44f3-b563-26ba295afc6c,Kaiser Estate Phase III,9-11
 Hung Hom,WS027,ac32004f-7e98-4d87-b154-c1205010fed0,Hang Fung Industrial Building I,2 Hok Yuen Street,,1979 Year,12 Floor(s),Hung Hom,Kowloon,0,1,7
 Hung Hom,WS027,dc6f626f-2688-4665-8f7a-f8a2d6ef0632,Focal Industrial Centre A,21 Man Lok Street,Aik San Realty Limited,1986 Year,24 Floor(s),Hung Hom,Kowloon,0,0,12
 Hung Hom,WS027,e6468bb6-f9cc-4968-8f37-4a63534a01d0,Conic Investment Building,13 Hok Yuen Street,,1982 Year,12 Floor(s),Hung Hom,Kowloon,0,0,0
+Kwun Tong,WS032,1272a802-d6c1-4853-baa9-2f8f188cbf5d,COS Centre,52-56 Tsun Yip Street,Billion Development and Project Management Limited,2015 Year,35 Floor(s),Kwun Tong,Kowloon,175,135,14
 Kwun Tong,WS032,175b52bc-107e-4096-814d-e53ae3a6cafb,TG Place,10 Shing Yip Street,Billion Development and Project Management Limited,2014 Year,30 Floor(s),Kwun Tong,Kowloon,123,74,35
 Kwun Tong,WS032,aa19d62e-3c8a-453a-a1db-e25a642ac188,Montery Plaza,15-17 Chong Yip Street,Billion Development and Project Management Limited,2015 Year,37 Floor(s),Kwun Tong,Kowloon,81,59,7
 Kwun Tong,WS032,fd296af1-37d9-463b-b65b-09a50b617464,Legend Tower,7 Shing Yip Street,Billion Development and Project Management Limited,2010 Year,32 Floor(s),Kwun Tong,Kowloon,19,47,27
@@ -835,6 +831,7 @@ Kwun Tong,WS032,e5c961e0-258a-4140-af03-2874ca0e90fe,Seapower Industrial Centre,
 Kwun Tong,WS032,a45a6dba-1fea-47f8-8ade-fb69e3765671,Long Life Industrial Building,15 Ko Fai Road,,1976 Year,10 Floor(s),Kwun Tong,Kowloon,2,1,1
 Kwun Tong,WS032,79aeb2f9-3de2-4128-971b-d375a6f55a21,Wah Fai Industrial Building,4 Sze Shan Street,,1977 Year,7 Floor(s),Kwun Tong,Kowloon,2,2,15
 Kwun Tong,WS032,41d40e94-0de2-4ee6-885d-0bd919831033,Chuan Yuan Factory Building,342-344 Kwun Tong Road,,1966 Year,11 Floor(s),Kwun Tong,Kowloon,2,1,6
+Kwun Tong,WS032,5bbe9c58-117a-477a-ab86-5be15a0f3f99,Fu Hop Factory Building,209-211 Wai Yip Street,,1965 Year,12 Floor(s),Kwun Tong,Kowloon,3,0,2
 Kwun Tong,WS032,66981e83-90a4-457b-8b59-550692e12978,Union Industrial Building Block A,27 Ko Fai Road,,1981 Year,6 Floor(s),Kwun Tong,Kowloon,0,3,0
 Kwun Tong,WS032,3aa7b9c2-4f2c-44b8-b015-baa02faa9675,Sui Tai Wai Kee Plaza,25 Hung To Road,,1965 Year,9 Floor(s),Kwun Tong,Kowloon,0,3,39
 Kwun Tong,WS032,26ab7e52-fc6c-447c-bada-b9ab858562aa,Kras Asia Industrial Building,79 Hung To Road,,1975 Year,11 Floor(s),Kwun Tong,Kowloon,1,3,0
@@ -853,7 +850,6 @@ Kwun Tong,WS032,9c845862-9013-4f8f-91fe-b893f4967f97,Keysky Industrial Building,
 Kwun Tong,WS032,8819f864-ade5-4f20-836d-9c4a04670ce4,Everwin Centre,72 Hung To Road,,1992 Year,15 Floor(s),Kwun Tong,Kowloon,1,1,0
 Kwun Tong,WS032,ca4bed7a-39fa-4958-8f34-e0c2c71a1ce1,Liven House,61-63 King Yip Street,,1978 Year,12 Floor(s),Kwun Tong,Kowloon,2,1,1
 Kwun Tong,WS032,db094c66-03e0-4cee-b399-f127d1316e55,Millennium City 2,378 Kwun Tong Road,Sun Hung Kai Properties Limited,1999 Year,31 Floor(s),Kwun Tong,Kowloon,0,2,4
-Kwun Tong,WS032,f7306c76-e2e4-4067-91ab-9fd678d9848f,Cheung Hing Industrial Building (KT),23 Tai Yip Street,,1970 Year,12 Floor(s),Kwun Tong,Kowloon,2,1,0
 Kwun Tong,WS032,f3055331-a1c6-4818-8247-bfe673edfc73,Chen Yip Industrial Building,5 Lai Yip Street,,1972 Year,11 Floor(s),Kwun Tong,Kowloon,0,2,3
 Kwun Tong,WS032,4114025c-b110-49e2-bfc6-576562716511,Hung Shing Industrial Building (KT),27 Tai Yip Street,,1978 Year,12 Floor(s),Kwun Tong,Kowloon,2,0,0
 Kwun Tong,WS032,2fa21f44-781a-490f-89f4-4a2da00e7c64,Contempo Place,81 Hung To Road,,1983 Year,14 Floor(s),Kwun Tong,Kowloon,0,2,1
@@ -982,13 +978,13 @@ Mongkok,WS020,9b9aa339-5737-46c1-9075-35a94ca96434,Silvercorp International Towe
 Mongkok,WS020,b200e028-aa4e-476d-aa3f-e99fe016f252,Omega Plaza,32-34 Dundas Street,Sino Land Company Limited,1993 Year,23 Floor(s),Mongkok,Kowloon,0,1,2
 Mongkok,WS020,3715c9a3-0c3c-4017-867b-a1c51a3f7938,Gala Place,56 Dundas Street,Hang Lung Properties Limited,1975 Year,25 Floor(s),Mongkok,Kowloon,0,0,10
 Mongkok,WS020,63661c58-1b31-45ee-b406-4512d8c084a3,Chow Tai Fook Commercial Centre,580 Nathan Road,New World Development Company Limited,1997 Year,23 Floor(s),Mongkok,Kowloon,0,0,2
+Mongkok,WS020,b7b4a4f4-2d5e-4a8a-b456-77a93dd3e7b5,Win Century Centre,2 Mong Kok Road,Appearance Estate Limited,1997 Year,22 Floor(s),Mongkok,Kowloon,0,0,0
 Mongkok,WS020,302c51c2-528d-429c-b3bb-d46f52e695d9,Hollywood Plaza,610 Nathan Road,Hang Lung Properties Limited,1984 Year,24 Floor(s),Mongkok,Kowloon,0,0,21
 Mongkok,WS020,7d0d8731-5a44-4367-aff7-37095c8113b1,Wai Fung Plaza,664 Nathan Road,Central Development Limited,1984 Year,21 Floor(s),Mongkok,Kowloon,0,0,1
 Mongkok,WS020,d529596f-07d7-4de1-9db3-caa90f106f92,"Office Tower One, Grand Plaza",639 Nathan Road,,1986 Year,23 Floor(s),Mongkok,Kowloon,0,0,6
 Mongkok,WS020,2ab62d4c-8fe6-4161-b505-7a94fc26500f,"Office Tower Two, Grand Plaza",625 Nathan Road,,1976 Year,20 Floor(s),Mongkok,Kowloon,0,0,6
 Mongkok,WS020,003bfbd9-39e6-4d55-81da-638dbf67984c,Righteous Centre,585 Nathan Road,Henderson Land Development Company Limited,1996 Year,26 Floor(s),Mongkok,Kowloon,0,0,7
 Mongkok,WS020,5b0710db-1f97-40ae-9002-34cd4623cae0,38 Plaza,38 Shantung Street,,1998 Year,18 Floor(s),Mongkok,Kowloon,0,0,2
-Prince Edward,WS019,697e371e-a54b-4280-8ee4-27cb5bcdf451,Kowloon Investment Building,8 Bute Street,,1973 Year,12 Floor(s),Prince Edward,Kowloon,0,33,0
 Prince Edward,WS019,f8bd9d6d-6837-4fcf-b42d-0d2f7b0dd77b,Belgian Bank Building,721-725 Nathan Road,Rich Treasure Development Limited,1977 Year,17 Floor(s),Prince Edward,Kowloon,8,3,6
 Prince Edward,WS019,f2a70f77-8963-4ecb-9301-0df5df11feb7,Allied Plaza,760 Nathan Road,,,,,,5,4,6
 Prince Edward,WS019,4a02fc35-6453-45cf-bbea-8e6886945a7f,Pioneer Centre,750-758 Nathan Road,,1995 Year,25 Floor(s),Prince Edward,Kowloon,0,5,10
@@ -999,7 +995,6 @@ Prince Edward,WS019,aabd12a3-5df3-4921-bb7a-71da7bde8269,Henley Industrial Centr
 Prince Edward,WS019,e989b81e-113f-4198-98e9-e3e049deae5a,Grand Century Place I,193 Prince Edward Road West,"Sun Hung Kai Properties Limited, Kowloon-Canton Railway Corporation",1997 Year,21 Floor(s),Prince Edward,Kowloon,0,1,6
 Prince Edward,WS019,a3bc4172-900e-49b8-8dc6-d1abfff5ccc3,Grand Century Place II,193 Prince Edward Road West,"Sun Hung Kai Properties Limited, Kowloon-Canton Railway Corporation",1997 Year,21 Floor(s),Prince Edward,Kowloon,0,1,5
 Prince Edward,WS019,54f59c48-b291-4ed1-8aad-fd7f959cc415,Fuk On Factory Building,1123 Canton Road,,1971 Year,13 Floor(s),Prince Edward,Kowloon,1,0,0
-Prince Edward,WS019,9e5c1203-1b97-43f6-9aae-9f26635f4857,"Kowloon Investment Co. Ltd., Fty Bldg (No.18 Bute Street)",18 Bute Street,,,5 Floor(s),Prince Edward,Kowloon,1,0,0
 Prince Edward,WS019,66f94cd3-3ca3-4412-9b48-5963f6cbfbcc,Famous Horse Centre,1145-1153 Canton Road,,1980 Year,13 Floor(s),Prince Edward,Kowloon,0,0,0
 Prince Edward,WS019,a62ac762-08f9-4661-942d-419f8b964f62,Prince Edward The Lamma City,761 Nathan Road,YU TAI HING Company Limited,2003 Year,19 Floor(s),Prince Edward,Kowloon,0,0,3
 Prince Edward,WS019,77ec08af-900d-4181-880b-a25ff2a99830,Sunbeam Plaza,1155 Canton Road,,1993 Year,20 Floor(s),Prince Edward,Kowloon,0,0,3
@@ -1034,7 +1029,6 @@ To Kwa Wan,WS026,79893934-bd5a-4150-86b0-ae274c10ac76,K.K. Industrial Building,5
 To Kwa Wan,WS026,394788ef-38f5-49a2-a7ae-8752867ef90a,Wearbest Building Phase I,60-64 To Kwa Wan Road,,1958 Year,9 Floor(s),To Kwa Wan,Kowloon,0,0,1
 To Kwa Wan,WS026,aeab4446-507e-403e-ba04-4803cd054f6e,Wacker Industrial Building,11 Mok Cheong Street,,1954 Year,5 Floor(s),To Kwa Wan,Kowloon,0,0,0
 To Kwa Wan,WS026,169e214f-e32a-437d-ac6c-bacbd061327f,New Lee Wah Centre,88 To Kwa Wan Road,,1997 Year,19 Floor(s),To Kwa Wan,Kowloon,0,0,1
-To Kwa Wan,WS026,b3b6861d-63d2-4e0b-8e5a-e0c074bd2708,Shun Wai Industrial Building,15 Yuk Yat Street,,1974 Year,12 Floor(s),To Kwa Wan,Kowloon,0,0,2
 To Kwa Wan,WS026,89f7bd29-8667-45c8-b33d-79976c0269dd,Gee Chang Industrial Building,108 Lok Shan Road,,1970 Year,11 Floor(s),To Kwa Wan,Kowloon,0,0,2
 To Kwa Wan,WS026,6d9ef263-5f08-4240-ae86-ba98b9f4ad97,Tai Chiap Factory Building,17 Yuk Yat Street,,1974 Year,11 Floor(s),To Kwa Wan,Kowloon,0,0,0
 To Kwa Wan,WS026,2e6c9f99-c019-4af2-aa36-90118b749639,Luen Ming Hing Factory Building,36 Mok Cheong Street,,1970 Year,11 Floor(s),To Kwa Wan,Kowloon,0,0,11
@@ -1044,6 +1038,7 @@ To Kwa Wan,WS026,c4236d02-e78d-4809-beac-8662b4161f91,Acro Industrial Building,1
 Yau Ma Tei,WS021,931cf37f-8fcc-4b6e-92bc-e3ca4e4935b2,Tai Shing Commercial (Yaumati) Building,498-500 Nathan Road,,1974 Year,23 Floor(s),Yau Ma Tei,Kowloon,14,3,12
 Yau Ma Tei,WS021,b1d7b5c7-51a0-4d58-b639-a1bf30acd8da,Bangkok Bank Building,490-492 Nathan Road,,1976 Year,23 Floor(s),Yau Ma Tei,Kowloon,7,1,1
 Yau Ma Tei,WS021,4ff4db2b-677d-4f5d-8710-ce3d0fb63e20,Ginza Square,565-567 Nathan Road,Sino Land Company Limited,1992 Year,23 Floor(s),Yau Ma Tei,Kowloon,0,4,1
+Yau Ma Tei,WS021,521382ee-d2c1-401d-8bad-180adb2e6a4a,Kowloon Building,555 Nathan Road,,1988 Year,23 Floor(s),Yau Ma Tei,Kowloon,0,2,3
 Island District,WS044,b4d7e366-c074-48cb-93be-dce5ae8e168d,Cainiao Smart Gateway,8 Chun Yue Road,,,12 Floor(s),Islands District,New Territories,0,0,0
 Fanling,WS052,ddfa4e08-ca1a-45a3-bc64-9fe8058282d4,Fuk Shing Commercial Building,28 On Lok Mun Street,Golden Opportunities Development Limited,1999 Year,6 Floor(s),Fanling,New Territories,2,17,1
 Fanling,WS052,fe61b007-dd5d-49e1-9656-345a0b6a6d6a,Raleigh Centre,9 Yip Cheong Street,Sino Land Company Limited,1989 Year,6 Floor(s),Fanling,New Territories,13,0,0
@@ -1099,8 +1094,8 @@ Sha Tin,WS035,958168c4-1633-4753-893d-190bfdac7398,Goldfield Industrial Centre,1
 Sha Tin,WS035,42dc338b-41f8-4b3b-9e24-853ba6d2e5be,Wah Yiu Industrial Centre,30-32 Au Pui Wan Street,Chinachem Group,1988 Year,15 Floor(s),Sha Tin,New Territories,10,7,12
 Sha Tin,WS035,739393a7-699c-461f-b272-8b5a5c332d03,Leapont Centre,18-28 Wo Liu Hang Road,Cotten USA Supply Chain,1981 Year,12 Floor(s),Sha Tin,New Territories,11,1,13
 Sha Tin,WS035,8dd4b945-6f74-44d6-b3b3-f80a07cca500,Fo Tan Industrial Centre,26-28 Au Pui Wan Street,Cheung Kong (Holdings) Limited,1985 Year,18 Floor(s),Sha Tin,New Territories,11,1,21
+Sha Tin,WS035,4216d91f-e6b5-46a2-87f8-abd1674ef00c,Yale Industrial Centre,61-63 Au Pui Wan Street,Sun Hung Kai Properties Limited,1987 Year,15 Floor(s),Sha Tin,New Territories,8,6,19
 Sha Tin,WS035,ae744354-66b7-47ef-8cde-4d18caa049a5,Wah Lai Industrial Centre,10-14 Kwei Tei Street,Chinachem Group,1988 Year,15 Floor(s),Sha Tin,New Territories,10,3,1
-Sha Tin,WS035,cb0ebf1c-d8d3-4e28-bf5f-68472261139e,Veristrong Industrial Centre Block B,34-36 Au Pui Wan Street,Wah Ha Realty Company Limited,1988 Year,17 Floor(s),Sha Tin,New Territories,4,8,11
 Sha Tin,WS035,e123f510-c203-4736-9c1d-f1d42752e338,Haribest Industrial Building,45-47 Au Pui Wan Street,Aik San Realty Limited,1987 Year,15 Floor(s),Sha Tin,New Territories,6,5,29
 Sha Tin,WS035,826ad54a-e108-4486-8f8e-1721fc4bf8ec,New Commerce Centre,19 On Sum Street,Sun Hung Kai Properties Limited,1997 Year,17 Floor(s),Sha Tin,New Territories,8,3,21
 Sha Tin,WS035,839405a7-8586-47e5-8a88-ef7363709a6e,Yue Cheung Centre,1-3 Wong Chuk Yeung Street,Tai Cheung Properties Limited,1986 Year,17 Floor(s),Sha Tin,New Territories,8,5,22
@@ -1240,10 +1235,8 @@ Tsuen Wan,WS040,7e19874d-3938-4339-8bf8-60f1528299ff,Yuet Kwong Industrial Build
 Tsuen Wan,WS040,0d2aa976-e7e8-4835-ad28-1eb84e28a299,Fritz Centre,100 Texaco Road,,1972 Year,9 Floor(s),Tsuen Wan,New Territories,0,0,0
 Tsuen Wan,WS040,a2dbcea3-4596-45d2-848d-b0eb60590580,Edward Wong Industrial Centre,13-23 Wang Wo Tsai Street,,1975 Year,12 Floor(s),Tsuen Wan,New Territories,0,0,0
 Tsuen Wan,WS040,61515b8f-d72b-4095-901e-8fe051001ec9,29-33 Chai Wan Kok Street,29-33 Chai Wan Kok Street,,1992 Year,2 Floor(s),Tsuen Wan,New Territories,0,0,0
-Tsuen Wan,WS040,6d7a5648-e4fd-454f-995a-87d5f1831d6b,UML TOWER,42 Fui Yiu Kok Street,,1971 Year,8 Floor(s),Tsuen Wan,New Territories,0,0,1
 Tsuen Wan,WS040,de0be983-6695-47d0-a57f-37f3f9f744bd,Pylon Tower,12-16 Fui Yiu Kok Street,,1972 Year,12 Floor(s),Tsuen Wan,New Territories,0,0,0
 Tsuen Wan,WS040,9899c408-f7a7-465c-a5f2-93b23f1ff43d,47-51 Chai Wan Kok Street,47-51 Chai Wan Kok Street,,1961 Year,3 Floor(s),Tsuen Wan,New Territories,0,0,0
-Tsuen Wan,WS040,6d32ee31-a48d-4471-8ac6-f71cd857f47d,Jumbo I Advantage,145-159 Yeung Uk Road,,1965 Year,8 Floor(s),Tsuen Wan,New Territories,0,0,0
 Tsuen Wan,WS040,a8321e05-7a1b-42c3-b749-459aa7f26638,First Asia Tower,8-10 Fui Yiu Kok Street,,2009 Year,21 Floor(s),Tsuen Wan,New Territories,0,0,2
 Tsuen Wan,WS040,c88e00e8-66e2-4e3b-a081-464ba3ba8aa2,Link Dyeing Works Ltd,78-86 Texaco Road,,,2 Floor(s),Tsuen Wan,New Territories,0,0,0
 Tsuen Wan,WS040,d8470c93-d211-4491-81df-b88d978520a7,Wing Yu Factory Building,10-14 Wang Wo Tsai Street,,1970 Year,6 Floor(s),Tsuen Wan,New Territories,0,0,0
@@ -1412,6 +1405,7 @@ Kwai Chung,WS042,38d40905-aafb-4953-9907-fd8c0d1537c3,Che Wah Industrial Buildin
 Kwai Chung,WS042,91383902-ae23-4b71-9cc8-09a1fec51f40,On Dak Industrial Building,2-6 Wah Sing Street,,1979 Year,24 Floor(s),Kwai Chung,New Territories,2,1,27
 Kwai Chung,WS042,45fe8ce4-9a4b-421f-9f60-898d47d27d54,Koon Wo Industrial Building,63-75 Ta Chuen Ping Street,,1982 Year,23 Floor(s),Kwai Chung,New Territories,2,1,22
 Kwai Chung,WS042,76b0a5f7-ec76-4c17-b2ab-cd16ef32290a,Kiu Kwong Industrial Building,6-10 Ka Hing Road,,1975 Year,11 Floor(s),Kwai Chung,New Territories,2,0,0
+Kwai Chung,WS042,66c7532f-d520-45bc-9143-166d3e70e92e,Grand Industrial Building,159-165 Wo Yi Hop Road,,1972 Year,12 Floor(s),Kwai Chung,New Territories,2,1,13
 Kwai Chung,WS042,73bc802c-c853-4474-a1c8-1cd816d92f08,Hou Feng Industrial Building,1-5 Wing Kin Road,,1983 Year,22 Floor(s),Kwai Chung,New Territories,2,2,0
 Kwai Chung,WS042,163fe9c7-2752-4597-b5c6-1c1acb127ac9,Kwai Tak Industrial Centre Phase 2,15-33 Kwai Tak Street,Cheung Kong (Holdings) Limited,1979 Year,11 Floor(s),Kwai Chung,New Territories,1,0,1
 Kwai Chung,WS042,4f6068f3-ffb2-407b-8031-4da5881371f1,Mai Sik Industrial Building,1-11 Kwai Ting Road,,1972 Year,16 Floor(s),Kwai Chung,New Territories,0,1,4
@@ -1421,6 +1415,7 @@ Kwai Chung,WS042,8d648d00-8a9e-4b7b-a97e-4816309240bd,Kingsford Industrial Build
 Kwai Chung,WS042,e15bea70-698c-497e-82c8-e50137a1e8e1,Kin Hing Industrial Building,17-23 Shek Kin Street,Chinachem Group,1972 Year,19 Floor(s),Kwai Chung,New Territories,0,1,1
 Kwai Chung,WS042,ae6a5915-802b-4b00-8e7c-7e5d1f0ce8c3,Sung's Tower,15-19 Lam Tin Street,,1970 Year,9 Floor(s),Kwai Chung,New Territories,0,1,1
 Kwai Chung,WS042,f6062e58-16eb-45cb-aeab-544d267a90d8,Sung Kee Factory Building,18-30 Kwai Ting Road,,1971 Year,8 Floor(s),Kwai Chung,New Territories,0,1,1
+Kwai Chung,WS042,de7a8b22-9a71-40a7-b059-4ce3af4bb8d1,Leung Yip Industrial Building,17-21 Kwai Sau Road,,1972 Year,10 Floor(s),Kwai Chung,New Territories,1,0,0
 Kwai Chung,WS042,83099ddc-6e3d-4419-ab5d-6674b16939f1,Wing Hong Factory Building (KC),18-26 Kwai Fung Crescent,,1980 Year,16 Floor(s),Kwai Chung,New Territories,0,1,9
 Kwai Chung,WS042,d9184b11-a057-4694-aa41-0962d7fec0bf,Kam Chung Factory Building,30-38 Lam Tin Street,,1971 Year,9 Floor(s),Kwai Chung,New Territories,1,0,0
 Kwai Chung,WS042,e6cd560f-ff2e-4426-9bb1-dcfe9470b3c9,Tung Tak Centre,25-27 Lam Tin Street,,1989 Year,12 Floor(s),Kwai Chung,New Territories,1,0,0
@@ -1576,12 +1571,17 @@ Tuen Mun,WS039,3941eea7-9d1e-4be8-b567-7006f555bf2e,Gemmy Development Industrial
 Tuen Mun,WS039,d7acc6ca-7616-4fde-a33d-8931295e115f,Kin Ga Industrial Building,9 San On Street,,1991 Year,26 Floor(s),Tuen Mun,New Territories,0,0,4
 Tuen Mun,WS039,dd156fa9-aeb9-4fe5-a29e-018428632afb,Shing On Industrial Building,14 Sun On Street,,1979 Year,12 Floor(s),Tuen Mun,New Territories,0,0,0
 Tuen Mun,WS039,7b58259c-1ed3-4d81-b011-ab100110ed06,Crown Data Centre I,6 Kin Fung Circuit,,1977 Year,10 Floor(s),Tuen Mun,New Territories,0,0,0
-Chai Wan,WS012,600f1ce0-80c7-4196-ac94-7e3671f7bafe,Fook Hing Factory Building,33 Lee Chung Street,,1972 Year,10 Floor(s),Chai Wan,Hong Kong,0,0,0
-Cheung Sha Wan,WS015,d2fe32ec-185e-4b79-97c1-9b3ad250c3ae,Trust Centre,912-914 Cheung Sha Wan Road,Sun Hung Kai Properties Limited,1994 Year,17 Floor(s),Cheung Sha Wan,Kowloon,9,2,6
-Kwun Tong,WS032,1272a802-d6c1-4853-baa9-2f8f188cbf5d,COS Centre,52-56 Tsun Yip Street,Billion Development and Project Management Limited,2015 Year,35 Floor(s),Kwun Tong,Kowloon,175,135,14
-Kwun Tong,WS032,5bbe9c58-117a-477a-ab86-5be15a0f3f99,Fu Hop Factory Building,209-211 Wai Yip Street,,1965 Year,12 Floor(s),Kwun Tong,Kowloon,3,0,2
-Mongkok,WS020,b7b4a4f4-2d5e-4a8a-b456-77a93dd3e7b5,Win Century Centre,2 Mong Kok Road,Appearance Estate Limited,1997 Year,22 Floor(s),Mongkok,Kowloon,0,0,0
-Yau Ma Tei,WS021,521382ee-d2c1-401d-8bad-180adb2e6a4a,Kowloon Building,555 Nathan Road,,1988 Year,23 Floor(s),Yau Ma Tei,Kowloon,0,2,3
-Sha Tin,WS035,4216d91f-e6b5-46a2-87f8-abd1674ef00c,Yale Industrial Centre,61-63 Au Pui Wan Street,Sun Hung Kai Properties Limited,1987 Year,15 Floor(s),Sha Tin,New Territories,8,6,19
-Kwai Chung,WS042,66c7532f-d520-45bc-9143-166d3e70e92e,Grand Industrial Building,159-165 Wo Yi Hop Road,,1972 Year,12 Floor(s),Kwai Chung,New Territories,2,1,13
-Kwai Chung,WS042,de7a8b22-9a71-40a7-b059-4ce3af4bb8d1,Leung Yip Industrial Building,17-21 Kwai Sau Road,,1972 Year,10 Floor(s),Kwai Chung,New Territories,1,0,0
+Chai Wan,WS012,8b0aff5a-1d8c-4cd4-9bd8-082ab9c7ed29,Chung On Industrial Building,28 Lee Chung Street,,1965 Year,9 Floor(s),Chai Wan,Hong Kong,0,0,0
+Tin Hau,WS046,d1b11d99-9990-4477-ac76-e99382b5cb35,Citicorp Centre,18 Whitfield Road,Cheung Kong (Holdings) Limited,1983 Year,37 Floor(s),Tin Hau,Hong Kong,2,8,2
+Shau Kei Wan,WS011,e4721ddf-76ad-42b0-ae58-5ae799c162ff,Centro-Sound Industrial Building,6 A Kung Ngam Village Road,,1978 Year,7 Floor(s),Shau Kei Wan,Hong Kong,2,3,0
+Causeway Bay,WS007,0232753d-1be4-428b-9111-6db2e9cdb3ca,"Times Square, Tower 2",1 Matheson Street,Wheelock and Company Limited,1993 Year,39 Floor(s),Causeway Bay,Hong Kong,0,7,8
+Southern District,WS002,8496ec00-626d-4f8e-936a-375e10d1fd79,Kin Teck Industrial Building,26 Wong Chuk Hang Road,,1972 Year,17 Floor(s),Southern District,Hong Kong,4,2,1
+Wan Chai,WS006,d21a587e-7341-49d6-a3da-68abb52e534d,Siu On Centre,188 Lockhart Road,,1994 Year,30 Floor(s),Wan Chai,Hong Kong,0,4,1
+Tai Kok Tsui,WS018,28edb0d8-30f9-427c-995f-dbdd0abb7bc6,Hing Lee Industrial Building,89 Bedford Road,,1988 Year,13 Floor(s),Tai Kok Tsui,Kowloon,1,0,0
+Kwun Tong,WS032,f7306c76-e2e4-4067-91ab-9fd678d9848f,Cheung Hing Industrial Building (KT),23 Tai Yip Street,,1970 Year,12 Floor(s),Kwun Tong,Kowloon,2,1,0
+Prince Edward,WS019,697e371e-a54b-4280-8ee4-27cb5bcdf451,Kowloon Investment Building,8 Bute Street,,1973 Year,12 Floor(s),Prince Edward,Kowloon,0,33,0
+Prince Edward,WS019,9e5c1203-1b97-43f6-9aae-9f26635f4857,"Kowloon Investment Co. Ltd., Fty Bldg (No.18 Bute Street)",18 Bute Street,,,5 Floor(s),Prince Edward,Kowloon,1,0,0
+To Kwa Wan,WS026,b3b6861d-63d2-4e0b-8e5a-e0c074bd2708,Shun Wai Industrial Building,15 Yuk Yat Street,,1974 Year,12 Floor(s),To Kwa Wan,Kowloon,0,0,2
+Sha Tin,WS035,cb0ebf1c-d8d3-4e28-bf5f-68472261139e,Veristrong Industrial Centre Block B,34-36 Au Pui Wan Street,Wah Ha Realty Company Limited,1988 Year,17 Floor(s),Sha Tin,New Territories,4,8,11
+Tsuen Wan,WS040,6d7a5648-e4fd-454f-995a-87d5f1831d6b,UML TOWER,42 Fui Yiu Kok Street,,1971 Year,8 Floor(s),Tsuen Wan,New Territories,0,0,1
+Tsuen Wan,WS040,6d32ee31-a48d-4471-8ac6-f71cd857f47d,Jumbo I Advantage,145-159 Yeung Uk Road,,1965 Year,8 Floor(s),Tsuen Wan,New Territories,0,0,0
