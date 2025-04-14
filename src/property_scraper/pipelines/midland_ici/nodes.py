@@ -271,13 +271,6 @@ def _process_and_save_results(
     else:
         combined_df = existing_buildings_df
     
-    # Save to CSV
-    #try:
-    #    combined_df.to_csv(output_path, index=False)
-        #logger.info(f"Successfully saved {len(combined_df)} buildings to {output_path}")
-    #except Exception as e:
-    #    logger.error(f"Failed to save CSV file: {str(e)}")
-    
     return combined_df
 
 def _save_incremental_results(
@@ -308,4 +301,121 @@ def _save_incremental_results(
     except Exception as e:
         logger.error(f"Failed to save incremental results: {str(e)}")
 
+###########################################################################
+
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from tqdm import tqdm
+import os
+import time
+
+def clean_for_url(text):
+    """Clean text for URL formatting by removing apostrophes and replacing spaces with hyphens."""
+    text = text.replace("'", "")  # Remove apostrophes
+    return '-'.join(text.split()).strip()
+
+def construct_url(row):
+    """Construct the URL for detailed scraping based on building information."""
+    return f"https://www.midlandici.com.hk/ics/property/{row['__typename'].lower()}/details/{row['id']}/{clean_for_url(row['nameEn'])}?lang=english"
+
+def scrape_with_requests(row):
+    """Scrape building details using requests library."""
+    try:
+        url = construct_url(row)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, 'html.parser')
+        building_info = {
+            'id': row['id'],
+            'Building Name': row['nameEn'],
+            'URL': url
+        }
+
+        # Extract meta information
+        for block in soup.find_all('div', class_='meta-info-container'):
+            title = block.find('div', class_='title')
+            content = block.find('div', class_='content')
+            
+            if title and content:
+                key = title.text.strip()
+                value = content.text.strip()
+                building_info[key] = value
+                
+        return building_info
+    except Exception as e:
+        print(f"Request failed for {row['nameEn']}: {str(e)}")
+        return None
+
+def process_buildings(
+    building_listings: pd.DataFrame,#input_csv
+    params:Dict[str, Any], 
+    #, output_file)
+    ) -> pd.DataFrame:
+    """
+    Process buildings with GET requests and save results to output file.
+    
+    Args:
+        input_csv (str): Path to the input CSV file.
+        output_file (str): Path to the output CSV file.
+    
+    Returns:
+        pd.DataFrame: DataFrame containing the scraped information.
+    """
+    
+    details_file = params.get('midland_ici_building_details', 'data/02_intermediate/midland_ici_building_details.parquet')
+
+    
+    # Check existing data
+    existing_ids = set()
+    if os.path.exists(details_file):
+        existing_df = pd.read_csv(details_file)
+        existing_ids = set(existing_df['id']) if 'id' in existing_df.columns else set()
+    
+    # Filter out buildings already in the output file
+    df_to_scrape = building_listings[~building_listings['id'].isin(existing_ids)]
+    
+    if len(df_to_scrape) == 0:
+        print("All buildings are already scraped. Nothing to do.")
+        if os.path.exists(details_file):
+            return pd.read_csv(details_file)
+        else:
+            return pd.DataFrame()
+    
+    results = []
+    
+    # Process buildings with tqdm progress bar and dynamic suffix
+    with tqdm(total=len(df_to_scrape), desc="Processing buildings", unit="building") as pbar:
+        for _, row in df_to_scrape[:5].iterrows():
+            # Update tqdm suffix with building name only
+            pbar.set_postfix_str(f"Building: {row['nameEn']}")
+            
+            result = scrape_with_requests(row)
+            if result:
+                results.append(result)
+            
+            # Add a small delay to avoid overwhelming the server
+            time.sleep(1)
+            
+            pbar.update(1)
+
+    # Save results to output file
+    if results:
+        df_results = pd.DataFrame(results)
+        
+        # Append new data to existing file or create a new one
+        if os.path.exists(details_file):
+            df_existing = pd.read_csv(details_file)
+            df_combined = pd.concat([df_existing, df_results], ignore_index=True)
+            #df_combined.to_csv(details_file, index=False)
+            print(f"Added {len(df_results)} new records to {details_file}")
+            return df_combined
+        else:
+            #df_results.to_csv(details_file, index=False)
+            print(f"Saved {len(df_results)} buildings to {details_file}")
+            return df_results
 

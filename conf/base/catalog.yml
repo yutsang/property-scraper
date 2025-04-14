@@ -98,6 +98,10 @@ midland_ici_building_listings:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/midland_ici_buildings.parquet
 
+midland_ici_building_details: 
+  type: pandas.ParquetDataset 
+  filepath: data/02_intermediate/midland_ici_building_details.parquet
+
 
 ##################################################################
 

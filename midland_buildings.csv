@@ -1,0 +1,971 @@
+sbu,id,nameEn,nameZh,addressEn,addressZh,__typename,district_id,district_name_en,district_name_cn,property_type,property_type_code,district_property_type
+mr_ind,B000025468,YIUGA FTY BLDG,耀基工廈,62 VICTORIA ROAD,域多利道62號,Building,1,Central and Western District,中西區,Industrial,mr_ind,Central and Western District_Industrial
+mr_comm,B000115397,WOHO,WOHO,119 Jervois Street,蘇杭街119號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000112477,The Henderson,The Henderson,2 Murray Road,美利道2號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000089563,L L Tower,L L Tower,2-4 Shelley Street,些利街2-4號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000058939,Two International Finance Centre,國際金融中心二期,8 Finance Street,金融街8號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000063699,181 Queen's Road Central,皇后大道中181號,181 Queen's Road Central,皇后大道中181號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018407,10-12 Pottinger Street,砵甸乍街10-12號,10-12 Pottinger Street,砵甸乍街10-12號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000060541,128 Wellington Street,威靈頓街128號,128 Wellington Street,威靈頓街128號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000022040,Nam Wo Hong Building,南和行大廈,No.148 Wing Lok Street,永樂街No.148號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000122674,China Merchants Plaza,招商局廣場,153 Connaught Road Central,干諾道中153號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000063825,One International Finance Centre,國際金融中心一期,1 Harbour View Road,港景街1號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000023965,The Center,中環中心,99 Queen's Road Central,皇后大道中99號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000008325,6 Wilmer Street,威利麻街6號,6 Wilmer Street,威利麻街6號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000054569,Two Pacific Place,太古廣場二座,88 Queensway,金鐘道88號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000063488,Admiralty Centre Tower II,海富中心二期,18 Harcourt Road,夏愨道18號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000025239,Yat Chau Building,一洲大廈,262 Des Voeux Road Central,德輔道中262號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000008409,Yardley Commercial Building,億利商業大廈,3 Connaught Road West,干諾道西3號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000025173,World-Wide House,環球大廈,19 Des Voeux Road Central,德輔道中19號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007685,Universal Trade Centre,環貿中心,3 Arbuthnot Road,亞畢諾道3號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007683,33 Des Voeux Road Central,德輔道中33號,33 Des Voeux Road Central,德輔道中33號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007651,United Centre,統一中心,95 Queensway,金鐘道95號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000024275,Tung Hip Commercial Building,東協商業大廈,244 Des Voeux Road Central,德輔道中244號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000023407,Singga Commercial Centre,成基商業中心,144-151 Connaught Road West,干諾道西144-151號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000006982,8 Queen's Road Central,皇后大道中八號,8 Queen's Road Central,皇后大道中8號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000054008,Shun Tak Centre (West Tower),信德中心(西座),168-200 Connaught Road Central,干諾道中168-200號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000023308,Shun Tak Centre-China Merchants Tower,信德中心 - 招商局大廈,168-200 Connaught Road Central,干諾道中168-200號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000022787,Qualipak Tower,確利達中心,122 Connaught Road West,干諾道西122號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000022537,Lippo Centre - Tower 2,力寶中心-第二座,89 Queensway,金鐘道89號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007676,Man Hing Commercial Building,萬興商業大廈,79-83 Queen's Road Central,皇后大道中79-83號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000054688,Lyndhurst Tower,壹號廣場,1 Lyndhurst Terrace,擺花街1號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000021344,Lippo Centre - Tower 1,力寶中心-第一座,89 Queensway,金鐘道89號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000020721,9 Des Voeux Road West,德輔道西九號,9 Des Voeux Road West,德輔道西9號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000112476,Cheung Kong Center II,長江集團中心二期,10 Harcourt Road,夏愨道10號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000084322,Nexxus Building,盈置大廈,77 Des Voeux Road Central,德輔道中77號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000019121,Finance Building,金融商業大廈,254 Des Voeux Road Central,德輔道中254號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007650,Far East Finance Centre,遠東金融中心,16 Harcourt Road,夏愨道16號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007672,Far East Consortium Building,遠東發展大廈,113-125A Des Voeux Road Central,德輔道中113-125A號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007649,Fairmont House,東昌大廈,8 Cotton Tree Drive,紅棉路8號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000062640,Cosco Tower,中遠大廈,183 Queen's Road Central,皇后大道中183號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018634,C.M.A. Building,中華廠商會大廈,64-66 Connaught Road Central,干諾道中64-66號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000054917,Chung Nam House,中南行,59 Des Voeux Road Central,德輔道中59號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007664,China Insurance Group Building,中保集團大廈,141 Des Voeux Road Central,德輔道中141號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000063697,100 Queen's Road Central,皇后大道中100號,100 Queen's Road Central,皇后大道中100號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018422,1 Duddell Street,都爹利街一號,1 Duddell Street,都爹利街1號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018361,Central Building,中建大廈,3 Pedder Street,畢打街3號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007657,Bangkok Bank Building.,盤谷銀行大廈,28 Des Voeux Road Central,德輔道中28號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000006989,8 Lyndhurst Terrace,擺花街八號,8 Lyndhurst Terrace,擺花街8號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007653,9 Queen's Road Central,皇后大道中九號,9 Queen's Road Central,皇后大道中9號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000023353,Silver Fortune Plaza,荊威廣場,1 Wellington Street,威靈頓街1號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000022405,One Pacific Place,太古廣場一座,88 Queensway,金鐘道88號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018367,Central Tower,中匯大廈,28 Queen's Road Central,皇后大道中28號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000007648,Bank of America Tower,美國銀行中心,12 Harcourt Road,夏愨道12號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000020056,Hong Kong Plaza,香港商業中心,188 Connaught Road West,干諾道西188號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018273,Bupa Centre,保柏中心,141 Connaught Road West,干諾道西141號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000018055,Admiralty Centre Tower I,海富中心一期,18 Harcourt Road,夏愨道18號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_comm,B000025191,Wyndham Place,雲咸商業中心,44 Wyndham Street,雲咸街44號,Building,1,Central and Western District,中西區,Office,mr_comm,Central and Western District_Office
+mr_shop,B000108713,DL TOWER,德林大廈,92-96 WELLINGTON STREET,威靈頓街92-96號,Building,1,Central and Western District,中西區,Shop,mr_shop,Central and Western District_Shop
+mr_shop,B000019383,THE GALLERIA,嘉軒廣場,9 QUEEN'S ROAD C,皇后大道中9號,Building,1,Central and Western District,中西區,Shop,mr_shop,Central and Western District_Shop
+mr_comm,B000112288,Six Pacific Place,太古廣場六座,46-56 Queen's Road East,皇后大道東46-56號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000107092,Golden Resources Tower,金源集團大廈,218 Jaffe Road,謝斐道218號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000095756,333 HENNESSY,333 HENNESSY,333 Hennessy Road,軒尼詩道333號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000111715,Plaza 228,Plaza 228,228 Wan Chai Road,灣仔道228號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054180,Hysan Place,希慎廣場,500 Hennessy Road,軒尼詩道500號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000120993,FLK Tower,馮良記中心,157-159 Johnston Road,莊士敦道157-159號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000066787,The Hennessy,The Hennessy,256 Hennessy Road,軒尼詩道256號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063703,QRE Plaza,QRE Plaza,202 Queen's Road East,皇后大道東202號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018151,Winland Square,永倫立方,318 Hennessy Road,軒尼詩道318號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063591,Tai Tung Building,大同大廈,8 Fleming Road,菲林明道8號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000062621,Three Pacific Place,太古廣場三期,1 Queen's Road East,皇后大道東1號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063745,Tai Yip Building,大業大廈,141 Thomson Road,譚臣道141號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007299,Bayfield Building,彰顯大廈,99 Hennessy Road,軒尼詩道99號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000053960,Tung Chiu Commercial Centre,東超商業中心,193-197 Lockhart Road,駱克道193-197號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024666,Tower 188,Tower 188,188-190 Hennessy Road,軒尼詩道188-190號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000025076,Winsan Tower,運盛大廈,98 Thomson Road,譚臣道98號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000062597,Siki Centre,兆基商業中心,23 Jardine's Bazaar,渣甸街23號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063830,Keen Hung Commercial Building,堅雄商業大廈,80 Queen's Road East,皇后大道東80號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054197,Toi Shan Association Building,台山商會大廈,167-169 Hennessy Road,軒尼詩道167-169號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024815,Wellable Commercial Building,維寶商業大廈,513 Hennessy Road,軒尼詩道513號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063608,Methodist House,循道衛理大廈,36 Hennessy Road,軒尼詩道36號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000062593,Dah Sing Financial Center,大新金融中心,248 Queen's Road East,皇后大道東248號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000053971,Wah Hing Commercial Building,華興商業大廈,283 Lockhart Road,駱克道283號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000062599,United Asia Finance Centre,亞洲聯合財務中心,333 Lockhart Road,駱克道333號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000061050,Shun Hei Causeway Bay Tower,順禧銅鑼灣中心,492 Lockhart Road,駱克道492號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063778,Redana Centre,丹納中心,25 Yiu Wa Street,耀華街25號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024732,Wanchai Central Building,灣仔中匯大廈,89 Lockhart Road,駱克道89號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007630,Weswick Commercial Building,威利商業大廈,147-149 Queen's Road East,皇后大道東147-149號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007451,Wan Chai Commercial Centre,灣仔商業中心,194-204 Johnston Road,莊士敦道194-204號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024007,Tien Chu Commercial Building,天廚商業大廈,173-174 Gloucester Road,告士打道173-174號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007356,Henfa Commercial Building,恆發商業大廈,348-350 Lockhart Road,駱克道348-350號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007624,Shun Feng International Centre,順豐國際中心,182 Queen's Road East,皇后大道東182號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000062591,CKK Commercial Centre,朱鈞記商業中心,289 Hennessy Road,軒尼詩道289號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000008317,263 Hennessy Road,軒尼詩道263號,263 Hennessy Road,軒尼詩道263號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007273,Effectual Building,宜發大廈,16 Hennessy Road,軒尼詩道16號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054454,Times Media Centre,卓凌中心,133 Wan Chai Road,灣仔道133號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000086291,Lee Garden One,利園一期,33 Hysan Avenue,希慎道33號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000023156,Times Square - Tower 2,時代廣場 - 第二座,1 Matheson Street,勿地臣街1號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024115,Toi Shan Centre,台山中心,128 Johnston Road,莊士敦道128號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063744,Mirage Tower,萬利中心,15 Thomson Road,譚臣道15號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007291,Golden Hill Mansion,金軒商業大廈,209-211 Hennessy Road,軒尼詩道209-211號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000025503,Yue Hing Building,越興大廈,103 Hennessy Road,軒尼詩道103號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000025347,Yeung Iu Chi Commercial Building,楊耀熾商業大廈,460-462 Jaffe Road,謝斐道460-462號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000050463,83 Wan Chai Road,灣仔道 83號,83 Wan Chai Road,灣仔道83號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000021974,Morrison Plaza,天樂廣場,9 Morrison Hill Road,摩利臣山道9號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018100,Anton Building,安定大廈,1 Anton Street,晏頓街1號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000088776,Lee Garden Two,利園二期,28 Yun Ping Road,恩平道28號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018931,Tesbury Centre,金鐘匯中心,24-32 Queen's Road East,皇后大道東24-32號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000020778,Kingswell Commercial Tower,金威商業大廈,171-173 Lockhart Road,駱克道171-173號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054110,CNT Tower,北海中心,326-338 Hennessy Road,軒尼詩道326-338號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000059941,Thomson Centre,卓信商業大廈,76-78 Thomson Road,譚臣道76-78號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007284,Easey Commercial Building,依時商業大廈,253-261 Hennessy Road,軒尼詩道253-261號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063596,Chinachem Century Tower,華懋世紀廣場,178 Gloucester Road,告士打道178號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007450,Chinachem Johnston Plaza,華懋莊士敦廣場,178-186 Johnston Road,莊士敦道178-186號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018914,Everbright Centre,光大中心,108 Gloucester Road,告士打道108號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007341,Ping Lam Commercial Building,平霖商業大廈,280-282 Lockhart Road,駱克道280-282號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007620,Pico Tower,筆克大廈,66 Gloucester Road,告士打道66號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007367,Jie Yang Building,揭陽大廈,271 Lockhart Road,駱克道271號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019507,Goodfit Commercial Building,好發商業大廈,7 Fleming Road,菲林明道7號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054199,3 Lockhart Road,駱克道3號,3 Lockhart Road,駱克道3號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007332,Siu On Centre,兆安中心,188 Lockhart Road,駱克道188號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007722,Progress Commercial Building,欣榮商業大廈,9 Irving Street,伊榮街9號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018626,China Resources Building,華潤大廈,26 Harbour Road,港灣道26號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007713,Guangdong Tours Centre,廣旅集團大廈,18 Pennington Street,邊寧頓街18號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007616,The Sun's Group Centre,新銀集團中心,200 Gloucester Road,告士打道200號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007397,Sunshine Plaza,三湘大廈,353 Lockhart Road,駱克道353號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007410,Wayson Commercial House,偉信商業大廈,68-70 Lockhart Road,駱克道68-70號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022984,San Kei Tower,新基商業中心,56-58 Yee Wo Street,怡和街56-58號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007618,Shui On Centre,瑞安中心,6-8 Harbour Road,港灣道6-8號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000053974,Causeway Bay Plaza II,銅鑼灣廣場2期,463-483 Lockhart Road,駱克道463-483號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063603,Central Plaza,中環廣場,18 Harbour Road,港灣道18號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000088774,Lee Garden Five,利園五期,18 Hysan Avenue,希慎道18號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000086989,Lee Garden Three,利園三期,10 Hysan Avenue,希慎道10號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007706,Catic Plaza,航空大廈,8 Causeway Road,高士威道8號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019544,Great Smart Tower,佳誠大廈,230 Wan Chai Road,灣仔道230號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000023113,Shanghai Industrial Investment Building,上海實業大廈,60 Hennessy Road,軒尼詩道60號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000008427,Shinyam Commercial Building,勝任商業大廈,163 Johnston Road,莊士敦道163號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000088775,Lee Garden Six,利園六期,111 Leighton Road,禮頓道111號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018279,CC Wu Building,集成中心,302-308 Hennessy Road,軒尼詩道302-308號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007174,Beverly House,利臨大廈,93-107 Lockhart Road,駱克道93-107號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019549,Greatmany Centre,智群商業中心,111 Queen's Road East,皇后大道東111號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000053973,313 Lockhart Road,駱克道 313號,313 Lockhart Road,駱克道313號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007724,United Success Commercial Building,聯成商業大廈,508 Jaffe Road,謝斐道508號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007311,China Overseas Building,中國海外大廈,139 Hennessy Road,軒尼詩道139號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022066,Times Square - Tower 1,時代廣場 - 第一座,1 Matheson Street,勿地臣街1號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054106,Emperor Group Centre,英皇集團中心,288 Hennessy Road,軒尼詩道288號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024129,COFCO Tower,中糧大廈,262 Gloucester Road,告士打道262號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000025619,Zoroastrian Building,善樂施大廈,101 Leighton Road,禮頓道101號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007633,Xiu Hua Commercial Building,秀華商業大廈,211-213 Jaffe Road,謝斐道211-213號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007609,Bank Of East Asia Harbour View Centre,東亞銀行港灣中心,56 Gloucester Road,告士打道56號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007391,Yue Xiu Building,越秀大廈,160-174 Lockhart Road,駱克道160-174號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007403,Yue On Commercial Building,裕安商業大廈,385-387 Lockhart Road,駱克道385-387號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024002,World Trade Centre,世界貿易中心,280 Gloucester Road,告士打道280號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024886,Windsor House - CHUBB Tower,皇室大廈 - 安達人壽大樓,311 Gloucester Road,告士打道311號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024791,Way On Commercial Building,維安商業大廈,500 Jaffe Road,謝斐道500號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024399,Valley Centre,柏餘中心,80-82 Morrison Hill Road,摩利臣山道80-82號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007622,Universal House,宇宙商業大廈,229-230 Gloucester Road,告士打道229-230號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000024150,Lucky Centre,樂基中心.,165-171 Wan Chai Road,灣仔道165-171號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007629,Thomson Commercial Building,威利商業大廈.,8 Thomson Road,譚臣道8號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000023578,Sun Hung Kai Centre,新鴻基中心,30 Harbour Road,港灣道30號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007459,Simsons Commercial Building,新盛商業大廈,137-139 Johnston Road,莊士敦道137-139號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000023470,SPA Centre,恒澤商業大廈,53-55 Lockhart Road,駱克道53-55號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007720,Professional Building,建康商業大廈,19-23 Tung Lo Wan Road,銅鑼灣道19-23號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022496,Parkview Commercial Building,百威商業中心,9-11 Shelter Street,信德街9-11號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022365,One Capital Place,海德中心,18 Luard Road,盧押道18號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022311,On Loong Commercial Building,安隆商業大廈,276-278 Lockhart Road,駱克道276-278號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007312,On Hong Commercial Building,安康商業大廈,145 Hennessy Road,軒尼詩道145號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007614,Capital Centre,資本中心,151 Gloucester Road,告士打道151號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000021620,Malaysia Building,馬來西亞大廈,50 Gloucester Road,告士打道50號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000021510,Luk Kwok Centre,六國中心,72 Gloucester Road,告士打道72號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000021247,Leighton Centre,禮頓中心,77 Leighton Road,禮頓道77號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007346,Kai Kwong Commercial Building,啟光商業大廈,332-334 Lockhart Road,駱克道332-334號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000020339,Jubilee Centre,捷利中心,18 Fenwick Street,分域街18號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000020128,Hopewell Centre,合和中心,183 Queen's Road East,皇后大道東183號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019726,Harvard Commercial Building,豪富商業大廈,105-111 Thomson Road,譚臣道105-111號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007409,The Broadway,博匯大廈,54-62 Lockhart Road,駱克道54-62號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019590,Guardian House,愛群商業大廈,32 Oi Kwan Road,愛群道32號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007418,East Town Building,東城大廈,41 Lockhart Road,駱克道41號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018870,Connaught Commercial Building,康樂商業大廈,185 Wan Chai Road,灣仔道185號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018086,Amber Commercial Building,凱利商業大廈,74 Morrison Hill Road,摩利臣山道74號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007399,Kiu Yin Commercial Building,翹賢商業大廈,361-363 Lockhart Road,駱克道361-363號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007303,East Point Centre,東角中心,555 Hennessy Road,軒尼詩道555號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007621,Tung Wai Commercial Building,東惠商業大廈,109-111 Gloucester Road,告士打道109-111號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007612,Harcourt House,夏愨大廈,39 Gloucester Road,告士打道39號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000063595,YF Life Centre,萬通保險中心,38 Gloucester Road,告士打道38號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007405,Winner Commercial Building,榮華商業大廈,401-403 Lockhart Road,駱克道401-403號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000076172,Five Pacific Place,太古廣場五座,28 Hennessy Road,軒尼詩道28號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007619,Sing-Ho Finance Building,信和財務大廈,166-168 Gloucester Road,告士打道166-168號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007306,Kam Chung Commercial Building,金鐘商業大廈,19-21 Hennessy Road,軒尼詩道19-21號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007407,Golden Star Building,金星商業大廈,20-24 Lockhart Road,駱克道20-24號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007387,Gaylord Commercial Building,嘉洛商業大廈,116 Lockhart Road,駱克道116號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007279,Eastern Commercial Centre,東區商業大廈,397 Hennessy Road,軒尼詩道397號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007607,Neich Tower,祥豐大廈,128 Gloucester Road,告士打道128號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007431,Chinaweal Centre,中望商業中心,414-424 Jaffe Road,謝斐道414-424號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018630,88 Gloucester Road,告士打道88號,88 Gloucester Road,告士打道88號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007762,Causeway Bay Plaza I,銅鑼灣廣場1期,489 Hennessy Road,軒尼詩道489號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007615,Overseas Trust Bank Building,海外信託銀行大廈,160 Gloucester Road,告士打道160號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054657,Kwan Chart Tower,群策大廈,6 Tonnochy Road,杜老誌道6號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007704,Cameron Commercial Centre,金聯商業中心,458-468 Hennessy Road,軒尼詩道458-468號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007605,Aubin House,安邦商業大廈,171-172 Gloucester Road,告士打道171-172號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007436,Times Tower,新時代中心,391-407 Jaffe Road,謝斐道391-407號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007628,Tak Lee Commercial Building,得利商業大廈,113-117 Wan Chai Road,灣仔道113-117號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000020320,Jonsim Place,中華大廈,228 Queen's Road East,皇后大道東228號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007725,Vulcan House,均峯商業大廈,21-23 Leighton Road,禮頓道21-23號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022198,88 Lockhart Road,駱克道 88號,88 Lockhart Road,駱克道88號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018289,Caltex House,德士古大廈,258 Hennessy Road,軒尼詩道258號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000025207,Yam Tze Commercial Building,壬子商業大廈,23 Thomson Road,譚臣道23號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007280,Ka Nin Wah Commercial Building,嘉年華商業大廈,423-425 Hennessy Road,軒尼詩道423-425號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007626,Southern Commercial Building,修頓商業大廈,11-13 Luard Road,盧押道11-13號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007617,Sang Woo Building,生和大廈,227-228 Gloucester Road,告士打道227-228號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000020471,Kam Fung Commercial Building,金豐商業大廈,2-4 Tin Lok Lane,天樂里2-4號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007719,Park Avenue Tower,百富中心,5 Moreton Terrace,摩頓台5號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007445,CNT House,宜興大廈,118-120 Johnston Road,莊士敦道118-120號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007317,Kin Tak Fung Commercial Building,建德豐商業大廈,467-473 Hennessy Road,軒尼詩道467-473號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007707,Causeway Bay Commercial Building,銅鑼灣商業大廈,3 Sugar Street,糖街3號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000021973,Morrison Commercial Building,摩利臣商業大廈,31 Morrison Hill Road,摩利臣山道31號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007281,Chang Pao Ching Building,張寶慶大廈,427-429 Hennessy Road,軒尼詩道427-429號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007335,Loyong Court Commercial Building,洛洋閣商業大廈,212-220 Lockhart Road,駱克道212-220號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007398,Hung To Commercial Building,鴻圖商業大廈,357-359 Lockhart Road,駱克道357-359號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007437,Kingpower Commercial Building,港佳商業大廈,409-413 Jaffe Road,謝斐道409-413號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007606,Fortis Tower,富通大廈,77-79 Gloucester Road,告士打道77-79號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022775,Prosperous Commercial Building,富盛商業大廈,54-58 Jardine's Bazaar,渣甸街54-58號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018369,Centre Point,中怡大廈,181-185 Gloucester Road,告士打道181-185號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007718,Mcdonald's Building,麥當奴大廈,46-54 Yee Wo Street,怡和街46-54號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007717,Lippo Leighton Tower,力寶禮頓大廈,103 Leighton Road,禮頓道103號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000022197,80 Gloucester Road,告士打道 80號,80 Gloucester Road,告士打道80號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019683,Hang Wai Commercial Building,恆威商業大廈,231-233 Queen's Road East,皇后大道東231-233號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007632,Wu Chung House,胡忠大廈,213 Queen's Road East,皇后大道東213號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018081,Allied Kajima Building,聯合鹿島大廈,138 Gloucester Road,告士打道138號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007623,Shiu Fung Building,兆豐商業大廈,51-53 Johnston Road,莊士敦道51-53號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007430,Workingfield Commercial Building,華斐商業大廈,408-412 Jaffe Road,謝斐道408-412號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007277,Wah Hen Commercial Centre,華軒商業中心,381-383 Hennessy Road,軒尼詩道381-383號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007908,Queen's Centre,帝后商業中心,58-64 Queen's Road East,皇后大道東58-64號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007462,Tai Yau Building,大有大廈,181 Johnston Road,莊士敦道181號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007714,Island Beverley,金百利,1 Great George Street,記利佐治街1號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007343,ZJ 300,浙江興業大廈,300-306 Lockhart Road,駱克道300-306號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000019781,Heng Shan Centre,恆山中心,145 Queen's Road East,皇后大道東145號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007393,Lockhart Centre,洛克中心,301-307 Lockhart Road,駱克道301-307號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007723,United Building,合群大廈,447-449 Hennessy Road,軒尼詩道447-449號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007708,Causeway Bay Centre,銅鑼灣中心,19 Sugar Street,糖街19號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018188,Bel Trade Commercial Building,百營商業大廈,3 Burrows Street,巴路士街3號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007627,Success Commercial Building,守時商業大廈,245-251 Hennessy Road,軒尼詩道245-251號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007610,Great Eagle Centre,鷹君中心,23 Harbour Road,港灣道23號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000054105,Dominion Centre,東美中心,43-59 Queen's Road East,皇后大道東43-59號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007625,Shun Pont Commercial Building,信邦商業大廈,5-11 Thomson Road,譚臣道5-11號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000018796,Chung Point Commercial Building,中邦商業大廈,300 Hennessy Road,軒尼詩道300號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_comm,B000007608,Convention Plaza - Office Tower,會展廣場辦公大樓,1 Harbour Road,港灣道1號,Building,2,Wan Chai District,灣仔區,Office,mr_comm,Wan Chai District_Office
+mr_shop,B000111798,ONE CONTINENTAL,恒匯中心,232 WAN CHAI ROAD,灣仔道232號,Building,2,Wan Chai District,灣仔區,Shop,mr_shop,Wan Chai District_Shop
+mr_shop,B000094314,208 JOHNSTON ROAD,莊士敦道208號,208 JOHNSTON ROAD,莊士敦道208號,Building,2,Wan Chai District,灣仔區,Shop,mr_shop,Wan Chai District_Shop
+mr_shop,B000060608,Emperor Watch And Jewellery Centre,英皇鐘錶珠寶中心,8 RUSSELL STREET,羅素街8號,Building,2,Wan Chai District,灣仔區,Shop,mr_shop,Wan Chai District_Shop
+mr_shop,B000084541,THE SHARP,THE SHARP,11-13 SHARP STREET EAST,霎東街11-13號,Building,2,Wan Chai District,灣仔區,Shop,mr_shop,Wan Chai District_Shop
+mr_shop,B000053975,L'HART,駱克駅,487-489 LOCKHART ROAD,駱克道487-489號,Building,2,Wan Chai District,灣仔區,Shop,mr_shop,Wan Chai District_Shop
+mr_ind,B000007844,KAILEY IND CTR,啟力工中,1 FUNG YIP STREET,豐業街1號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000024368,MEGA-IADVANTAGE,第一亞洲廣場,399 CHAI WAN ROAD,柴灣道399號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007055,SAFETY GODOWN INDUSTRIAL BUILDING,安全貨倉工業大廈,56 KA YIP STREET,嘉業街56號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000059626,FORTUNE FTY BLDG BLK B,富誠工廈B座,40 LEE CHUNG STREET,利眾街40號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007064,YIKO INDUSTRIAL BUILDING,益高工業大廈,10 KA YIP STREET,嘉業街10號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007511,SINO FAVOUR CTR,新華豐中心,1 ON YIP STREET,安業街1號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000056176,SEA VIEW EST BLK C,海景大廈 C 座,8 WATSON ROAD,屈臣道8號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007209,CORNELL CTR,港利中心,50 WING TAI ROAD,永泰道50號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007212,WESTLANDS CTR,華蘭中心,20 WESTLANDS ROAD,華蘭路20號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007059,SUNVIEW INDUSTRIAL BUILDING,新藝工業大廈,3 ON YIP STREET,安業街3號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000020634,CHINA RESOURCES CHAIWAN WAREHOUSE,華潤柴灣貨倉,50 KA YIP STREET,嘉業街50號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007208,PARAMOUNT BLDG,百樂門大廈,12 KA YIP STREET,嘉業街12號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007509,DECCA INDUSTRIAL CENTRE,達藝工業中心,12 KUT SHING STREET,吉勝街12號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007206,CHEUNG TAT CTR,祥達中心,18 CHEUNG LEE STREET,祥利街18號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007848,SEA VIEW EST BLK B,海景大廈 B 座,4-6 WATSON ROAD,屈臣道4-6號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007847,SEA VIEW EST BLK A,海景大廈 A 座,2 WATSON ROAD,屈臣道2號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007218,TUNG CHONG FTY BLDG,東祥工廈,653-659 KING'S ROAD,英皇道653-659號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007490,TECHNOLOGY PLAZA,科匯中心,651 KING'S ROAD,英皇道651號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007214,EASTERN CTR,東達中心,1065 KING'S ROAD,英皇道1065號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007065,YIP CHEUNG CTR,業昌中心,10 FUNG YIP STREET,豐業街10號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007078,HOP SHI FTY BLDG,合時工廈,29-31 LEE CHUNG STREET,利眾街29-31號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007510,HONG MAN IND CTR,康民工中,2 HONG MAN STREET,康民街2號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007901,CHAI WAN IND CITY PH 1,柴灣工業城1期,60 WING TAI ROAD,永泰道60號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007205,CHEUNG LEE IND BLDG,祥利工廈,9 CHEUNG LEE STREET,祥利街9號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007903,CHAI WAN IND CITY PH 2,柴灣工業城2期,70 WING TAI ROAD,永泰道70號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007842,M P IND CTR BLK A,明報工中 A 座,18 KA YIP STREET,嘉業街18號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007843,M P IND CTR BLK B,明報工中 B 座,18 KA YIP STREET,嘉業街18號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007845,KAILEY IND CTR BLK B,啟力工中 B 座,12 FUNG YIP STREET,豐業街12號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007211,EASTERN HARBOUR CTR,東港中心,28 HOI CHAK STREET,海澤街28號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000020827,KODAK HSE BLK 2,柯達大廈 2 座,39 HEALTHY STREET EAST,健康東街39號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007513,FORTUNE FTY BLDG BLK A,富誠工廈A座,40 LEE CHUNG STREET,利眾街40號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_ind,B000007210,HONOUR INDUSTRIAL CENTRE,安力工業中心,6 SUN YIP STREET,新業街6號,Building,3,Eastern District,東區,Industrial,mr_ind,Eastern District_Industrial
+mr_comm,B000112287,228 Electric Road,電氣道228號,228 Electric Road,電氣道228號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000113453,39 King's Road,英皇道39號,39 King's Road,英皇道39號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000113140,383 King's Road,英皇道383號,383-385 King's Road,英皇道383-385號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000090984,Hong Kong Li-Ning Building,香港李寧大廈,218 Electric Road,電氣道218號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000074219,E-Trade Plaza,東貿廣場,24 Lee Chung Street,利眾街24號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059839,Park Commercial Centre,百樂商業中心,180 Tung Lo Wan Road,銅鑼灣道180號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059860,Two Chinachem Exchange Square,華懋交易廣場2期,338 King's Road,英皇道338號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000022207,North Point Asia-Pac Commercial Centre,北角亞太商業中心,10 North Point Road,北角道10號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000022258,Olympia Plaza,國都廣場,255 King's Road,英皇道255號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059846,Java Road 108 Commercial Centre,渣華道108號商業中心,108 Java Road,渣華道108號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000022495,Parkview Centre,柏景中心,7 Lau Li Street,琉璃街7號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000041931,148 Electric Road,電氣道148號,148 Electric Road,電氣道148號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059840,A I A Tower,友邦廣場,183 Electric Road,電氣道183號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007596,Workingberg Commerical Building,華寶商業大廈,41-47 Marble Road,馬寶道41-47號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007018,Java Commercial Centre,渣華商業中心,124-132 Java Road,渣華道124-132號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007416,Concord Commercial Building,六合商業大廈,157 King's Road,英皇道157號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000020349,Jupiter Tower,永昇中心,9 Jupiter Street,木星街9號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007413,Kwai Hung Holdings Centre,桂洪集團中心,89 King's Road,英皇道89號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000053035,Union Park Tower,柏宜大廈,168 Electric Road,電氣道168號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059865,Loong Wan Building,隆運大廈,8 North Point Road,北角道8號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000080453,KP Tower,錦平中心,93-95 King's Road,英皇道93-95號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000020264,Island Place Tower,港運大廈,510 King's Road,英皇道510號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000019772,Henan Electric Development Building,豫港電力發展大廈,389 King's Road,英皇道389號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000053077,China United Centre,華匯中心,28 Marble Road,馬寶道28號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000054308,King's Commercial Centre,景星中心,25 King's Road,英皇道25號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059842,Morecrown Commercial Building,冠貿商業大廈,108 Electric Road,電氣道108號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000054003,A.T. Tower,百家利中心,180 Electric Road,電氣道180號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000054309,Kingsfield Centre,嘉昌商業中心,18 Shell Street,蜆殼街18號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000008322,Supreme Commercial Building,榮馳商業大廈,368 King's Road,英皇道368號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000059844,88 Hing Fat Street,興發街88號,88 Hing Fat Street,興發街88號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007701,Carnival Commercial Building,嘉匯商業大廈,18 Java Road,渣華道18號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000022938,SUP Tower,聯合出版大廈,75-83 King's Road,英皇道75-83號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000020293,Greenwich Centre,怡安中心,260 King's Road,英皇道260號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007479,Hang Seng North Point Building,恆生北角大廈,335-341 King's Road,英皇道335-341號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007480,Bank Tower,銀輝中心,351-353 King's Road,英皇道351-353號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000024817,Wellborne Commercial Centre,威邦商業中心,8 Java Road,渣華道8號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007477,China Harbour Building,振華商業大廈,370-374 King's Road,英皇道370-374號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000054050,Citicorp Centre,萬國寶通中心,18 Whitfield Road,威非路道18號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007481,Max Share Centre,上潤中心,367-373 King's Road,英皇道367-373號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007478,North Cape Commercial Building,北港商業大廈,388 King's Road,英皇道388號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007015,Haven Commercial Building,凱豐商業大廈,6-8 Tsing Fung Street,清風街6-8號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000007017,K. Wah Centre,嘉華國際中心,191 Java Road,渣華道191號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000023060,Seabright Plaza,秀明中心,9-23 Shell Street,蜆殼街9-23號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_comm,B000018879,Corn Yan Centre,澤盈中心,3 Jupiter Street,木星街3號,Building,3,Eastern District,東區,Office,mr_comm,Eastern District_Office
+mr_ind,B000121963,TWO BEDFORD PLACE,TWO BEDFORD PLACE,必發道75號,必發道75號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000093379,THE CLOUD,雲之端,111 TUNG CHAU STREET,通州街111號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000084440,KHORA,宏創方,128 BEDFORD ROAD,必發道128號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000076248,THE BEDFORD,THE BEDFORD,91-93 BEDFORD ROAD,必發道91-93號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000068633,SOLO,SOLO,81 BEDFORD ROAD,必發道81號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000023620,SUNBEAM PLAZA,日昇廣場,1155 CANTON ROAD,廣東道1155號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000059585,YEE LEE BLDG,宜利工業大廈,131-133 TUNG CHAU STREET,通州街131-133號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000019636,HANG CHONG CTR,恆昌中心,136-146 BEDFORD ROAD,必發道136-146號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000023523,STYLE FTY BLDG,新型工廠大廈,9 ELM STREET,榆樹街9號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000024652,WAH YUEN FTY BLDG,華源工廠大廈,15-21 BEECH STREET,櫸樹街15-21號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000087056,WALNUT 9,合桃街9號,9 WALNUT STREET,合桃街9號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000024930,WING GAR FTY BLDG,永嘉工廠大廈,87 LARCH STREET,洋松街87號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000059583,WORLDWIDE CENTRE,國貿中心,123 TUNG CHAU STREET,通州街123號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000023475,SPLENDID CTR,德讚中心,94-108 LARCH STREET,洋松街94-108號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000023343,SILICON TOWER,科興中心,82-88 LARCH STREET,洋松街82-88號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000023708,TAI CHI FTY BLDG,大志工廠大廈,25-29 KOK CHEUNG STREET,角祥街25-29號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000024694,WAI YICK IND BLDG,偉益工業大廈,99-101 BEDFORD ROAD,必發道99-101號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000024775,WANG YIP IND BLDG,宏業工業大廈,1 ELM STREET,榆樹街1號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_ind,B000021990,MOW SHING CTR,茂盛中心,118 BEDFORD ROAD,必發道118號,Building,5,Yau Tsim Mong District,油尖旺區,Industrial,mr_ind,Yau Tsim Mong District_Industrial
+mr_comm,B000059566,Kowloon Investment Co. Ltd.,九龍企業有限公司大廈,18 Bute Street,弼街18號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000121585,One Bedford Place,One Bedford Place,100-114 Bedford Road,必發道100-114號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000078690,Le Diamant,金鑽璽,703-705 Nathan Road,彌敦道703-705號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000081559,8 Observatory Road,天文臺道8號,8 Observatory Road,天文臺道8號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000063541,ICC-International Commerce Centre,環球貿易廣場,1 Austin Road West,柯士甸道西1號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062592,Langham Place,朗豪坊,8 Argyle Street,亞皆老街8號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062494,One Peking,北京道1號,1 Peking Road,北京道1號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000056062,33 Argyle Street,美聯金融大廈,33 Argyle Street,亞皆老街33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061852,World Finance Centre (South Tower),環球金融中心(南座),17-19 Canton Road,廣東道17-19號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062499,The Gateway Tower 5,港威大廈5座,15 Canton Road,廣東道15號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062500,The Gateway Tower 6,港威大廈6座,9 Canton Road,廣東道9號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062498,The Gateway Tower 3-Prudential Tower,港威大廈3座-保誠保險大廈,21 Canton Road,廣東道21號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020055,Hong Kong Pacific Centre,亞太中心,28 Hankow Road,漢口道28號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022389,26 Nathan Road,彌敦道26號,26 Nathan Road,彌敦道26號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061850,China Hong Kong City Tower 6,中港城六座,33 Canton Road,廣東道33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061849,China Hong Kong City Tower 5,中港城五座,33 Canton Road,廣東道33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061848,China Hong Kong City Tower 3,中港城三座,33 Canton Road,廣東道33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061847,China Hong Kong City Tower 2,中港城二座,33 Canton Road,廣東道33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061846,China Hong Kong City Tower 1,中港城一座,33 Canton Road,廣東道33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062497,The Gateway Tower 2,港威大廈2座,25 Canton Road,廣東道25號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000023363,Silvercord Tower 1,新港中心第一座,30 Canton Road,廣東道30號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000053344,South Seas Centre 1,南洋中心第一座,75 Mody Road,麼地道75號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000060508,Silvercord Tower 2,新港中心第二座,30 Canton Road,廣東道30號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000053342,New Mandarin Plaza A,新文華中心A座,14 Science Museum Road,科學館道14號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000053343,New Mandarin Plaza B,新文華中心B座,14 Science Museum Road,科學館道14號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000007538,Silvercorp International Tower,銀高國際大廈,707-713 Nathan Road,彌敦道707-713號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022194,8 Hart Avenue,赫德道8號,8 Hart Avenue,赫德道8號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000025167,Wharf T & T Centre,九倉電訊中心,7 Canton Road,廣東道7號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018124,Astoria Building,天星大廈,34 Ashley Road,亞士厘道34號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000019393,The Gateway Tower 1,港威大廈1座,25 Canton Road,廣東道25號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000021933,Mira Place,美麗華大廈,132-134 Nathan Road,彌敦道132-134號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018865,Concordia Plaza,康宏廣場,1 Science Museum Road,科學館道1號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018245,Boss Commercial Centre,寶時商業中心,28 Ferry Street,渡船街28號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022881,Rightful Centre,興富中心,12 Tak Hing Street,德興街12號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018376,CFC Tower,中福商業大廈,22-28 Mody Road,麼地道22-28號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000053345,South Seas Centre 2,南洋中心第二座,75 Mody Road,麼地道75號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000021783,Mass Resources Development Building,宏貿發展大廈,12 Humphreys Avenue,堪富利士道12號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022377,Oriental Crystal Finance Centre,中晶金融中心,107-109 Chatham Road South,漆咸道南107-109號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022803,Railway Plaza,鐵路大廈,37-43 Chatham Road South,漆咸道南37-43號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022003,Multifield Plaza,萬事昌廣場,3 Prat Avenue,寶勒巷3號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018131,Austin Commercial Centre,柯士甸商業中心,4 Austin Avenue,柯士甸路4號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022866,Richmond Commercial Building,皆旺商業大廈,107-111 Argyle Street,亞皆老街107-111號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020143,Houston Centre,好時中心,63 Mody Road,麼地道63號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000019030,Empress Plaza,帝后廣場,17-19 Chatham Road South,漆咸道南17-19號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000081909,Austin Tower,好兆年行,22-26 Austin Avenue,柯士甸路22-26號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000021935,Mirror Tower,冠華中心,61 Mody Road,麼地道61號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000019032,Energy Plaza,幸福中心,92 Granville Road,加連威老道92號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000061853,World Finance Centre (North Tower),環球金融中心(北座),17-19 Canton Road,廣東道17-19號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000025163,World Commerce Centre,世界商業中心,11 Canton Road,廣東道11號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000023673,Supreme House,首邦行,2A Hart Avenue,赫德道2A號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000025617,Zhongda Building,中達大廈,38-40 Haiphong Road,海防道38-40號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022214,Ocean Centre,海洋中心,5 Canton Road,廣東道5號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000007161,Metropole Building,國都大廈,57 Peking Road,北京道57號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020902,Kundamal House,金帝行,4 Prat Avenue,寶勒巷4號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020428,Kaiseng Commercial Centre,騏生商業中心,4-6 Hankow Road,漢口道4-6號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000060702,Eu Yan Sang Tower,余仁生中心,11-15 Chatham Road South,漆咸道南11-15號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000019029,Empire Centre,帝國中心,68 Mody Road,麼地道68號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020970,BOC Mongkok Commercial Centre,中銀旺角商業中心,589 Nathan Road,彌敦道589號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000024174,Tsimshatsui Centre,尖沙咀中心,66 Mody Road,麼地道66號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020600,Kee Shing Centre,奇盛中心,74-76 Kimberley Road,金巴利道74-76號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020842,Koon Fook Centre,冠福中心,9 Knutsford Terrace,諾士佛臺9號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020808,Knutsford Commercial Building,東港商業大廈,4-5 Knutsford Terrace,諾士佛臺4-5號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020248,Maxwell Centre,麥仕維中心,39-41 Hankow Road,漢口道39-41號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020868,Kowloon Centre,九龍中心,29-39 Ashley Road,亞士厘道29-39號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000024395,Valiant Commercial Building,雲龍商業大廈,22-24 Prat Avenue,寶勒巷22-24號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000019801,Hermes Commercial Centre,恒貿商業中心,4-4A Hillwood Road,山林道4-4A號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020662,Kimberley House,金巴利中心,35-35A Kimberley Road,金巴利道35-35A號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018520,Cheung Lee Commercial Building,長利商業大廈,25 Kimberley Road,金巴利道25號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000006958,President Commercial Centre,總統商業大廈,608 Nathan Road,彌敦道608號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000006951,Kelly Commercial Centre,基利商業大廈,570-572 Nathan Road,彌敦道570-572號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022375,Oriental Centre,安年大廈,67-71 Chatham Road South,漆咸道南67-71號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018206,Beverley Commercial Centre,百利商業中心,87-105 Chatham Road South,漆咸道南87-105號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000025000,Wing On Plaza,永安廣場,62 Mody Road,麼地道62號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018570,Chevalier House,其士大廈,45-51 Chatham Road South,漆咸道南45-51號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000020247,Inter-continental Plaza,明輝中心,94 Granville Road,加連威老道94號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000007295,Harbour Crystal Centre,港晶中心,100 Granville Road,加連威老道100號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018482,Cheuk Nang Centre,卓能中心,9-11A Hillwood Road,山林道9-11A號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000021343,Lippo Sun Plaza,力寶太陽廣場,28 Canton Road,廣東道28號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022526,Peninsula Centre,半島中心,67 Mody Road,麼地道67號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000022082,New East Ocean Centre,新東海商業中心,9 Science Museum Road,科學館道9號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000007294,East Ocean Centre,東海商業中心,98 Granville Road,加連威老道98號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000023509,Star House,星光行,3 Salisbury Road,梳士巴利道3號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000006953,Sino Centre,信和中心,582-592 Nathan Road,彌敦道582-592號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000006952,Nathan Centre,彌敦中心,580G-580K Nathan Road,彌敦道580G-580K號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000007162,Universal Commercial Building,環球商業大廈,65-69 Peking Road,北京道65-69號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000006978,Argyle Centre,旺角中心,688 Nathan Road,彌敦道688號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000062493,Chinachem Golden Plaza,華懋廣場,77 Mody Road,麼地道77號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000052953,Champion Building,嘉賓商業大廈,301-309 Nathan Road,彌敦道301-309號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018373,Century House,世紀商業大廈,3-4 Hanoi Road,河內道3-4號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000007330,Bright Way Tower,凱途發展大廈,33 Mongkok Road,旺角道33號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018202,Best-O-Best Commercial Centre,富利來商業大廈,32-36 Ferry Street,渡船街32-36號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_comm,B000018167,BCC Building,國際商業信貸銀行大廈,25-31 Carnarvon Road,加拿分道25-31號,Building,5,Yau Tsim Mong District,油尖旺區,Office,mr_comm,Yau Tsim Mong District_Office
+mr_shop,B000088546,LADDER DUNDAS,LADDER DUNDAS,575 NATHAN ROAD,彌敦道575號,Building,5,Yau Tsim Mong District,油尖旺區,Shop,mr_shop,Yau Tsim Mong District_Shop
+mr_shop,B000078384,724-726 NATHAN ROAD,彌敦道724-726號,724-726 NATHAN ROAD,彌敦道724-726號,Building,5,Yau Tsim Mong District,油尖旺區,Shop,mr_shop,Yau Tsim Mong District_Shop
+mr_shop,B000072955,H8,H8,8 HAU FOOK STREET,厚福街8號,Building,5,Yau Tsim Mong District,油尖旺區,Shop,mr_shop,Yau Tsim Mong District_Shop
+mr_shop,B000053563,KING WAH CTR,瓊華中心,620-628 NATHAN ROAD,彌敦道620-628號,Building,5,Yau Tsim Mong District,油尖旺區,Shop,mr_shop,Yau Tsim Mong District_Shop
+mr_ind,B000125920,HORIZON SEA,海傲,NO 33 HUNG TO ROAD ,鴻圖道33號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000093836,GR8 INNO TECH CENTRE,廣域創科中心,46 TSUN YIP STREET,駿業街46號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000084208,CORE 45,創匯廣場,43-45 TSUN YIP STREET,駿業街43-45號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000059655,INTERNATIONAL IND BLDG,國際工業大廈,175 HOI BUN ROAD,海濱道175號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000019325,FULLY IND BLDG,富利工業大廈,6 TSUN YIP LANE,駿業里6號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007841,CFC - CATIC BLDG,"中福,中航",44 TSUN YIP STREET,駿業街44號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007831,CHUNG MEI IND CTR,中美中心,15 HING YIP STREET,興業街15號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000076260,FUN TOWER,天星中心,35 HUNG TO ROAD,鴻圖道35號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018064,KAM MEI LAN IND BLDG,KAM MEI LAN IND BLDG, HOI YUEN ROAD,開源道號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000059714,JC TOWER,JC TOWER,91 WAI YIP STREET,偉業街91號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000021791,THE ICON,THE ICON,320-322 KWUN TONG ROAD,觀塘道320-322號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000059712,SOUTHTEX BLDG,南達大廈,51 TSUN YIP STREET,駿業街51號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018915,DAH WAY INDUSTRIAL BUILDING,大偉工業大廈,86 HUNG TO ROAD,鴻圖道86號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000023406,ROOM + KWUN TONG,觀塘自由倉大廈,338 KWUN TONG ROAD,觀塘道338號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000023663,SUNSHINE KOWLOON BAY CARGO CENTRE,三湘九龍灣貨運中心,59 TAI YIP STREET,大業街59號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020210,HUNG TO IND BLDG,鴻圖工業大廈,80 HUNG TO ROAD,鴻圖道80號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007108,HUNG TAT IND BLDG,鴻達工業大廈,43 HUNG TO ROAD,鴻圖道43號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000059602,CONTINENTAL ELECTRIC BLDG,康大電業大廈,17 WANG CHIU ROAD,宏照道17號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000019369,FUNG YIP IND BLDG,豐業工業大廈,170 WAI YIP STREET,偉業街170號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020818,KO LEUNG IND BLDG,高良工業大廈,25 TAI YIP STREET,大業街25號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020309,JING HIN IND BLDG,正興工業大廈,5 WANG KEE STREET,宏基道5號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007104,CHINA TRADE CTR,華貿中心,122-124 WAI YIP STREET,偉業街122-124號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007501,ASSUN PACIFIC CENTER,日昇亞太中心,41 TSUN YIP STREET,駿業街41號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007523,FOOK HONG IND BLDG,福康工業大廈,19 SHEUNG YUET ROAD,常悅道19號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007521,KAI FUK IND CTR,啟福工業中心,1 WANG TUNG STREET,宏通街1號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000019912,HING YIP CENTRE,興業中心,31 HING YIP STREET,興業街31號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020398,KADER BLDG,開達大廈,22 KAI CHEUNG ROAD,啟祥道22號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020704,KINETIC IND CTR,興力工業中心,7 WANG KWONG ROAD,宏光道7號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020316,JOINT VENTURE FTY BLDG,聯運工業大廈,76 HUNG TO ROAD,鴻圖道76號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018707,FIRST GROUP CENTRE (Old),第一集團中心 (舊),14 WANG TAI ROAD,宏泰道14號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020879,KRAS ASIA IND BLDG,嘉士亞洲工業大廈,79 HUNG TO ROAD,鴻圖道79號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007864,TONIC IND CTR B,同力工業中心 B 座,19 LAM HING STREET,臨興街19號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007832,CHUNG MEI IND CTR BLK B,中美中心B座,15 HING YIP STREET,興業街15號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000021376,LOK KUI IND BLDG,樂居工業大廈,6-8 HUNG TO ROAD,鴻圖道6-8號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000019816,HIGH WIN FTY BLDG,凱源工業大廈,47 HOI YUEN ROAD,開源道47號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007897,EVERWIN CTR,恆勝中心,72 HUNG TO ROAD,鴻圖道72號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007896,1 HUNG TO ROAD,鴻圖道1號,1 HUNG TO ROAD,鴻圖道1號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007492,CROWN IND BLDG,冠力工業大廈,106 HOW MING STREET,巧明街106號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007102,CENTURY CTR,世紀工商中心,44-46 HUNG TO ROAD,鴻圖道44-46號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007045,RAY CTR,志聯中心,88 HUNG TO ROAD,鴻圖道88號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007105,WAH HUNG CTR,華鴻工貿中心,41 HUNG TO ROAD,鴻圖道41號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007775,WAH SHING CTR,華成工商中心,11-13 SHING YIP STREET,成業街11-13號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018709,CHUAN YUAN FTY BLDG,泉源工業大廈,342-344 KWUN TONG ROAD,觀塘道342-344號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018911,D J BLDG,申新大廈,173 HOI BUN ROAD,海濱道173號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007094,LLADRO BUILDING,溢財中心,72 HOI YUEN ROAD,開源道72號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000023542,THE OZONE,THE OZONE,134 WAI YIP STREET,偉業街134號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000024438,VIET SHING FTY BLDG,越成工廠大廈,145 WAI YIP STREET,偉業街145號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000019402,GEE LOK IND BLDG,致樂工業大廈,34 HUNG TO ROAD,鴻圖道34號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007777,CAMELPAINT BLDG BLK 2,駱駝漆大廈二期,62 HOI YUEN ROAD,開源道62號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018311,CANTAKE FTY BLDG,堅德工業大廈,172 WAI YIP STREET,偉業街172號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007776,CAMELPAINT BLDG BLK 1,駱駝漆大廈一期,62 HOI YUEN ROAD,開源道62號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007111,SEAVIEW CTR,海濱中心,139 HOI BUN ROAD,海濱道139號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000023474,SPEEDY IND BLDG,迅達工業大廈,114 HOW MING STREET,巧明街114號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007780,KWUN TONG IND CTR BLK 2,觀塘工業中心二座,460-470 KWUN TONG ROAD,觀塘道460-470號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007862,TONIC IND CTR A,同力工業中心 A 座,26 KAI CHEUNG ROAD,啟祥道26號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007101,FREE TRADE CTR,佳貿中心,49 TSUN YIP STREET,駿業街49號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018505,CHEUNG HING IND BLDG (KT),長慶工業大廈,23 TAI YIP STREET,大業街23號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000022407,PACIFIC TRADE CTR,太平洋貿易中心,2 KAI HING ROAD,啟興道2號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007508,SHIU FAT IND BLDG,兆發工業大廈,139-141 WAI YIP STREET,偉業街139-141號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007781,KWUN TONG IND CTR BLK 3,觀塘工業中心三座,448-458 KWUN TONG ROAD,觀塘道448-458號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007096,HEWLETT CTR,豐利中心,52-54 HOI YUEN ROAD,開源道52-54號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000021597,MAI GAR IND BLDG,美嘉工業大廈,146 WAI YIP STREET,偉業街146號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007107,HUNG TAI IND BLDG,鴻泰工業大廈,37-39 HUNG TO ROAD,鴻圖道37-39號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000059809,YAU TONG IND CITY B,油塘工業城 B 座,17 KO FAI ROAD,高輝道17號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000025072,WINNER FTY BLDG,幸運工業大廈,55 HUNG TO ROAD,鴻圖道55號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000018063,AIR GOAL CARGO BLDG,威力貨運大廈,330 KWUN TONG ROAD,觀塘道330號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000021613,MAI TAK IND BLDG,美德工業大廈,221 WAI YIP STREET,偉業街221號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007098,APEC PLAZA,創貿廣場,49 HOI YUEN ROAD,開源道49號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007772,HOI LUEN IND CTR BLK A,開聯工業中心 A 座,55 HOI YUEN ROAD,開源道55號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007223,PO LUNG CTR,寶隆中心,11 WANG CHIU ROAD,宏照道11號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007779,KWUN TONG IND CTR BLK 1,觀塘工業中心一座,472-484 KWUN TONG ROAD,觀塘道472-484號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007504,KING YIP FTY BLDG,敬業工業大廈,59 KING YIP STREET,敬業街59號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020772,KINGSFORD IND CTR,景發工業中心,13 WANG HOI ROAD,宏開道13號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007495,SHING YIP IND BLDG,成業工業大廈,19-21 SHING YIP STREET,成業街19-21號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007224,HOPE SEA IND CTR,富洋工業中心,26 LAM HING STREET,臨興街26號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007500,TREASURE CTR,華寶中心,42 HUNG TO ROAD,鴻圖道42號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007522,KOWLOON BAY IND CTR,九龍灣工業中心,15 WANG HOI ROAD,宏開道15號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007520,INTERNATIONAL PLAZA,環球工商大廈,20 SHEUNG YUET ROAD,常悅道20號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020624,KENNING IND BLDG,健力工業大廈,19 WANG HOI ROAD,宏開道19號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020345,JUMBO IND BLDG,金寶工業大廈,189 WAI YIP STREET,偉業街189號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007494,RICKY CTR,華基中心,36 CHONG YIP STREET,創業街36號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007773,HOI LUEN IND CTR BLK B,開聯工業中心 B 座,55 HOI YUEN ROAD,開源道55號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007106,WORLD TECH CTR,世達中心,95 HOW MING STREET,巧明街95號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007782,KWUN TONG IND CTR BLK 4,觀塘工業中心四座,436-446 KWUN TONG ROAD,觀塘道436-446號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007095,SUNBEAM CTR,日昇中心,27 SHING YIP STREET,成業街27號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000019956,HOI BUN IND BLDG,海濱工業大廈,6 WING YIP STREET,榮業街6號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007905,METRO CENTRE BLK 2,美羅中心2期,21 LAM HING STREET,臨興街21號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007100,CAPITAL TRADE CTR,京貿中心,62 TSUN YIP STREET,駿業街62號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007109,EVEREST IND CTR,毅力工業中心,396 KWUN TONG ROAD,觀塘道396號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000023409,SINO IND PLAZA,信和工商中心,9 KAI CHEUNG ROAD,啟祥道9號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007046,BILLION TRADE CTR,鴻貿中心,31 HUNG TO ROAD,鴻圖道31號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007805,LEMMI CTR,利寶時中心,50 HOI YUEN ROAD,開源道50號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007103,KWONG SANG HONG CTR,廣生行中心,151-153 HOI BUN ROAD,海濱道151-153號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007099,ENTREPOT CTR,港貿中心,117 HOW MING STREET,巧明街117號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007112,WINFUL CTR,華富工貿中心,30 SHING YIP STREET,成業街30號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020484,KAM HON IND BLDG,金漢工業大廈,8 WANG KWUN ROAD,宏冠道8號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007778,CAMELPAINT BLDG BLK 3,駱駝漆大廈三期,60 HOI YUEN ROAD,開源道60號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000025278,YAU TONG IND CITY A,油塘工業城 A 座,17 KO FAI ROAD,高輝道17號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000007902,METRO CENTRE BLK 1,美羅中心1期,32 LAM HING STREET,臨興街32號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_ind,B000020064,HONG LEONG IND COMPLEX,豐隆工業中心,4 WANG KWONG ROAD,宏光道4號,Building,9,Kwun Tong District,觀塘區,Industrial,mr_ind,Kwun Tong District_Industrial
+mr_comm,B000113283,MG 162,MG 162,162 Wai Yip Street,偉業街162號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000087062,Capital Tower Tower B,富臨中心B座,38 Wai Yip Street,偉業街38號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000101515,Four Seas Group Centre,四洲集團中心,41 King Yip Street,敬業街41號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000087061,Capital Tower Tower A,富臨中心A座,38 Wai Yip Street,偉業街38號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000101516,Boton Technology Innovation Tower,波頓科創中心,368 Kwun Tong Road,觀塘道368號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000082795,Manulife Place,宏利廣場,348 Kwun Tong Road,觀塘道348號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000083127,The Bay Hub,太豐匯,17 Kai Cheung Road,啟祥道17號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000112479,The Millennity - Tower 2,The Millennity 2座,98 How Ming Street,巧明街98號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000018298,Camelpaint Centre,駱駝漆中心,1 Hing Yip Street,興業街1號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000078832,COS Centre,中海日升中心,56 Tsun Yip Street,駿業街56號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000059634,LT Tower,LT Tower,31 Chong Yip Street,創業街31號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000111037,The 80 l 20,The 80 l 20,161 Wai Yip Street,偉業街161號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000116170,KTR350,KTR350,350 Kwun Tong Road,觀塘道350號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000122069,De Hua Tower,德華中心,32 Hung To Road,鴻圖道32號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000079980,Sitoy Tower,時代中心,164 Wai Yip Street,偉業街164號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000123892,The Cendas,The Cendas,15 Sheung Yuet Road,常悅道15號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000080483,Montery Plaza,萬泰利廣場,15 Chong Yip Street,創業街15號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000112478,The Millennity - Tower 1,The Millennity 1座,98 How Ming Street,巧明街98號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000076490,Rykadan Capital Tower,宏基資本大廈,135 Hoi Bun Road,海濱道135號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000024099,Hung To Centre,鴻圖中心,94-96 How Ming Street,巧明街94-96號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000079638,T G Place,電訊一代廣場,10 Shing Yip Street,成業街10號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000078780,YHC Tower,恩浩國際中心,1 Sheung Yuet Road,常悅道1號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000062696,Crocodile Centre,鱷魚恤中心,79 Hoi Yuen Road,開源道79號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000071821,Elite Centre,俊匯中心,22 Hung To Road,鴻圖道22號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000076026,Kin Sang Commercial Centre,建生商業中心,49 King Yip Street,敬業街49號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000066769,Billion Centre Tower B,億京中心B座,1 Wang Kwong Road,宏光道1號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000066942,C-Bons International Center,絲寶國際大廈,108 Wai Yip Street,偉業街108號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000022558,MG Tower,萬兆豐中心,133 Hoi Bun Road,海濱道133號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000019120,Legend Tower,寧晉中心,7 Shing Yip Street,成業街7號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000075970,King Palace Plaza,皇廷廣場,55 King Yip Street,敬業街55號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007804,Remington Centre,利登中心,23 Hung To Road,鴻圖道23號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000059821,One Harbour Square,One Harbour Square,181 Hoi Bun Road,海濱道181號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000109128,First Group Centre,第一集團中心,23 Wang Chiu Road,宏照道23號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000063754,Exchange Tower,國際交易中心,33 Wang Chiu Road,宏照道33號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007047,Fullerton Centre,富登中心,19 Hung To Road,鴻圖道19號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000085262,Mega Cube,創豪坊,8 Wang Kwong Road,宏光道8號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000062010,Enterprise Square Phase 5-Mega Box,企業廣場5期Mega Box,38 Wang Chiu Road,宏照道38號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000066768,Billion Centre Tower A,億京中心A座,1 Wang Kwong Road,宏光道1號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000059664,EGL Tower,東瀛遊廣場,83 Hung To Road,鴻圖道83號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007958,Yen Sheng Centre,源成中心,64 Hoi Yuen Road,開源道64號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000062009,Enterprise Square Phase 5-Tower 1,企業廣場5期1座,38 Wang Chiu Road,宏照道38號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000059665,Benson Tower,明順大廈,74 Hung To Road,鴻圖道74號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000022769,Prosperity Center,創富中心,25 Chong Yip Street,創業街25號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000059604,Enterprise Square Phase 3,企業廣場3期,39 Wang Chiu Road,宏照道39號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000059595,Enterprise Square Phase 2,企業廣場2期,3 Sheung Yuet Road,常悅道3號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000020050,Kowloonbay Int'l Trade & Exhibition Ctr,九龍灣國際展貿中心,1 Trademart Drive,展貿徑1號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007493,China Aerospace Centre,航天科技中心,143 Hoi Bun Road,海濱道143號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007861,Enterprise Square Phase 1-Tower 3,企業廣場1期3座,9 Sheung Yuet Road,常悅道9號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007859,Enterprise Square Phase 1-Tower 2,企業廣場1期2座,9 Sheung Yuet Road,常悅道9號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007857,Enterprise Square Phase 1-Tower 1,企業廣場1期1座,9 Sheung Yuet Road,常悅道9號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007219,Telford House,德福大廈,16 Wang Hoi Road,宏開道16號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007221,Nan Fung Commercial Centre,南豐商業中心,19 Lam Lok Street,臨樂街19號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_comm,B000007220,Chevalier Commercial Centre,其士商業中心,8 Wang Hoi Road,宏開道8號,Building,9,Kwun Tong District,觀塘區,Office,mr_comm,Kwun Tong District_Office
+mr_ind,B000104584,iCITY TOWER 1,iCITY 一座,111 TA CHUEN PING STREET,打磚坪街111號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000080612,THE STAR,星星中心,18 YIP SHING STREET,業成街18號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000080523,MAPLETREE LOGISTICS HUB TSING YI,豐樹青衣物流中心,30 TSING YI ROAD,青衣路30號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019796,HENRY CTR,恆利中心,131 WO YI HOP ROAD,和宜合道131號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021831,MEI KEI IND BLDG,美基工業大廈,30-40 WING LAP STREET,永立街30-40號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000079462,REASON GROUP TWR,匯城集團大廈,403-413 CASTLE PEAK ROAD,青山公路403-413號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000077104,THE GALAXY,天際中心,313 CASTLE PEAK ROAD,青山公路313號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024398,VALID INDUSTRIAL CENTRE,華利工業中心,13 WING KEI ROAD,永基路13號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024415,VENUS IND BLDG,金星工業大廈,45-51 TAI LIN PAI ROAD,大連排道45-51號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000061958,CARGO CONSOLIDATION COMPLEX,集運中心,43 CONTAINER PORT ROAD,貨櫃碼頭路43號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020465,TAK KEE GROUP BLDG,德記集團大廈,30-38 LAM TIN STREET,藍田街30-38號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020836,KONG SHENG FTY BLDG,恭誠工廠大廈,75-87 WO YI HOP ROAD,和宜合道75-87號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000018708,CHUAN KEI FTY BLDG,泉基工業大廈,15-23 KIN HONG STREET,健康街15-23號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007790,REGENT CTR (B),麗晶中心B座,63-67 WO YI HOP ROAD,和宜合道63-67號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000018635,CHING CHEONG IND BLDG,禎昌工業大廈,1-7 KWAI CHEONG ROAD,葵昌路1-7號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007114,ROXY IND CTR,樂聲工業中心,58-66 TAI LIN PAI ROAD,大連排道58-66號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024526,WAFORD IND BLDG,華福工業大廈,9-11 KWAI LOK STREET,葵樂街9-11號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000018639,CHING HING IND BLDG,正興工業大廈,19-25 FU UK ROAD,傅屋道19-25號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007783,WYLER CTR (1),偉倫中心 1 期,202-210 TAI LIN PAI ROAD,大連排道202-210號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000067517,VIGOR IND BLDG (2),華基工業大廈 2 期,49-53 TA CHUEN PING STREET,打磚坪街49-53號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007784,WYLER CTR (2),偉倫中心 2 期,192-200 TAI LIN PAI ROAD,大連排道192-200號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020449,KAM BUN IND BLDG,錦濱工業大廈,13-19 KWAI WING ROAD,葵榮路13-19號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021616,MAI WO IND BLDG,美和工業大廈,90-98 KWAI CHEONG ROAD,葵昌路90-98號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000025205,YAM HOP HING IND BLDG,任合興工業大廈,40-44 KWAI WING ROAD,葵榮路40-44號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007119,FOOK YIP BLDG,福業大廈,53-57 KWAI FUNG CRESCENT,葵豐街53-57號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007796,KWAI TAK IND CTR (1),葵德工業中心 1 期,15-33 KWAI TAK STREET,葵德街15-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059548,TUNG CHUN IND BLDG (B),同珍工業大廈 B 座,11-13 TAI YUEN STREET,大圓街11-13號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000018089,AMIATA INDUSTRIAL BUILDING,萬美達工業大廈,58-64 LEI MUK ROAD,梨木道58-64號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024617,WAH SING IND BLDG,華星工業大廈,12-14 WAH SING STREET,華星街12-14號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021936,MITA CTR,美達中心,552-566 CASTLE PEAK ROAD,青山公路552-566號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020917,SUNG'S TOWER,宋氏大廈,15-19 LAM TIN STREET,藍田街15-19號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059749,VIGOR IND BLDG (B),偉力工業中心B座,14-20 CHEUNG TAT ROAD,長達路14-20號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007120,PROFIT IND BLDG,盈業大廈,1-15 KWAI FUNG CRESCENT,葵豐街1-15號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020949,KWAI WAN IND BLDG,葵灣工業大廈,2 WING KIN ROAD,永建路2號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024934,WING HANG IND BLDG,永恆工業大廈,13-29 KWAI HEI STREET,葵喜街13-29號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020953,KWAI WU IND BLDG,葵匯工業大廈,85-89 TA CHUEN PING STREET,打磚坪街85-89號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024443,VIGOR IND BLDG (A),偉力工業中心A座,14-20 CHEUNG TAT ROAD,長達路14-20號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059747,TSING YI IND CTR Blk D (Ph 2),青衣工業中心D座(2期),1-33 CHEUNG TAT ROAD,長達路1-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019965,TUNG TAK CENTRE,同德中心,25-27 LAM TIN STREET,藍田街25-27號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059873,WING CHEUNG IND BLDG,永祥工業大廈,58-70 KWAI CHEONG ROAD,葵昌路58-70號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059864,KINGSFORD IND BLDG (2),金發工業大廈 2 期,26-32 KWAI HEI STREET,葵喜街26-32號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007789,REGENT CTR (A),麗晶中心A座,63-67 WO YI HOP ROAD,和宜合道63-67號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020140,HOU FENG IND BLDG,厚豐工業大廈,1-5 WING KIN ROAD,永建路1-5號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007797,KWAI TAK IND CTR (2),葵德工業中心 2 期,15-33 KWAI TAK STREET,葵德街15-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024444,VIGOR IND BLDG (1),華基工業大廈 1 期,49-53 TA CHUEN PING STREET,打磚坪街49-53號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024293,TUNG LUEN IND BLDG,東聯工業大廈,319-325 CASTLE PEAK ROAD,青山公路319-325號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059875,88 KWAI CHEONG RD,葵昌路88號,88 KWAI CHEONG ROAD,葵昌路88號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019467,GOLDEN IND BLDG,金德工業大廈,16-26 KWAI TAK STREET,葵德街16-26號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007121,TRANS ASIA CTR,恆亞中心,18 KIN HONG STREET,健康街18號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000023440,SO TAO CTR,蘇濤中心,11-15 KWAI SAU ROAD,葵秀路11-15號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020676,KIN HING IND BLDG,建興工業大廈,17-23 SHEK KIN STREET,石建街17-23號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024182,TSING YI IND CTR Blk A (Ph 1),青衣工業中心A座(1期),1-33 CHEUNG TAT ROAD,長達路1-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021053,LMK DEVELOPMENT ESTATE,羅氏美光發展大廈,10-16 KWAI TING ROAD,葵定路10-16號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000018409,CHE WAH IND BLDG,致華工廈,1-7 KIN HONG STREET,健康街1-7號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007353,HK WORSTED MILLS IND BLDG,香港毛紡工業大廈,31-39 WO TONG TSUI STREET,禾塘咀街31-39號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019528,GRAND IND BLDG,華寶工業大廈,159-165 WO YI HOP ROAD,和宜合道159-165號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021607,MAI LUEN IND BLDG,美聯工業大廈,23-31 KUNG YIP STREET,工業街23-31號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024971,WING LOI IND BLDG,榮來工業大廈,8-14 WING LAP STREET,永立街8-14號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019481,GOLDFIELD IND BLDG (2),金豐工業大廈 2 期,144-150 TAI LIN PAI ROAD,大連排道144-150號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000023631,SUNG KEE IND BLDG,生記工業大廈,18-30 KWAI TING ROAD,葵定路18-30號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059748,TSING YI IND CTR Blk E (Ph 2),青衣工業中心E座(2期),1-33 CHEUNG TAT ROAD,長達路1-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059562,GOLD WAY IND CTR (B),高威工業中心 B 座,16-20 WING KIN ROAD,永建路16-20號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000022478,PARK SUN BLDG,百新大廈,103-107 WO YI HOP ROAD,和宜合道103-107號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019449,GOLD WAY IND CTR (A),高威工業中心 A 座,16-20 WING KIN ROAD,永建路16-20號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059745,TSING YI IND CTR Blk B (Ph 1),青衣工業中心B座(1期),1-33 CHEUNG TAT ROAD,長達路1-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007113,RILEY HSE,達利中心,88 LEI MUK ROAD,梨木道88號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024953,WING KIN IND BLDG,永健工業大廈,4-6 WING KIN ROAD,永建路4-6號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000023446,SONG LING IND BLDG,松林工業大廈,40-42 TA CHUEN PING STREET,打磚坪街40-42號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019425,GLOBAL TRADE CTR,宏貿中心,15 WING KIN ROAD,永建路15號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021665,MAN LEE IND BLDG,萬利工業大廈,13 KIN HONG STREET,健康街13號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000059746,TSING YI IND CTR Blk C (Ph 2),青衣工業中心C座(2期),1-33 CHEUNG TAT ROAD,長達路1-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021611,MAI SHUN IND BLDG,美順工業大廈,18-24 KWAI CHEONG ROAD,葵昌路18-24號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007116,SUN FUNG CTR,新豐中心,88 KWOK SHUI ROAD,國瑞路88號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020771,KINGSFORD IND BLDG (1),金發工業大廈 1 期,26-32 KWAI HEI STREET,葵喜街26-32號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021615,MAI WAH IND BLDG,美華工業大廈,1-7 WAH SING STREET,華星街1-7號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019108,FAVOR IND CTR,飛亞工業中心,2-6 KIN HONG STREET,健康街2-6號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000021679,MAN SHING IND BLDG,萬勝工業大廈,307-311 CASTLE PEAK ROAD,青山公路307-311號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019441,GOLD KING IND BLDG,金基工業大廈,35-41 TAI LIN PAI ROAD,大連排道35-41號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007118,WELL FUNG IND CTR,和豐工業中心,58-76 TA CHUEN PING STREET,打磚坪街58-76號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024546,WAH FAT IND BLDG,華發工業大廈,10-14 KUNG YIP STREET,工業街10-14號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000023780,TAI TAK IND BLDG,大德工業大廈,2-12 KWAI FAT ROAD,葵發路2-12號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000024263,TUNG CHUN IND BLDG (A),同珍工業大廈 A 座,9-11 CHEUNG WING ROAD,昌榮路9-11號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007030,KWAI CHEONG CTR,葵昌中心,40-52 KWAI CHEONG ROAD,葵昌路40-52號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000019005,EFFORT IND BLDG,力豐工業大廈,2-8 KUNG YIP STREET,工業街2-8號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007117,VANTA IND CTR,宏達工業中心,21-33 TAI LIN PAI ROAD,大連排道21-33號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000020853,KOON WO IND BLDG,冠和工業大廈,63-75 TA CHUEN PING STREET,打磚坪街63-75號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000023455,SOUTH CHINA IND BLDG,南華工業大廈,1-7 CHUN PIN STREET,圳邊街1-7號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_ind,B000007031,KWAI SHUN IND CTR,葵順工業中心,51-63 CONTAINER PORT ROAD,貨櫃碼頭路51-63號,Building,10,Kwai Tsing District,葵青區,Industrial,mr_ind,Kwai Tsing District_Industrial
+mr_comm,B000088026,K83,K83,83 Tai Lin Pai Road,大連排道83號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000059544,Viking Technology & Business Centre A,維京科技商業中心A座,93 Ta Chuen Ping Street,打磚坪街93號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000078692,KC100,KC100,100-110 Kwai Cheong Road,葵昌路100-110號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000064189,EDGE,EDGE,30-34 Kwai Wing Rd,葵榮路30-34號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000061130,Kowloon Commerce Centre Tower 2,九龍貿易中心2座,51 Kwai Cheong Road,葵昌路51號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000066161,Kowloon Commerce Centre Tower 1,九龍貿易中心1座,51 Kwai Cheong Road,葵昌路51號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000007795,Manhattan Centre,萬泰中心,2-16 Kwai Cheong Road,葵昌路2-16號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000056108,Metro Loft,都會坊,38 Kwai Hei Street,葵喜街38號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000067518,Viking Technology & Business Centre B,維京科技商業中心B座,93 Ta Chuen Ping Street,打磚坪街93號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000059862,Chinabest International Centre,中信國際中心,8 Kwai On Road,葵安道8號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000059874,Millennium Trade Centre,貿易之都,56 Kwai Cheong Road,葵昌路56號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000053018,Ever Gain Plaza Tower 2,永得利廣場二座,82-100 Container Port Road,貨櫃碼頭路82-100號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000059871,Citic Telecom Tower,中信電訊大廈,93 Kwai Fuk Rd,葵福路93號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000053017,Ever Gain Plaza Tower 1,永得利廣場一座,82-100 Container Port Road,貨櫃碼頭路82-100號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000018122,Asia Trade Centre,亞洲貿易中心,79 Lei Muk Road,梨木道79號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000007788,Metroplaza Tower 2,新都會廣場第二座,223 Hing Fong Road,興芳路223號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_comm,B000007787,Metroplaza Tower 1,新都會廣場第一座,223 Hing Fong Road,興芳路223號,Building,10,Kwai Tsing District,葵青區,Office,mr_comm,Kwai Tsing District_Office
+mr_ind,B000093831,CAMERON SINO TECHNOLOGY CENTRE ,金岸科技中心,73 CHAI WAN KOK STREET,柴灣角街73號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000108951,W MEGA TOWER 1,W MEGA 1座,252 TEXACO ROAD,德士古道252號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000023109,SHANDAH BLDG,SHANDAH BLDG,682-6 CASTLE PEAK ROAD,青山公路682-6號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000073300,ONE MIDTOWN,ONE MIDTOWN,11 HOI SHING ROAD,海盛路11號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000021568,LUNG WAH INTERNATIONAL GODOWN,龍華國際貨運中心,72-76 WANG LUNG STREET,橫龍街72-76號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000058148,100 TEXACO ROAD,德士古道100號,100 TEXACO ROAD,德士古道100號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000059721,KING PALACE PLAZA,皇廷廣場,52A SHA TSUI ROAD,沙咀道52A號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000018462,CHEONG TAI IND BLDG,昌泰工業大廈,50-56 FUI YIU KOK STREET,灰50-56號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000054357,CHEUNG HING SHING CTR,昌興盛中心,23 SHA TSUI ROAD,沙咀道23號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007256,INTERNATIONAL TRADE CTR,達貿中心,11-19 SHA TSUI ROAD,沙咀道11-19號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007938,KONG NAM IND BLDG (A),江南工業大廈 A座,603-609 CASTLE PEAK ROAD,青山公路603-609號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000018080,ALLIED CARGO CTR,聯合貨運中心,150-160 TEXACO ROAD,德士古道150-160號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000077806,DAN6,DAN6,6 FUI YIU KOK STREET,灰6號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000050720,GOODMAN GLOBAL GATEWAY,嘉民國際訊通中心,168 YEUNG UK ROAD,楊屋道168號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007943,LEADER IND CTR (2),立泰工業中心 二期,188-202 TEXACO ROAD,德士古道188-202號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000059732,ADP PENTAGON CTR,五方集團中心,98 TEXACO ROAD,德士古道98號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000059698,WANG CHEONG ENTERPRISES CENTRE,宏昌企業中心,65-69 CHAI WAN KOK STREET,柴灣角街65-69號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007254,GOLDEN BEAR IND CTR,金熊工業中心,66-82 CHAI WAN KOK STREET,柴灣角街66-82號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000077793,TML TOWER,TML廣場,3 HOI SHING ROAD,海盛路3號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000024196,TSUEN TUNG FTY BLDG,銓通工業大廈,38-40 CHAI WAN KOK STREET,柴灣角街38-40號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000019616,STOREFRIENDLY TOWER (METROPLIS WEST),儲存易集團中心(新界西),22-28 TAI CHUNG ROAD,大涌道22-28號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007944,MILLION FORTUNE IND CTR,萬達來工業中心,34-36 CHAI WAN KOK STREET,柴灣角街34-36號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007252,EW INTERNATIONAL TOWER,安泰國際中心,120-124 TEXACO ROAD,德士古道120-124號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000059730,TCL TOWER,TCL工業中心,8 TAI CHUNG ROAD,大涌道8號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007940,KONG NAM IND BLDG (B),江南工業大廈 B座,603-609 CASTLE PEAK ROAD,青山公路603-609號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007089,SOUTHEAST IND BLDG,東南工業大廈,611-619 CASTLE PEAK ROAD,青山公路611-619號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007941,LEADER IND CTR (1),立泰工業中心 一期,188-202 TEXACO ROAD,德士古道188-202號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007491,THRIVING IND CTR,匯力工業中心,26-38 SHA TSUI ROAD,沙咀道26-38號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000019422,GLEE IND BLDG,致利工業大廈,77-81 CHAI WAN KOK STREET,柴灣角街77-81號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000025473,YOUNG YA IND BLDG,榮亞工業大廈,381-389 SHA TSUI ROAD,沙咀道381-389號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007249,MEGA TRADE CTR,時貿中心,1 MEI WAN STREET,美環街1號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000023668,SUNWISE IND BLDG,順力工業大廈,16-26 WANG WO TSAI STREET,橫窩仔街16-26號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000023671,SUPERLUCK IND CTR (2),荃運工業中心2期,57 SHA TSUI ROAD,沙咀道57號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007251,GOODMAN DYNAMIC CTR,嘉民達力貨櫃中心,188 YEUNG UK ROAD,楊屋道188號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007248,LUCIDA IND BLDG,龍力工業大廈,43-47 WANG LUNG STREET,橫龍街43-47號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007255,HO LIK CTR,豪力中心,64-66 SHA TSUI ROAD,沙咀道64-66號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007947,HI-TECH IND CTR (A),嘉力工業中心(A座),5-21 PAK TIN PAR STREET,白田壩街5-21號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000024201,TSUEN WAN IND BLDG,荃灣工業大廈,59-71 WANG LUNG STREET,橫龍街59-71號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000059725,SUPERLUCK IND CTR (1),荃運工業中心1期,45-53 SHA TSUI ROAD,沙咀道45-53號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007250,CHEUNG FUNG IND BLDG,長豐工業大廈,23-29 PAK TIN PAR STREET,白田壩街23-29號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007949,HI-TECH IND CTR (B),嘉力工業中心(B座),491-501 CASTLE PEAK ROAD,青山公路491-501號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007092,CABLE TV TOWER,有線電視大樓,9 HOI SHING ROAD,海盛路9號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000059741,TEXACO RD IND CTR (B),德士古道工業中心 (B座),14-22 WANG LUNG STREET,橫龍街14-22號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000024939,WING HING IND BLDG (TW),榮興工業大廈,83-93 CHAI WAN KOK STREET,柴灣角街83-93號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000018240,BONSUN IND BLDG,萬象工業大廈,364-366 SHA TSUI ROAD,沙咀道364-366號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000019510,GOODWILL IND BLDG,信義工業大廈,36-44 PAK TIN PAR STREET,白田壩街36-44號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000023958,TEXACO RD IND CTR (A),德士古道工業中心 (A座),256-264 TEXACO ROAD,德士古道256-264號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_ind,B000007527,WANG LUNG IND BLDG,宏龍工業大廈,48-56 WANG LUNG STREET,橫龍街48-56號,Building,11,Tsuen Wan District,荃灣區,Industrial,mr_ind,Tsuen Wan District_Industrial
+mr_comm,B000100035,Global Plaza,環貿廣場,1 Sha Tsui Road,沙咀道1號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000119995,Kingview Plaza,京匯廣場,37-43 Sha Tsui Road,沙咀道37-43號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000090123,International Enterprise Centre 3,國際企業中心3期,18 Tai Chung Road,大涌道18號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000099323,International Enterprise Centre 1,國際企業中心1期,11-15 Chai Wan Kok Street,柴灣角街11-15號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000079466,The Octagon,嘉達環球中心,6 Sha Tsui Road,沙咀道6號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000007028,CDW Building,中染大廈,382-392 Castle Peak Road - Tsuen Wan,青山公路荃灣段382-392號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000068804,Tai Hung Fai (Tsuen Wan) Centre,大鴻輝(荃灣)中心,55 Chung On Street,眾安街55號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_comm,B000006511,Nan Fung Centre,南豐中心,264-298 Castle Peak Road,青山道264-298號,Building,11,Tsuen Wan District,荃灣區,Office,mr_comm,Tsuen Wan District_Office
+mr_ind,B000023725,TAI HING INDUSTRIAL BUILDING,大興工業大廈,3 TSING YEUNG CIRCUIT,青楊街3號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000069877,GOODMAN TUEN MUN DISTRIBUTION CTR BLK2,嘉民屯門物流中心二座,3A. HUNG CHEUNG ROAD,洪祥路3A.號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000019213,GOODMAN TUEN MUN DISTRIBUTION CTR BLK1,嘉民屯門物流中心1座,3A HUNG CHEUNG ROAD,洪祥路3A號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000059652,GOODMAN WESTERN PLAZA,嘉民環宇物流廣場,2 TIN HAU ROAD,天后路2號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000059625,NAN FUNG IND CITY (5),南豐工業城五座,18 TIN HAU ROAD,天后路18號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000059622,NAN FUNG IND CITY (2),南豐工業城二座,18 TIN HAU ROAD,天后路18號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000023847,TAK LEE IND CTR (A),得利工業大廈A座,8 TSING YEUNG CIRCUIT,青楊街8號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000022006,MY LOFT,萬能閣,9 HOI WING ROAD,海榮路9號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000018069,YICK FUNG GROUP BUILDING,億豐集團大廈,1 KIN FAT LANE,建發里1號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000022051,NAN FUNG IND CITY (1),南豐工業城一座,18 TIN HAU ROAD,天后路18號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000018364,NAN FUNG IND CITY (CENTRAL),南豐工業城中央大樓,18 TIN HAU ROAD,天后路18號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000021001,KWONG KIN TRADE CTR,廣建貿易中心,5 KIN FAT STREET,建發街5號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000059623,NAN FUNG IND CITY (3),南豐工業城三座,18 TIN HAU ROAD,天后路18號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000059654,TAK LEE IND CTR (B),得利工業大廈B座,8 TSING YEUNG CIRCUIT,青楊街8號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_ind,B000059624,NAN FUNG IND CITY (4),南豐工業城四座,18 TIN HAU ROAD,天后路18號,Building,12,Tuen Mum District,屯門區,Industrial,mr_ind,Tuen Mum District_Industrial
+mr_comm,B000089215,One Vista Summit,匯賢一號‧雋峰,3 San Hop Lane,新合里3號,Building,12,Tuen Mum District,屯門區,Office,mr_comm,Tuen Mum District_Office
+mr_ind,B000059804,YUEN LONG HI-TECH CTR,元朗科技中心,11 WANG YIP STREET WEST,宏業西街11號,Building,13,Yuen Long District,元朗區,Industrial,mr_ind,Yuen Long District_Industrial
+mr_ind,B000024773,WANG YIP CTR,宏業工貿中心,18 WANG YIP STREET EAST,宏業東街18號,Building,13,Yuen Long District,元朗區,Industrial,mr_ind,Yuen Long District_Industrial
+mr_ind,B000025548,YUEN LONG TRADING CTR,元朗貿易中心(宏業西街),33 WANG YIP STREET WEST,宏業西街33號,Building,13,Yuen Long District,元朗區,Industrial,mr_ind,Yuen Long District_Industrial
+mr_ind,B000021103,LAI SUN YUEN LONG CENTRE,麗新元朗中心,21-35 WANG YIP STREET EAST,宏業東街21-35號,Building,13,Yuen Long District,元朗區,Industrial,mr_ind,Yuen Long District_Industrial
+mr_comm,B000108494,One North Tower 2,朗壹廣場2座,8 Hong Yip Street,康業街8號,Building,13,Yuen Long District,元朗區,Office,mr_comm,Yuen Long District_Office
+mr_comm,B000108493,One North Tower 1,朗壹廣場1座,8 Hong Yip Street,康業街8號,Building,13,Yuen Long District,元朗區,Office,mr_comm,Yuen Long District_Office
+mr_ind,B000095107,HI-SPEED CENTRE 1,海迅中心1座,18 ON CHUEN STREET,安全街18號,Building,14,Northern District,北區,Industrial,mr_ind,Northern District_Industrial
+mr_ind,B000059462,JUMBO PLAZA,珍寶廣場,6 CHOI FAI STREET,彩暉街6號,Building,14,Northern District,北區,Industrial,mr_ind,Northern District_Industrial
+mr_ind,B000059754,HI-TECH CTR,深港中心,9 CHOI YUEN ROAD,彩園路9號,Building,14,Northern District,北區,Industrial,mr_ind,Northern District_Industrial
+mr_ind,B000059816,CHINA RESOURCES LOG. S.S. WAREHOUSE,華潤物流上水貨倉,2 SAN PO STREET,新寶街2號,Building,14,Northern District,北區,Industrial,mr_ind,Northern District_Industrial
+mr_comm,B000059831,Fuk Shing Commercial Building,福成商業大廈,28 On Lok Mun Street,安樂門街28號,Building,14,Northern District,北區,Office,mr_comm,Northern District_Office
+mr_ind,B000059687,TAI PING IND CTR (3),太平工業中心 3 座,53 TING KOK ROAD,汀角路53號,Building,15,Tai Po District,大埔區,Industrial,mr_ind,Tai Po District_Industrial
+mr_ind,B000023761,TAI PING IND PARK (A),太平工業園 A 座,51 TING KOK ROAD,汀角路51號,Building,15,Tai Po District,大埔區,Industrial,mr_ind,Tai Po District_Industrial
+mr_ind,B000059689,TAI PING IND PARK (B),太平工業園 B 座,51 TING KOK ROAD,汀角路51號,Building,15,Tai Po District,大埔區,Industrial,mr_ind,Tai Po District_Industrial
+mr_ind,B000059686,TAI PING IND CTR (2),太平工業中心 2 座,55 TING KOK ROAD,汀角路55號,Building,15,Tai Po District,大埔區,Industrial,mr_ind,Tai Po District_Industrial
+mr_ind,B000059688,TAI PING IND CTR (4),太平工業中心 4 座,51A TING KOK ROAD,汀角路51A號,Building,15,Tai Po District,大埔區,Industrial,mr_ind,Tai Po District_Industrial
+mr_ind,B000023760,TAI PING IND CTR (1),太平工業中心 1 座,57 TING KOK ROAD,汀角路57號,Building,15,Tai Po District,大埔區,Industrial,mr_ind,Tai Po District_Industrial
+mr_ind,B000019055,EVER GAIN CTR,永得利中心,28 ON MUK STREET,安睦街28號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000066961,EVERGAIN BLDG (NO.3),永得利大廈(第三座),22 ON SUM STREET,安心街22號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024581,WAH LAI IND CTR,華麗工業中心,10-14 KWEI TEI STREET,桂地街10-14號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000023097,SHA TIN IND BLDG,沙田工業大廈,22-28 WO SHUI STREET,禾穗街22-28號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024588,WAH LOK IND CTR (A),華樂工業中心 A 座,37-41 SHAN MEI STREET,山尾街37-41號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059786,POWER IND BLDG,力堅工業大廈,9-15 WO HEUNG STREET,禾香街9-15號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024134,TOPSAIL PLAZA,華順廣場,11 ON SUM STREET,安心街11號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024142,TRANSPORT CITY BLDG,交通城工業大廈,1-7 SHING WAN ROAD,成運路1-7號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059771,WAH LOK IND CTR (C),華樂工業中心 C 座,31-35 SHAN MEI STREET,山尾街31-35號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000022279,ON HO IND BLDG,安豪工業大廈,17-19 SHING WAN ROAD,成運路17-19號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000023646,SUNKING FTY BLDG,順景工業大廈,1-7 SHING CHUEN ROAD,成全路1-7號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059547,GOODMAN SHATIN LOGISTICS CENTRE 2,嘉民沙田物流中心2座,6 WONG CHUK YEUNG STREET,黃竹洋街6號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000022313,NEW TRADE PLAZA BLK B,新貿中心 B 座,6 ON PING STREET,安平街6號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000025174,WORLD-WIDE IND CTR,環球工業中心,43-47 SHAN MEI STREET,山尾街43-47號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000066957,GOODMAN SHATIN LOGISTICS CENTRE 1,嘉民沙田物流中心1座,6 WONG CHUK YEUNG STREET,黃竹洋街6號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059774,WAH LOK IND CTR (F),華樂工業中心 F 座,31-41 SHAN MEI STREET,山尾街31-41號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059762,KIN HO IND BLDG BLK 2,金豪工業大廈 2 座,14-24 AU PUI WAN STREET,坳背灣街14-24號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000025214,YAN HING CTR,仁興中心,9-13 WONG CHUK YEUNG STREET,黃竹洋街9-13號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000020783,KIN HO IND BLDG BLK 1,金豪工業大廈 1 座,14-24 AU PUI WAN STREET,坳背灣街14-24號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000022081,NEW COMMERCE CTR,匯貿中心,19 ON SUM STREET,安心街19號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000019482,GOLDFIELD IND CTR,豐利工業中心,1 SUI WO ROAD,穗禾路1號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000052951,GRANDTECH CTR,偉達中心,8 ON PING STREET,安平街8號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000019225,FU CHEUNG CTR,富昌中心,5-7 WONG CHUK YEUNG STREET,黃竹洋街5-7號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059772,WAH LOK IND CTR (D),華樂工業中心 D 座,31-35 SHAN MEI STREET,山尾街31-35號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000020502,CORPORATION PARK,企業中心,11 ON LAI STREET,安麗街11號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000022101,NEW TRADE PLAZA BLK A,新貿中心 A 座,6 ON PING STREET,安平街6號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024373,UNISON IND CTR,協興工業中心,27-31 AU PUI WAN STREET,坳背灣街27-31號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000019138,FONDA IND BLDG,峰達工業大廈,37-39 AU PUI WAN STREET,坳背灣街37-39號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059773,WAH LOK IND CTR (E),華樂工業中心 E 座,31-35 SHAN MEI STREET,山尾街31-35號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000019716,HARIBEST IND BLDG,喜利佳工業大廈,45-47 AU PUI WAN STREET,坳背灣街45-47號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059770,WAH LOK IND CTR (B),華樂工業中心 B 座,37-41 SHAN MEI STREET,山尾街37-41號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000023948,TECHNOLOGY PARK,達利廣場,18 ON LAI STREET,安麗街18號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000018375,CENTURY INDUSTRIAL CENTRE ,世紀工業中心,33-35 AU PUI WAN STREET,坳背灣街33-35號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024631,WAH WAI CTR,華衛工貿中心,38-42 AU PUI WAN STREET,坳背灣街38-42號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000019132,FO TAN IND CTR,富騰工業中心,26-28 AU PUI WAN STREET,坳背灣街26-28號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024645,WAH YIU IND CTR,華耀工業中心,30-32 AU PUI WAN STREET,坳背灣街30-32號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000019723,HARRY IND BLDG,協力工業大廈,49-51 AU PUI WAN STREET,坳背灣街49-51號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000023098,SHA TIN IND CTR (A),沙田工業中心 A 座,5-7 YUEN SHUN CIRCUIT,源順圍5-7號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000059551,SHA TIN IND CTR (B),沙田工業中心 B 座,5-7 YUEN SHUN CIRCUIT,源順圍5-7號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024385,UNIVERSAL IND CTR,宇宙工業中心,19-25 SHAN MEI STREET,山尾街19-25號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000024397,VALIANT IND CTR,威力工業中心,2-12 AU PUI WAN STREET,坳背灣街2-12號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_ind,B000020637,CHINA RESOURCES SHATIN WAREHOUSE,華潤沙田貨倉,36-42 SHAN MEI STREET,山尾街36-42號,Building,16,Sha Tin District,沙田區,Industrial,mr_ind,Sha Tin District_Industrial
+mr_comm,B000088915,W LUXE,W LUXE,5 On Yiu Street,安耀街5號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_comm,B000079981,Kings Wing Plaza 1,京瑞廣場1期,3 On Kwan Street,安群街3號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_comm,B000080275,Kings Wing Plaza 2,京瑞廣場2期,1 On Kwan Street,安群街1號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_comm,B000021870,Metropole Square,新都廣場,2 On Yiu Street,安耀街2號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_comm,B000054903,11 Shatin Plaza,沙田11號廣場,11 Wo Shui St,禾穗街11號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_comm,B000018826,Citimark,都會廣場,28 Yuen Shun Circuit,源順圍28號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_comm,B000023117,Shatin Galleria,沙田商業中心,18-24 Shan Mei Street,山尾街18-24號,Building,16,Sha Tin District,沙田區,Office,mr_comm,Sha Tin District_Office
+mr_ind,B000022225,OCEANIC IND CTR,海灣工貿中心,2 LEE LOK STREET,利樂街2號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000021173,LEADER IND CTR,利達工中,37 WONG CHUK HANG ROAD,黃竹坑道37號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000019530,GRAND MARINE CENTER,大洋中心,3 YUE FUNG STREET,漁豐街3號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000019713,HARBOUR IND CTR,港灣工貿中心,10 LEE HING STREET,利興街10號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000059768,KINGLEY IND BLDG BLK 1,金來工廈一座,33-35 YIP KAN ST,業勤街33-35號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000090803,HORIZON PLAZA,新海怡廣場,2 LEE WING STREET,利榮街2號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000025236,YAN'S TWR,甄沾記大廈,25-27 WONG CHUK HANG ROAD,黃竹坑道25-27號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000020762,KINGLEY IND BLDG BLK 2,金來工廈二座,33-35 YIP KAN ST,業勤街33-35號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_ind,B000019903,HING WAI CTR,興偉中心,7 TIN WAN PRAYA ROAD,田灣海旁道7號,Building,4,Southern District,南區,Industrial,mr_ind,Southern District_Industrial
+mr_comm,B000108492,S22,S22,22 Heung Yip Road,香葉道22號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000080282,Vertical Sq,嘉尚匯,28 Heung Yip Road,香葉道28號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000080486,Casey Aberdeen House,啟時深灣大廈,38 Heung Yip Road,香葉道38號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000087080,41 Heung Yip Road,香葉道41號,41 Heung Yip Road,香葉道41號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000095757,Rykadan One,宏基匯,23 Wong Chuk Hang Road,黃竹坑道23號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000021184,Lee & fund Centre,利基中心,31 Wong Chuk Hang Road,黃竹坑道31號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000114344,Viva Place,偉華匯,36 Heung Yip Road,香葉道36號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000085763,The Hub,The Hub,23 Yip Kan Street,業勤街23號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000024780,One Island South,One Island South,2 Heung Yip Road,香葉道2號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000077711,Global Trade Square,環匯廣場,19-21 Wong Chuk Hang Road,黃竹坑道19-21號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000079814,W50,W50,50 Wong Chuk Hang Road,黃竹坑道50號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000022837,Metro South Tower,都會中心,39 Wong Chuk Hang Road,黃竹坑道39號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000025494,Yue Fai Commercial Centre,裕輝商業中心,208 Aberdeen Main Road,香港仔大道208號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_comm,B000063776,Southmark,南匯廣場,11 Yip Hing Street,業興街11號,Building,4,Southern District,南區,Office,mr_comm,Southern District_Office
+mr_ind,B000122544,VERDE HEIGHTS ,蘢薈,NO 550 CASTLE PEAK ROAD ,青山道550號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000101679,ONE TWO ONE,ONE TWO ONE,121 KING LAM STREET,瓊林街121號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000094022,VITA GREEN TOWER ,維特健靈中心,918 CHEUNG SHA WAN ROAD,長沙灣道918號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000094023,PROWELL ASIA CENTRE ,寶源亞洲中心,926 CHEUNG SHA WAN ROAD,長沙灣道926號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000094024,ORIENT INTERNATIONAL TOWER,東方國際大廈,1018 TAI NAN WEST STREET,大南西街1018號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000081953,KIMBERLAND CENTRE,金百盛中心,55 WING HONG STREET,永康街55號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000081664,W668,W668,668-680 CASTLE PEAK ROAD,青山道668-680號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000079730,GLOBAL GATEWAY TOWER,GLOBAL GATEWAY TOWER,63 WING HONG STREET,永康街63號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000025402,YING TUNG INDUSTRIAL BUILDING,應通工業大廈,802 LAI CHI KOK ROAD,荔枝角道802號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000068495,CEO TOWER,環薈中心,77 WING HONG STREET,永康街77號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000022098,NEW TIMELY FTY BLDG,時來工廠大廈,497 CASTLE PEAK ROAD,青山道497號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000068661,GRANDION PLAZA,興迅廣場,932 CHEUNG SHA WAN ROAD,長沙灣道932號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000077739,TAI SHING FACTORY BUILDING,泰盛工廠大廈,273-279 UN CHAU STREET,元州街273-279號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000025310,YEE TAK FTY BLDG,義德工廠大廈,42 WING HONG STREET,永康街42號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000020382,FORD GLORY PLAZA,福源廣場,37-39 WING HONG STREET,永康街37-39號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000021021,KWONG TAI FTY BLDG,廣大工廠大廈,750 CHEUNG SHA WAN ROAD,長沙灣道750號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000021421,LONG TO BLDG,浪淘大廈,654-656 CASTLE PEAK ROAD,青山道654-656號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007243,CRE CTR,華創中心,889 CHEUNG SHA WAN ROAD,長沙灣道889號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000019390,GARMENT CTR,製衣中心,576-586 CASTLE PEAK ROAD,青山道576-586號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007235,VOGUE CTR,時采中心,696 CASTLE PEAK ROAD,青山道696號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000055077,822 LAI CHI KOK ROAD,荔枝角道822號,822 LAI CHI KOK ROAD,荔枝角道822號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000021477,LUEN HING FTY BLDG,聯興工廠大廈,109 KING LAM STREET,瓊林街109號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007237,HOP HING IND BLDG,合興工業大廈,704 CASTLE PEAK ROAD,青山道704號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007924,"HK SPINNERS IND BLDG (1,2)","香港紗廠工業大廈 I,II  期",601-603 TAI NAN WEST STREET,大南西街601-603號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000055082,D2 PLACE 2,D2 PLACE 2,15 CHEUNG SHUN STREET,長順街15號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000054388,THE GLOBE,創匯國際中心,79 WING HONG STREET,永康街79號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007238,KA TO FTY BLDG,嘉圖工廠大廈,2 CHEUNG YUE STREET,長裕街2號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007915,HK IND CTR BLK A,香港工業中心 A 座,489-491 CASTLE PEAK ROAD,青山道489-491號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007918,HK IND CTR BLK C,香港工業中心 C 座,489-491 CASTLE PEAK ROAD,青山道489-491號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007240,CHARM CTR,時運中心,700 CASTLE PEAK ROAD,青山道700號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007241,CHINA UNITED PLAZA,華匯廣場,1008 TAI NAN WEST STREET,大南西街1008號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007245,ELITE IND CTR,億利工業中心,883 CHEUNG SHA WAN ROAD,長沙灣道883號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000019358,FUNG WAH FACTORY BUILDING,豐華工業大廈,646-648A CASTLE PEAK ROAD,青山道646-648A號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007904,9 WING HONG ST,永康街9號,9 WING HONG STREET,永康街9號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007935,FASHION CTR,時穎中心,51-53 WING HONG STREET,永康街51-53號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000025555,YUEN SHING IND BLDG,源盛工業大廈,1033 YEE KUK STREET WEST,醫局西街1033號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007232,STERLING CTR,定豐中心,11 CHEUNG YUE STREET,長裕街11號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007236,WING HONG CTR,永康中心,18 WING HONG STREET,永康街18號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000020168,HUNG CHEONG FTY BLDG,鴻昌工廠大廈,3 KWONG CHEUNG STREET,光昌街3號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007239,CENTRE 600,陸佰中心,82 KING LAM STREET,瓊林街82號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007929,HK SPINNERS IND BLDG (5),香港紗廠工業大廈 V 期,760 CHEUNG SHA WAN ROAD,長沙灣道760號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000024612,WAH SHING IND BLDG,華盛工業大廈,18 CHEUNG SHUN STREET,長順街18號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007916,HK IND CTR BLK B,香港工業中心 B 座,489-491 CASTLE PEAK ROAD,青山道489-491號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000019099,FAST IND BLDG,福至工業大廈,658 CASTLE PEAK ROAD,青山道658號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007244,DRAGON IND BLDG,龍翔工業大廈,93 KING LAM STREET,瓊林街93號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007229,PREMIER CTR,時豐中心,20 CHEUNG SHUN STREET,長順街20號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007230,KOWLOON PLAZA,九龍廣場,485 CASTLE PEAK ROAD,青山道485號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007234,TRUST CTR,時信中心,912-914 CHEUNG SHA WAN ROAD,長沙灣道912-914號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007930,HK SPINNERS IND BLDG (6),香港紗廠工業大廈 VI 期,481 CASTLE PEAK ROAD,青山道481號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000007231,SIU WAI IND CTR,兆威工業大廈,29-33 WING HONG STREET,永康街29-33號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_ind,B000022746,PRECIOUS IND CTR,柏裕工業中心,18 CHEUNG YUE STREET,長裕街18號,Building,6,Sham Shui Po District,深水埗區,Industrial,mr_ind,Sham Shui Po District_Industrial
+mr_comm,B000120992,83 Wing Hong Street,永康街83號,83 Wing Hong Street,永康街83號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000112480,83 King Lam Street Tower A,瓊林街83號A座,83 King Lam Street,瓊林街83號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000093889,NCB Innovation Centre,南商金融創新中心,888 Lai Chi Kok Road,荔枝角道888號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000083965,China Shipbuilding Tower,中國船舶大廈,650 Cheung Sha Wan Road,長沙灣道650號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000112481,83 King Lam Street Tower B,瓊林街83號B座,83 King Lam Street,瓊林街83號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000078476,Billion Plaza II,億京廣場II期,10 Cheung Yue Street,長裕街10號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000007233,Times Tower,時代中心,928-930 Cheung Sha Wan Road,長沙灣道928-930號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000071134,Excel Centre,卓匯中心,483A Castle Peak Road,青山道483A號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000007242,Comweb Plaza,經達廣場,12 Cheung Yue Street,長裕街12號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000024673,909 Cheung Sha Wan Road,長沙灣道909號,909 Cheung Sha Wan Road,長沙灣道909號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000053057,Clifford Centre,香港中心,778-784 Cheung Sha Wan Road,長沙灣道778-784號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000021067,Laford Centre,勵豐中心,838 Lai Chi Kok Road,荔枝角道838號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000055044,Kings Tower,擎天廣場,111 King Lam Street,瓊林街111號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000022528,Peninsula Tower,半島大廈,534-538 Castle Peak Road,青山道534-538號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000059580,Saxon Tower,西頓中心,7 Cheung Shun Street,長順街7號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000052931,Billion Plaza,億京廣場,8 Cheung Yue Street,長裕街8號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000022467,PeakCastle,PeakCastle,476 Castle Peak Road,青山道476號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000024831,West Gate Tower,西港都會中心,7 Wing Hong Street,永康街7號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000055081,D2 Place One,D2 Place One,9 Cheung Yee Street,長義街9號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000054979,Cheung Sha Wan Plaza Tower II,長沙灣廣場第二期,833 Cheung Sha Wan Road,長沙灣道833號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000054978,Cheung Sha Wan Plaza Tower I,長沙灣廣場第一期,833 Cheung Sha Wan Road,長沙灣道833號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_comm,B000021167,Laws Commercial Plaza,羅氏商業廣場,788 Cheung Sha Wan Road,長沙灣道788號,Building,6,Sham Shui Po District,深水埗區,Office,mr_comm,Sham Shui Po District_Office
+mr_ind,B000023549,SUI YING IND BLDG,瑞英工業大廈,1 YUK YAT STREET,旭日街1號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007087,GEMSTAR TOWER,駿昇中心,23 MAN LOK STREET,民樂街23號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007486,HILDER CTR,富德中心,2 SUNG PING STREET,崇平街2號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007769,FOCAL IND CTR - B,富高工業中心B座,21 MAN LOK STREET,民樂街21號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007489,GUARDFORCE CENTRE,衛安中心,3 HOK YUEN STREET EAST,鶴園東街3號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007892,HARBOUR CTR TOWER 2,維港中心2座,8 HOK CHEUNG STREET,鶴翔街8號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000019657,HENG NGAI JEWELRY CTR,恆藝珠寶中心,4 HOK YUEN STREET EAST,鶴園東街4號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000056050,WINNER BLDG,榮業大廈,32-40 MAN YUE STREET,民裕街32-40號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000022089,NEW LEE WAH CENTRE,新利華中心,88 TO KWA WAN ROAD,土瓜灣道88號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007169,KAISER ESTATE PHASE 3,凱旋工商中心3期,9-11A HOK YUEN STREET,鶴園街9-11A號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007168,KAISER ESTATE PHASE 2,凱旋工商中心2期,47-53 MAN YUE STREET,民裕街47-53號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007485,FU HANG INDUSTRIAL BUILDING,富恆工業大廈,1 HOK YUEN STREET EAST,鶴園東街1號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007768,FOCAL IND CTR - A,富高工業中心A座,21 MAN LOK STREET,民樂街21號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007488,ELDEX IND BLDG,義達工業大廈,21 MA TAU WAI ROAD,馬頭圍道21號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000007891,HARBOUR CTR TOWER 1,維港中心1座,1 HOK CHEUNG STREET,鶴翔街1號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_ind,B000054107,KAISER ESTATE PHASE 1,凱旋工商中心1期,37-45 MAN YUE STREET,民裕街37-45號,Building,7,Kowloon City District,九龍城區,Industrial,mr_ind,Kowloon City District_Industrial
+mr_comm,B000064359,The Metropolis Tower,都會大廈,10 Metropolis Drive,都會道10號,Building,7,Kowloon City District,九龍城區,Office,mr_comm,Kowloon City District_Office
+mr_comm,B000063784,The Harbourfront Tower 2,海濱廣場二座,18-22 Tak Fung Street,德豐街18-22號,Building,7,Kowloon City District,九龍城區,Office,mr_comm,Kowloon City District_Office
+mr_comm,B000007890,Hunghom Commercial Centre B,紅磡商業中心B座,37-39 Ma Tau Wai Road,馬頭圍道37-39號,Building,7,Kowloon City District,九龍城區,Office,mr_comm,Kowloon City District_Office
+mr_comm,B000063833,The Harbourfront Tower 1,海濱廣場一座,18-22 Tak Fung Street,德豐街18-22號,Building,7,Kowloon City District,九龍城區,Office,mr_comm,Kowloon City District_Office
+mr_comm,B000007088,Peninsula Square,半島廣場,18 Sung On Street,祟安街18號,Building,7,Kowloon City District,九龍城區,Office,mr_comm,Kowloon City District_Office
+mr_comm,B000007889,Hunghom Commercial Centre A,紅磡商業中心A座,37-39 Ma Tau Wai Road,馬頭圍道37-39號,Building,7,Kowloon City District,九龍城區,Office,mr_comm,Kowloon City District_Office
+mr_ind,B000103151,HORIZON EAST,東傲,1 TSAT PO STREET,七寶街1號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000062682,MIDAS PLAZA,勤達中心,1 TAI YAU STREET,大有街1號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000025014,WING SUM 2ND IND BLDG,榮森工業第二大廈,12-14 SAM CHUK STREET,三祝街12-14號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000021792,MAX TRADE CTR,萬昌中心,23 LUK HOP STREET,六合街23號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000022103,NEW TREND CTR,新時代工貿商業中心,704 PRINCE EDWARD ROAD EAST,太子道東704號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000018309,CANNY IND BLDG,佳力工業大廈,33 TAI YAU STREET,大有街33號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000022097,NEW TECH PLAZA,新科技廣場,34 TAI YAU STREET,大有街34號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000021509,LUK HOP IND BLDG,六合工業大廈,8 LUK HOP STREET,六合街8號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000025128,WONG KING IND BLDG,旺景工業大廈,192 CHOI HUNG ROAD,彩虹道192號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_ind,B000021164,LAURELS IND CTR,泰力工業中心,32 TAI YAU STREET,大有街32號,Building,8,Wong Tai Sin District,黃大仙區,Industrial,mr_ind,Wong Tai Sin District_Industrial
+mr_comm,B000111508,The Burrow,The Burrow,212 Choi Hung Road,彩虹道212號,Building,8,Wong Tai Sin District,黃大仙區,Office,mr_comm,Wong Tai Sin District_Office
+mr_comm,B000080050,On Tin Centre,安田中心,1-3 Sheung Hei Street,雙喜街1-3號,Building,8,Wong Tai Sin District,黃大仙區,Office,mr_comm,Wong Tai Sin District_Office
+mr_comm,B000059457,One Portside,宏基中心一期,29 Tai Yau Street,大有街29號,Building,8,Wong Tai Sin District,黃大仙區,Office,mr_comm,Wong Tai Sin District_Office
+mr_comm,B000080611,Maxgrand Plaza,萬迪廣場,3 Tai Yau Street,大有街3號,Building,8,Wong Tai Sin District,黃大仙區,Office,mr_comm,Wong Tai Sin District_Office
+mr_comm,B000066796,Win Plaza,匯達商業中心,9 Sheung Hei Street,雙喜街9號,Building,8,Wong Tai Sin District,黃大仙區,Office,mr_comm,Wong Tai Sin District_Office

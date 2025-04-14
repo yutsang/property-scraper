@@ -76,6 +76,7 @@ midland_ici:
   incremental_save_frequency: 5
   resume_from_existing: True
   midland_ici_building_listings: 'data/02_intermediate/midland_ici_buildings.parquet'
+  midland_ici_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
 
   # API URLs
   buildings_url: "https://service.midlandici.com/building/graphql"
