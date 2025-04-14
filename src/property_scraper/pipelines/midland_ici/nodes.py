@@ -419,3 +419,96 @@ def process_buildings(
             print(f"Saved {len(df_results)} buildings to {details_file}")
             return df_results
 
+####################################################################################
+# Transaction
+
+import requests
+import time
+import random
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
+from tqdm import tqdm
+import json
+import pandas as pd
+
+def ml_ici_scrape_trans(
+    params: Dict[str, Any]) -> pd.DataFrame:
+    """
+    Scrape all transaction data from Midland ICI website and return as pandas DataFrame.
+    
+    Args:
+        start_date (datetime): Start date for scraping.
+        end_date (datetime): End date for scraping.
+        base_url (str): API endpoint URL.
+        headers (dict): HTTP headers for the request.
+        max_page_size (int): Maximum number of records per page.
+        
+    Returns:
+        pandas.DataFrame: DataFrame containing all transaction data.
+    """
+    all_transactions = []
+    
+    # Generate month ranges
+    month_ranges = []
+    start_date = params['start_date']
+    current = datetime.now()
+    
+    # Convert string dates to datetime objects
+    if isinstance(start_date, str):
+        start_date = datetime.fromisoformat(start_date)
+        
+    while current >= start_date:
+        month_end = current
+        month_start = current.replace(day=1)
+        month_ranges.append((month_start.strftime("%Y-%m-%d"), month_end.strftime("%Y-%m-%d")))
+        current = month_start - relativedelta(days=1)
+    
+    # Scrape data for each month range
+    with tqdm(month_ranges, desc="Processing Trans", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as month_pbar:
+        for date_min, date_max in month_pbar:
+            month_data = []
+            cursor = 1
+            
+            while True:
+                try:
+                    response = requests.get(
+                        params['transaction_url'],
+                        headers=params['headers'],
+                        params={
+                            "ics_type": "",
+                            "date_min": date_min,
+                            "date_max": date_max,
+                            "lang": "english",
+                            "page_size": params['max_page_size'],
+                            "cursor": cursor,
+                            "order": "tx_date-desc"
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    if not data.get('transactions'):
+                        break
+
+                    # Update transaction tracking
+                    month_data.extend(data['transactions'])
+                    current_total = len(all_transactions) + len(month_data)
+                    month_pbar.set_postfix_str(f"Trans: {current_total}")
+
+                    # Pagination control
+                    if (len(month_data) >= data.get('count', 0) or 
+                        len(data['transactions']) < params['max_page_size']):
+                        break
+
+                    cursor += 1
+                    time.sleep(random.uniform(0.5, 1.5))
+
+                except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
+                    print(f"Error: {e}. Retrying...")
+                    time.sleep(5)
+                    continue
+
+            all_transactions.extend(month_data)
+            
+    return pd.DataFrame(all_transactions)
+

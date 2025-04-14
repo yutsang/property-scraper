@@ -70,16 +70,20 @@ centaline_oir:
   }
 
 midland_ici:
+  start_date: "2000-01-01"
   request_delay: 0.5
   max_retries: 3
   save_incremental: True
   incremental_save_frequency: 5
+  max_page_size: 20000
   resume_from_existing: True
   midland_ici_building_listings: 'data/02_intermediate/midland_ici_buildings.parquet'
   midland_ici_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
 
+
   # API URLs
   buildings_url: "https://service.midlandici.com/building/graphql"
+  transaction_url: "https://www.midlandici.com.hk/ics/property/transaction/json"
   headers:  {
         "Content-Type": "application/json",
         "Accept": "*/*",
