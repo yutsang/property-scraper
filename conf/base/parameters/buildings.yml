@@ -1,0 +1,119 @@
+# Buildings Pipeline Configuration
+
+# Node tracking settings
+node_tracking:
+  enabled: true
+  days_between_runs: 7
+
+# Geocoding settings
+geocoding:
+  # OSM geocoding settings
+  osm:
+    enabled: true
+    max_retries: 3
+    timeout: 10
+    delay_between_requests: 1.0
+  
+  # Google Maps API settings (expensive, use sparingly)
+  google_maps:
+    enabled: false  # Set to true only during initialization
+    api_key: ""  # Add your Google Maps API key here
+    max_retries: 3
+    timeout: 10
+    delay_between_requests: 1.0
+
+# Matching settings
+matching:
+  # Exact matching settings
+  exact:
+    enabled: true
+    name_similarity_threshold: 0.9
+    district_similarity_threshold: 0.8
+  
+  # Location-based matching settings
+  location_based:
+    enabled: true
+    distance_threshold_km: 0.5  # Maximum distance for considering buildings as the same
+    coordinate_precision: 6  # Decimal places for lat/lon comparison
+  
+  # Fuzzy matching settings (fallback)
+  fuzzy:
+    enabled: true
+    similarity_threshold: 85  # RapidFuzz similarity score
+    max_candidates: 10
+
+# Building name cleaning settings
+name_cleaning:
+  remove_suffixes: true
+  remove_prefixes: true
+  normalize_whitespace: true
+  remove_special_chars: false
+  convert_to_lowercase: false
+
+# Source priority settings
+source_priority:
+  residential:
+    - centaline_res
+    - midland_res
+  commercial:
+    - leasinghub
+    - centaline_oir
+    - midland_ici
+
+# District priority settings
+district_priority:
+  residential:
+    - centaline_res
+    - midland_res
+  commercial:
+    - leasinghub
+    - centaline_oir
+    - midland_ici
+
+# Hong Kong territory bounds
+hong_kong_bounds:
+  min_lat: 22.1
+  max_lat: 22.6
+  min_lon: 113.8
+  max_lon: 114.5
+
+# District centers for distance calculation
+district_centers:
+  "Central and Western": [22.2783, 114.1747]
+  "Eastern": [22.2783, 114.2247]
+  "Southern": [22.2483, 114.1547]
+  "Wan Chai": [22.2783, 114.1747]
+  "Sham Shui Po": [22.3283, 114.1547]
+  "Kowloon City": [22.3283, 114.1947]
+  "Kwun Tong": [22.3283, 114.2347]
+  "Wong Tai Sin": [22.3483, 114.1947]
+  "Yau Tsim Mong": [22.3083, 114.1747]
+  "Islands": [22.2783, 113.9447]
+  "Kwai Tsing": [22.3583, 114.1347]
+  "North": [22.4983, 114.1347]
+  "Sai Kung": [22.3783, 114.2747]
+  "Sha Tin": [22.3983, 114.1947]
+  "Tai Po": [22.4483, 114.1747]
+  "Tsuen Wan": [22.3783, 114.1147]
+  "Tuen Mun": [22.3983, 114.0147]
+  "Yuen Long": [22.4483, 114.0347]
+
+# File paths
+file_paths:
+  osm_geocoding_cache: "data/03_primary/osm_geocoding_cache.json"
+  google_geocoding_cache: "data/03_primary/google_geocoding_cache.json"
+  manual_review_file: "data/03_primary/manual_review_list.parquet"
+
+# Manual review settings
+manual_review:
+  enabled: true
+  priority_thresholds:
+    high: 0.5
+    medium: 0.8
+  max_review_items: 1000
+
+# Output settings
+output:
+  save_intermediate_results: true
+  compress_outputs: true
+  include_metadata: true 

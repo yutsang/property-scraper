@@ -1,0 +1,285 @@
+# Data Catalog for Midland Residential Pipeline
+midland_res_area_code:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/midland_res_area_code.csv
+  load_args:
+    sep: ","
+  save_args:
+    index: False
+
+cleaned_district_data:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/midland_res_district_data.parquet
+
+raw_estate_data:
+    type: pandas.JSONDataset
+    filepath: data/01_raw/midland_res_raw_estate_data.json
+    load_args:
+        lines: True
+    save_args:
+        orient: records
+        lines: True
+
+midland_res_transactions:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/midland_res_trans_lv_0.parquet
+  save_args:
+    index: False
+
+midland_res_estates:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/midland_res_estates.parquet
+  save_args:
+    index: False
+
+merged_property_data:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/midland_res_trans_lv_1.parquet
+  save_args:
+    index: False
+
+midland_res_base:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/midland_res_base.parquet
+  save_args:
+    index: False
+
+midland_res:
+  type: pandas.CSVDataset
+  filepath: data/03_primary/midland_res.csv
+  save_args:
+    index: False 
+
+##################################################################
+
+# Data Catalog for Centaline Residential Pipeline
+
+# Raw Data
+area_codes:
+  type: pandas.CSVDataset  # Changed from ExcelDataSet
+  filepath: data/01_raw/Centanet_Res_Area_Code.csv  # Changed extension
+  load_args:
+    encoding: utf-8-sig
+
+# Rest of the catalog remains the same
+raw_estate_listings:
+  type: pandas.ParquetDataset
+  #filepath: data/02_intermediate/estate_listings.parquet
+  filepath: data/01_raw/centaline_estate_lv_1.parquet
+
+estate_details_raw:
+  type: pandas.ParquetDataset
+  #filepath: data/02_intermediate/estate_details_raw.parquet
+  filepath: data/01_raw/centaline_estate_lv_2.parquet
+
+raw_transaction_data: # Check incremental
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/centaline_res_trans_lv_0.parquet
+
+# Processed Data
+processed_transactions:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centaline_res_trans_lv_1.parquet
+
+centaline_res_base:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centaline_res_base.parquet
+
+centaline_res:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/centaline_res.parquet
+
+##################################################################
+
+# Data Catalog for Midland ICI Pipeline
+
+ml_ici_area_code:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/midland_ici_area_code.csv
+  load_args:
+    sep: ","
+  save_args:
+    index: False
+
+midland_ici_building_listings:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/midland_ici_buildings.parquet
+
+midland_ici_trans:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/midland_ici_trans.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+midland_ici_building_details: 
+  type: pandas.ParquetDataset 
+  filepath: data/02_intermediate/midland_ici_building_details.parquet
+
+midland_ici_base:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/midland_ici_base.parquet
+
+midland_ici:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/midland_ici.parquet
+
+
+##################################################################
+
+# Data Catalog for Centaline OIR Pipeline
+
+# Input data
+cl_oir_area_code:
+  type: pandas.CSVDataset
+  filepath: data/01_raw/centanet_oir_area_code.csv
+  load_args:
+    sep: ","
+    encoding: utf-8-sig
+  save_args:
+    index: False
+
+centanet_oir_buildings_listing:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/centanet_oir_buildings.parquet
+
+centaline_oir_trans_lv_0:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/centaline_oir_trans_lv_0.parquet
+
+centanet_oir_buildings_details:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centanet_oir_details.parquet
+
+centaline_oir_base:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centaline_oir_base.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+    compression: snappy
+
+centaline_oir:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/centaline_oir.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+
+##################################################################
+
+# Data Catalog for Final Outputs
+output_excel_2020_2022:
+  type: pandas.ExcelDataset
+  filepath: data/03_primary/Combined_Dateset_2020_2022.xlsx
+  save_args:
+    index: false
+
+output_excel_2023_current:
+  type: pandas.ExcelDataset
+  filepath: data/03_primary/Combined_Dateset_2023_2025.xlsx
+  save_args:
+    index: false
+
+##################################################################
+
+# Data Catalog for Centralized Buildings Pipeline
+
+# Raw building data from all sources
+leasinghub_building_listings:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/leasinghub_building_listings.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+commercial_buildings_raw:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/commercial_buildings_raw.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+residential_buildings_raw:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/residential_buildings_raw.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+# Consolidated building databases
+consolidated_commercial_db:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/consolidated_commercial_db.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+consolidated_residential_db:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/consolidated_residential_db.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+# Unmatched buildings for further processing
+unmatched_commercial_buildings:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/unmatched_commercial_buildings.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+unmatched_residential_buildings:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/unmatched_residential_buildings.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+# Google Maps geocoded buildings (expensive, initialization only)
+google_geocoded_commercial_buildings:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/google_geocoded_commercial_buildings.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+google_geocoded_residential_buildings:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/google_geocoded_residential_buildings.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+# Manual review and final outputs
+manual_review_list:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/manual_review_list.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+final_consolidated_commercial_db:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/final_consolidated_commercial_db.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+final_consolidated_residential_db:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/final_consolidated_residential_db.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+# Geocoding cache files
+osm_geocoding_cache:
+  type: json.JSONDataset
+  filepath: data/03_primary/osm_geocoding_cache.json
+
+google_geocoding_cache:
+  type: json.JSONDataset
+  filepath: data/03_primary/google_geocoding_cache.json

@@ -1,0 +1,37 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Encrypt all data files
+data/** filter=git-crypt diff=git-crypt
+data/**/*.parquet filter=git-crypt diff=git-crypt
+data/**/*.csv filter=git-crypt diff=git-crypt
+data/**/*.json filter=git-crypt diff=git-crypt
+data/**/*.xls filter=git-crypt diff=git-crypt
+
+# Do NOT encrypt Excel files in data/03_primary/
+\!data/03_primary/*.xlsx
+
+# Encrypt specific directories that contain sensitive data
+data/01_raw/** filter=git-crypt diff=git-crypt
+data/02_intermediate/** filter=git-crypt diff=git-crypt
+data/03_primary/** filter=git-crypt diff=git-crypt
+data/04_feature/** filter=git-crypt diff=git-crypt
+data/05_model_input/** filter=git-crypt diff=git-crypt
+data/06_models/** filter=git-crypt diff=git-crypt
+data/07_model_output/** filter=git-crypt diff=git-crypt
+data/08_reporting/** filter=git-crypt diff=git-crypt
+
+# Encrypt configuration files
+conf/** filter=git-crypt diff=git-crypt
+conf/**/*.yml filter=git-crypt diff=git-crypt
+conf/**/*.yaml filter=git-crypt diff=git-crypt
+conf/**/*.ini filter=git-crypt diff=git-crypt
+conf/**/*.cfg filter=git-crypt diff=git-crypt
+
+# Encrypt any other sensitive files
+*.key filter=git-crypt diff=git-crypt
+*.pem filter=git-crypt diff=git-crypt
+*.p12 filter=git-crypt diff=git-crypt
+*.pfx filter=git-crypt diff=git-crypt
+secrets.* filter=git-crypt diff=git-crypt
+.env* filter=git-crypt diff=git-crypt

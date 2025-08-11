@@ -1,0 +1,122 @@
+# Parameters for Centaline Residential Pipeline # Purely Based on Control-Date
+webscraper:
+  global:
+    use_edge: False  # True = Edge, False = Chrome
+    headless: True
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
+    min_delay: 0.5
+    max_delay: 2.0
+    max_retries: 3
+    page_load_timeout: 30
+    start_date: "2000-01-01"
+    end_date: "2025-06-17"
+    page_size: 10000
+    retry_count: 3
+    timeout: 30
+    price_threshold: 1000000
+    
+  # Node execution tracking configuration
+  node_tracking:
+    transaction_skip_days: 6  # Skip transaction nodes if run within 1 day
+    estate_skip_days: 28       # Skip estate nodes if run within 7 days
+    building_skip_days: 28     # Skip building nodes if run within 7 days
+    default_skip_days: 0      # Default nodes always run (0 = no skip)
+  
+  centaline_res:
+    max_pages_per_area: 999
+    estate_listings_file: data/01_raw/centaline_estate_lv_1.parquet
+    estate_details_file: data/01_raw/centaline_estate_lv_2.parquet
+  
+  centaline_oir:
+    transaction_api_url: "https://oir.centanet.com/api/Transaction/GetTransactionList"
+    property_api_url: "https://oir.centanet.com/api/Property/GetPropertyList"
+    cl_oir_building_listings_file: 'data/01_raw/centanet_oir_buildings.parquet'
+    cl_oir_transaction_file: 'data/01_raw/centaline_oir_trans_lv_0.parquet'
+    page_size: 10000
+    headers:
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+      Accept: "application/json"
+    join:
+      left_on: "propertyId"
+      right_on: "property_id"
+      type: "left"
+      cast_join_keys: True
+      validate: "one_to_many"
+    cookies: {"gr_user_id": "24005ea2-e47e-4e55-baed-171d8f324a03"}
+  
+  midland_res:
+    res_trans_path: "data/01_raw/midland_res_trans_lv_0.parquet"
+    request_delay_min: 1.0
+    request_delay_max: 3.0
+    max_retries: 3
+    timeout: 30
+  
+  midland_ici:
+    save_incremental: True
+    incremental_save_frequency: 5
+    max_page_size: 20000
+    resume_from_existing: True
+    max_retries: 3
+    request_delay: 0.5
+    midland_ici_building_listings: 'data/01_raw/midland_ici_buildings.parquet'
+    midland_ici_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
+    buildings_url: "https://service.midlandici.com/building/graphql"
+    transaction_url: "https://www.midlandici.com.hk/ics/property/transaction/json"
+    headers:
+      Content-Type: "application/json"
+      Accept: "*/*"
+      Origin: "https://www.midlandici.com.hk"
+      Referer: "https://www.midlandici.com.hk/"
+      User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+    join:
+      join_left_on: pis_bldg_id
+      join_right_on: id
+      join_type: left
+      cast_join_keys: True
+      cast_direction: left_to_right
+  
+  processing:
+    phase_keywords: ["Phase", "Site", "(Block"]
+    block_keywords: ['Tower', 'Block', 'Path', 'Street', 'Browdway',
+                      'Celestial Avenue', 'Carpark', 'Road', 'Lane',
+                      'Drive', 'Vista Avenue', 'Mansion', 'House',
+                      'Sky One']
+    floor_keywords: ['Floor', '/F', 'LG', 'B/M', 'U/L', 'UCP', 'P3', 'P2',
+                'Podium', 'PODIUM', 'U/G', 'P7', 'P4', 'UG1']
+    flat_keywords: ['Flat', 'Apartment', 'Duplex']
+
+# Parameters for Buildings Pipeline (LeasingHub)
+buildings:
+  property_types: ['office', 'shop', 'industrial']
+  max_pages: 200
+  start_idx: 0
+  batch_size: null
+  base_urls:
+    office: "https://www.leasinghub.com/office/buildings"
+    shop: "https://www.leasinghub.com/shop/buildings"
+    industrial: "https://www.leasinghub.com/industrial/buildings"
+  # Fuzzy matching parameters
+  fuzzy_matching:
+    residential_threshold: 90  # Threshold for residential building matching
+    commercial_threshold: 85  # Threshold for commercial building matching 
+    min_name_length: 3        # Minimum building name length
+    enable_fuzzy_matching: true
+  # Building name extraction parameters
+  name_extraction:
+    centaline_res_columns: ['extracted_estate_name', 'matched_estate_name', 'Name', 'scraped_estate_name']
+    centaline_oir_columns: ['propertyNameEn', 'propertyNameCn']
+    midland_res_columns: ['estate', 'building', 'name']
+    midland_ici_columns: ['Building Name', 'building_name_zh', 'building_name_en']
+    min_frequency: 1          # Minimum frequency for name inclusion
+  # Node execution tracking configuration
+  node_tracking:
+    building_skip_days: 0     # Skip building nodes if run within 7 days (temporarily set to 0 for re-run)
+    default_skip_days: 0      # Default nodes always run (0 = no skip)
+  # Geocoding parameters for location-based matching
+  geocoding:
+    rate_limit_delay: 1.0     # Delay between geocoding requests (seconds)
+    max_retries: 3            # Maximum retries for failed geocoding
+    batch_save_frequency: 50  # Save progress every N geocoded addresses
+    distance_threshold_meters: 100  # Distance threshold for location matching (meters)
+    enable_geocoding: true    # Enable/disable geocoding functionality
+

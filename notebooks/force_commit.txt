@@ -1,0 +1,13 @@
+# Create a new orphan branch
+git checkout --orphan latest_branch
+
+# Add all files and commit
+git add -A
+git commit -am "Initial commit"
+
+# Delete the old branch and rename the new one
+git branch -D main
+git branch -m main
+
+# Force push to GitHub (overwrites history)
+git push -f origin main
