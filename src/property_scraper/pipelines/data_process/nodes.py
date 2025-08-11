@@ -1407,9 +1407,11 @@ def merge_and_excel(
         df_copy = df.copy()
         date_col = date_column_mapping[source_key]
         
-        # Handle string dates with error handling for invalid values
+        # Handle string dates with error handling for invalid values (create canonical datetime column)
         df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], dayfirst=True, errors='coerce')
-        #df_copy['source'] = source_key
+        
+        # Also surface a unified 'date' column as datetime for Excel filtering
+        df_copy['date'] = df_copy['standard_date']
         
         return df_copy
     
@@ -1451,6 +1453,26 @@ def merge_and_excel(
     excel_2020_2022 = {}
     excel_2023_current = {}
     
+    # Prepare dataframe for Excel: ensure single 'date' column as datetime and sort desc
+    def prepare_for_excel(df: pd.DataFrame, source_key: str) -> pd.DataFrame:
+        df_out = df.copy()
+        # Ensure unified 'date' column exists and is datetime
+        df_out['date'] = pd.to_datetime(df_out.get('date', df_out['standard_date']), errors='coerce')
+        # Drop source-specific date columns to avoid confusion
+        original_date_cols = {
+            'df_cr': ['standard_date'],
+            'df_co': ['transactionDate', 'standard_date'],
+            'df_mr': ['tx_date', 'standard_date'],
+            'df_mi': ['tx_date', 'standard_date'],
+        }
+        for col in original_date_cols.get(source_key, []):
+            if col in df_out.columns:
+                df_out = df_out.drop(columns=[col])
+        # Sort descending by date
+        if 'date' in df_out.columns:
+            df_out = df_out.sort_values(by='date', ascending=False, kind='mergesort').reset_index(drop=True)
+        return df_out
+
     # Process each dataframe and assign to appropriate tabs
     for df_processed, source_key in [
         (df_cr_processed, 'df_cr'),
@@ -1478,11 +1500,13 @@ def merge_and_excel(
         else:
             df_recent_sampled = df_recent
         
-        # Only add sheets with data to avoid "no visible sheets" error
+        # Prepare for Excel: ensure datetime 'date' column and sort desc
         if not df_early_sampled.empty:
-            excel_2020_2022[tab_name] = sanitize_dataframe_content(df_early_sampled)
+            df_early_prepped = prepare_for_excel(df_early_sampled, source_key)
+            excel_2020_2022[tab_name] = sanitize_dataframe_content(df_early_prepped)
         if not df_recent_sampled.empty:
-            excel_2023_current[tab_name] = sanitize_dataframe_content(df_recent_sampled)
+            df_recent_prepped = prepare_for_excel(df_recent_sampled, source_key)
+            excel_2023_current[tab_name] = sanitize_dataframe_content(df_recent_prepped)
     
     return {
         'excel_2020_2022': excel_2020_2022,
