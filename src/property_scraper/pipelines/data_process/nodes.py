@@ -1420,7 +1420,20 @@ def merge_and_excel(
     df_mi_processed = standardize_dataframe(mi, 'df_mi')
     
     # Split each dataframe by date ranges
-    def split_by_date_range(df):
+    def split_by_date_range(df, tab_name):
+        # Debug date ranges
+        valid_dates = df[df['standard_date'].notna()]
+        if not valid_dates.empty:
+            min_year = valid_dates['standard_date'].dt.year.min()
+            max_year = valid_dates['standard_date'].dt.year.max()
+            logger.info(f"{tab_name}: Date range {min_year}-{max_year}, Total records: {len(df)}")
+            
+            # Show year distribution
+            year_counts = valid_dates['standard_date'].dt.year.value_counts().sort_index()
+            logger.info(f"{tab_name}: Year distribution: {year_counts.head(10).to_dict()}")
+        else:
+            logger.warning(f"{tab_name}: No valid dates found!")
+        
         df_2020_2022 = df[
             (df['standard_date'].dt.year >= 2020) & 
             (df['standard_date'].dt.year <= 2022)
@@ -1429,6 +1442,8 @@ def merge_and_excel(
         df_2023_current = df[
             df['standard_date'].dt.year >= 2023
         ].copy()
+        
+        logger.info(f"{tab_name}: 2020-2022: {len(df_2020_2022)} records, 2023+: {len(df_2023_current)} records")
         
         return df_2020_2022, df_2023_current
     
@@ -1443,8 +1458,8 @@ def merge_and_excel(
         (df_mr_processed, 'df_mr'),
         (df_mi_processed, 'df_mi')
     ]:
-        df_early, df_recent = split_by_date_range(df_processed)
         tab_name = tab_names[source_key]
+        df_early, df_recent = split_by_date_range(df_processed, tab_name)
         
         # Excel row limit is ~1,048,576. Sample large datasets to fit within limits
         max_rows_per_sheet = 1000000  # Leave some buffer

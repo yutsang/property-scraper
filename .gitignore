@@ -123,7 +123,8 @@ kedro-viz-*
 *.csv
 *.xlsx
 *.parquet
-data/
+!data/03_primary/*.parquet
+!data/03_primary/*.xlsx
 res/
 ici/
 "data copy"/

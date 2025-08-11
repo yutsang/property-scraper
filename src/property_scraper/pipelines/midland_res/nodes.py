@@ -263,7 +263,7 @@ def process_estate_data(district_df: pd.DataFrame, params: Dict[str, Any] = {}) 
             return pd.read_parquet(output_file)
         else:
             logger.warning(f"Existing data file not found: {output_file}")
-            return pd.DataFrame()
+            logger.info("File missing, proceeding with fresh processing")
     all_estate_data = []
     with tqdm(total=len(district_df), desc="Processing District") as pbar:
         for _, row in district_df.iterrows():
@@ -719,9 +719,17 @@ def merge_transactions_estates(transactions_df: pd.DataFrame, estates_df: pd.Dat
     Merge transactions and estates data.
     Handles different possible column names for estate ID.
     """
-    # Check what columns are available for merging
-    #logger.info(f"Transactions columns: {list(transactions_df.columns)}")
-    #logger.info(f"Estates columns: {list(estates_df.columns)}")
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    # Log available columns for debugging
+    logger.info(f"Transactions columns: {list(transactions_df.columns)}")
+    logger.info(f"Estates columns: {list(estates_df.columns)}")
+    
+    # Check if we have estate_id in transactions
+    if 'estate_id' not in transactions_df.columns:
+        logger.warning("No estate_id column in transactions DataFrame - cannot merge")
+        return transactions_df
     
     # Determine the right join column for estates
     if 'estate_id' in estates_df.columns:
@@ -735,7 +743,22 @@ def merge_transactions_estates(transactions_df: pd.DataFrame, estates_df: pd.Dat
             right_on = id_columns[0]
             logger.info(f"Using {right_on} as estate ID column")
         else:
-            raise ValueError("No suitable ID column found in estates DataFrame")
+            # If still no ID column found, try using estate name for matching
+            name_columns = [col for col in estates_df.columns if 'name' in col.lower() and 'estate' in col.lower()]
+            if name_columns:
+                right_on = name_columns[0]
+                logger.warning(f"No ID column found, attempting merge using name column: {right_on}")
+                # Try to merge on estate name instead
+                return pd.merge(
+                    transactions_df,
+                    estates_df,
+                    left_on='estate',  # Use estate name from transactions
+                    right_on=right_on,
+                    how='left',
+                    suffixes=('_trans', '_estate')
+                )
+            else:
+                raise ValueError("No suitable ID column found in estates DataFrame")
     
     logger.info(f"Merging on: transactions.estate_id = estates.{right_on}")
     
