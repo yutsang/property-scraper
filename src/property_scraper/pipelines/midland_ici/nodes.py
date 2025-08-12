@@ -421,12 +421,31 @@ def process_buildings(
     
     # Initialize driver once per execution
     def initialize_driver():
-        chromedriver_autoinstaller.install()
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        return webdriver.Chrome(options=options)
+        from selenium import webdriver
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
+        try:
+            # Switchable by params:webscraper.global.use_edge
+            use_edge = params.get('global', {}).get('use_edge', False)
+        except Exception:
+            use_edge = False
+
+        if use_edge:
+            import edgedriver_autoinstaller
+            edgedriver_autoinstaller.install()
+            opts = webdriver.EdgeOptions()
+            opts.use_chromium = True
+            opts.add_argument("--headless=new")
+            opts.add_argument("--no-sandbox")
+            opts.add_argument("--disable-dev-shm-usage")
+            return webdriver.Edge(options=opts)
+        else:
+            import chromedriver_autoinstaller
+            chromedriver_autoinstaller.install()
+            opts = ChromeOptions()
+            opts.add_argument("--headless=new")
+            opts.add_argument("--no-sandbox")
+            opts.add_argument("--disable-dev-shm-usage")
+            return webdriver.Chrome(options=opts)
     
     driver = initialize_driver()
 

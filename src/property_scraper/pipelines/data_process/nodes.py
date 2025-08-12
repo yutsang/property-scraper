@@ -31,35 +31,58 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
     logger.info("📅 Step 1/6: Converting date column to proper date format...")
     
     def clean_date(date_value):
-        """Convert various date formats to standard datetime"""
+        """Convert various date formats to standard datetime with validation.
+        - Prefer day-first when ambiguous
+        - If the parsed date is in the future, try the alternate interpretation
+        - Clamp to None if still invalid
+        """
         try:
             if pd.isna(date_value):
                 return None
-            
-            # If already datetime, extract date
+            today = pd.Timestamp.now().date()
+
+            # Already timestamp
             if isinstance(date_value, pd.Timestamp):
-                return date_value.date()
-            
-            # Convert string dates
-            date_str = str(date_value).strip()
-            if not date_str:
+                parsed = date_value.date()
+            else:
+                date_str = str(date_value).strip()
+                if not date_str:
+                    return None
+
+                # First pass: strict known formats (prefer Y-m-d, then day-first)
+                primary_formats = ['%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y', '%Y%m%d']
+                parsed = None
+                for fmt in primary_formats:
+                    try:
+                        parsed = pd.to_datetime(date_str, format=fmt).date()
+                        break
+                    except ValueError:
+                        continue
+
+                # Fallback: pandas with dayfirst=True
+                if parsed is None:
+                    parsed_ts = pd.to_datetime(date_str, errors='coerce', dayfirst=True)
+                    parsed = parsed_ts.date() if not pd.isna(parsed_ts) else None
+
+                # If still None, give up
+                if parsed is None:
+                    return None
+
+            # If parsed date is in future, try alternate interpretation (month-first)
+            if parsed > today:
+                alt_ts = pd.to_datetime(str(date_value).strip(), errors='coerce', dayfirst=False)
+                alt_date = alt_ts.date() if not pd.isna(alt_ts) else None
+                if alt_date and alt_date <= today:
+                    return alt_date
                 return None
-                
-            # Try multiple date formats
-            date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y%m%d', '%d-%m-%Y']
-            for fmt in date_formats:
-                try:
-                    return pd.to_datetime(date_str, format=fmt).date()
-                except ValueError:
-                    continue
-            
-            # Fallback to pandas automatic parsing
-            return pd.to_datetime(date_str, errors='coerce').date()
-            
+
+            return parsed
         except Exception as e:
             logger.debug(f"Error converting date '{date_value}': {str(e)}")
             return None
     
+    # No date backfilling – keep transaction dates strictly as scraped; missing dates remain null
+
     if 'date' in df.columns:
         df['date'] = df['date'].apply(clean_date)
         logger.info(f"   ✅ Converted {df['date'].notna().sum()} dates successfully")
