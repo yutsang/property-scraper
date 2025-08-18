@@ -220,50 +220,134 @@ def scrape_transaction_data(
             scroll_attempts += 1
 
     def extract_table_data(driver):
-        """Extract transaction data from table elements"""
+        """Extract transaction data from the structured table layout."""
         table_data = []
         try:
             enhanced_scroll_down(driver)
-            
-            # Multiple selector strategies for robust extraction
-            row_selectors = [
-                "tr.cv-structured-list-item",
-                "div.cv-structured-list-item", 
-                ".transaction-row"
-            ]
-            
-            rows = []
-            for selector in row_selectors:
-                try:
-                    found_rows = driver.find_elements(By.CSS_SELECTOR, selector)
-                    if found_rows:
-                        rows = found_rows
-                        break
-                except:
-                    continue
 
+            # Find all transaction rows (desktop table format)
+            rows = driver.find_elements(By.CSS_SELECTOR, "tr.cv-structured-list-item")
+            
             for row in rows:
-                cells = row.find_elements(By.CSS_SELECTOR, "td.cv-structured-list-data, div.cv-structured-list-data")
-                if len(cells) >= 8:
-                    # Determine transaction type
-                    transaction_type = "SALE" 
-                    if row.find_elements(By.CSS_SELECTOR, ".tranRent"):
-                        transaction_type = "RENT"
-
-                    record = {
-                        'date': cells[0].text.strip(),
-                        'address': cells[1].text.strip(),
-                        'rooms': cells[2].text.strip() if len(cells) > 2 else '',
-                        'price': cells[4].text.strip() if len(cells) > 4 else '',
-                        'area': cells[5].text.strip() if len(cells) > 5 else '',
-                        'ft_price': cells[6].text.strip() if len(cells) > 6 else '',
-                        'changes': cells[7].text.strip() if len(cells) > 7 else '',
-                        'agency': cells[8].text.strip() if len(cells) > 8 else '',
-                        'transaction_type': transaction_type
-                    }
-                    table_data.append(record)
+                try:
+                    # Get all cells in the row
+                    cells = row.find_elements(By.CSS_SELECTOR, "td.cv-structured-list-data")
+                    
+                    if len(cells) >= 5:  # Ensure we have enough cells (minimum 5 for basic data)
+                        # Extract date from the first cell
+                        try:
+                            date_element = cells[0].find_element(By.CSS_SELECTOR, ".info-date span")
+                            date_text = date_element.text.strip()
+                        except:
+                            # Fallback: use cell text directly
+                            date_text = cells[0].text.strip()
+                        
+                        # Extract address from the second cell
+                        try:
+                            address_element = cells[1].find_element(By.CSS_SELECTOR, ".addr")
+                            address_text = address_element.text.strip()
+                        except:
+                            # Fallback: use cell text directly
+                            address_text = cells[1].text.strip()
+                        
+                        # For desktop table format, title-lg is not available, so we'll use the address
+                        title_lg_text = address_text
+                        
+                        # Extract rooms from the third cell
+                        rooms_text = cells[2].text.strip()
+                        
+                        # Determine transaction type and extract price from the fourth cell
+                        transaction_type = "SALE"
+                        price_text = cells[3].text.strip()
+                        
+                        # Check if it's a rent transaction (usually contains "租" or "$" with smaller amounts)
+                        if "租" in price_text or (price_text.startswith("$") and any(char.isdigit() for char in price_text)):
+                            # Additional check for rent vs sale based on price format
+                            if price_text.startswith("$") and len(price_text) < 10:  # Likely rent
+                                transaction_type = "RENT"
+                        
+                        # Extract area from the fifth cell
+                        area_text = cells[4].text.strip()
+                        
+                        # Initialize optional fields
+                        ft_price_text = ""
+                        changes_text = ""
+                        agency_text = ""
+                        
+                        # Extract additional data if available
+                        if len(cells) >= 6:
+                            ft_price_text = cells[5].text.strip()
+                        if len(cells) >= 7:
+                            try:
+                                changes_element = cells[6].find_element(By.CSS_SELECTOR, ".riseBox span")
+                                changes_text = changes_element.text.strip()
+                            except:
+                                changes_text = cells[6].text.strip()
+                        if len(cells) >= 8:
+                            try:
+                                agency_element = cells[7].find_element(By.CSS_SELECTOR, ".label")
+                                agency_text = agency_element.text.strip()
+                            except:
+                                agency_text = cells[7].text.strip()
+                        
+                        record = {
+                            'date': date_text,
+                            'address': address_text,
+                            'title_lg': title_lg_text,  # Address with native separators
+                            'rooms': rooms_text,
+                            'price': price_text,
+                            'area': area_text,
+                            'ft_price': ft_price_text,
+                            'changes': changes_text,
+                            'agency': agency_text,
+                            'transaction_type': transaction_type,
+                        }
+                        table_data.append(record)
+                        
+                except Exception as e:
+                    logger.debug(f"Error processing row: {str(e)}")
+                    continue
+                    
+            # Extract title-lg information from mobile card format
+            mobile_cards = driver.find_elements(By.CSS_SELECTOR, ".transactions-content")
+            
+            # Create a list of title-lg values from mobile cards
+            title_lg_values = []
+            for card in mobile_cards:
+                try:
+                    # First try: .text01 .title-lg (the correct structure)
+                    text01_elements = card.find_elements(By.CSS_SELECTOR, ".text01")
+                    if text01_elements:
+                        title_lg_elements = text01_elements[0].find_elements(By.CSS_SELECTOR, ".title-lg")
+                        if title_lg_elements:
+                            title_lg_text = title_lg_elements[0].text.strip()
+                            if title_lg_text:
+                                title_lg_values.append(title_lg_text)
+                                continue
+                    
+                    # Fallback: direct .title-lg
+                    title_lg_elements = card.find_elements(By.CSS_SELECTOR, ".title-lg")
+                    if title_lg_elements:
+                        title_lg_text = title_lg_elements[0].text.strip()
+                        if title_lg_text:
+                            title_lg_values.append(title_lg_text)
+                except Exception as e:
+                    logger.debug(f"Error processing mobile card: {str(e)}")
+                    continue
+            
+            # Enrich table data with title-lg information
+            # Since desktop table addresses are often empty, we'll use the mobile card title-lg values
+            # and assign them sequentially to table records
+            for i, record in enumerate(table_data):
+                if i < len(title_lg_values):
+                    record['title_lg'] = title_lg_values[i]
+                else:
+                    # If we run out of title-lg values, use the address as fallback
+                    record['title_lg'] = record['address'] if record['address'] else ''
+            
             return table_data
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error extracting table data: {str(e)}")
             return []
 
     def check_for_next_page(driver):
@@ -523,10 +607,60 @@ def process_transaction_data(
     params: Dict[str, Any]
 ) -> pd.DataFrame:
     """
-    Simplified transaction processor - placeholder for future updates
-    Currently passes through the data unchanged
+    Process transaction data by filtering out invalid records and cleaning the data
     """
-    return trans_df
+    logger.info(f"🔄 Processing transaction data: {len(trans_df)} records")
+    
+    # Create a copy to avoid modifying original
+    processed_df = trans_df.copy()
+    
+    # Filter out rows with empty or invalid dates
+    initial_count = len(processed_df)
+    
+    # Remove rows where date is empty, None, or invalid
+    processed_df = processed_df.dropna(subset=['date'])
+    processed_df = processed_df[processed_df['date'] != '']
+    processed_df = processed_df[processed_df['date'].str.strip() != '']
+    
+    # Also filter out rows where address is empty (these are likely failed scrapes)
+    processed_df = processed_df.dropna(subset=['address'])
+    processed_df = processed_df[processed_df['address'] != '']
+    processed_df = processed_df[processed_df['address'].str.strip() != '']
+    
+    # Remove rows where price is empty (these are likely incomplete records)
+    processed_df = processed_df.dropna(subset=['price'])
+    processed_df = processed_df[processed_df['price'] != '']
+    processed_df = processed_df[processed_df['price'].str.strip() != '']
+    
+    final_count = len(processed_df)
+    removed_count = initial_count - final_count
+    
+    logger.info(f"📊 Data cleaning results:")
+    logger.info(f"  - Initial records: {initial_count:,}")
+    logger.info(f"  - Valid records: {final_count:,}")
+    logger.info(f"  - Removed invalid records: {removed_count:,}")
+    logger.info(f"  - Success rate: {(final_count/initial_count)*100:.1f}%")
+    
+    # Additional data cleaning
+    if len(processed_df) > 0:
+        # Clean up date format
+        processed_df['date'] = processed_df['date'].str.strip()
+        
+        # Clean up address format
+        processed_df['address'] = processed_df['address'].str.strip()
+        
+        # Clean up price format
+        processed_df['price'] = processed_df['price'].str.strip()
+        
+        # Ensure title_lg is populated (use address if title_lg is empty)
+        processed_df['title_lg'] = processed_df['title_lg'].fillna(processed_df['address'])
+        # Replace empty strings with address values
+        mask = (processed_df['title_lg'] == '') | (processed_df['title_lg'].isna())
+        processed_df.loc[mask, 'title_lg'] = processed_df.loc[mask, 'address']
+        
+        logger.info(f"✅ Data processing completed successfully")
+    
+    return processed_df
 
 
 def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
@@ -1183,14 +1317,104 @@ def enrich_estate_data(
         
         # Add basic building information columns
         transactions_copy['building_name'] = transactions_copy['estate_name']
-        transactions_copy['district'] = transactions_copy.get('District', '')
-        transactions_copy['region'] = transactions_copy.get('Region', '')
-        transactions_copy['subdistrict'] = transactions_copy.get('Subdistrict', '')
+        
+        # Initialize region/district/subdistrict columns (will be populated from estate details)
+        transactions_copy['region'] = None
+        transactions_copy['district'] = None
+        transactions_copy['subdistrict'] = None
+        transactions_copy['code'] = None
         
         # Add processing metadata
         transactions_copy['processing_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         transactions_copy['source'] = 'centaline_res'
         transactions_copy['property_type'] = 'residential'
+        
+        # Fix date format (remove the incorrect year column creation)
+        if 'date' in transactions_copy.columns:
+            # Convert date to dd/mm/yyyy format
+            try:
+                date_dt = pd.to_datetime(transactions_copy['date'], errors='coerce')
+                transactions_copy['date'] = date_dt.dt.strftime('%d/%m/%Y')
+                logger.info("✅ Fixed date format to dd/mm/yyyy")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fix date format: {e}")
+        
+        # Add building completion year and age from estate details
+        if not estate_details_df.empty:
+            try:
+                # Extract completion year from Occupation Permit column
+                estate_details_copy = estate_details_df.copy()
+                
+                # Function to extract year from occupation permit string
+                def extract_completion_year(permit_str):
+                    if pd.isna(permit_str) or permit_str == 'None':
+                        return None
+                    try:
+                        # Handle formats like "2004/11", "2000/2", "1986/2"
+                        if '/' in str(permit_str):
+                            year_part = str(permit_str).split('/')[0]
+                            if year_part.isdigit() and len(year_part) == 4:
+                                return int(year_part)
+                    except:
+                        pass
+                    return None
+                
+                # Extract completion year from Occupation Permit
+                estate_details_copy['completion_year'] = estate_details_copy['Occupation Permit'].apply(extract_completion_year)
+                
+                # Join with estate details to get completion year
+                transactions_copy = transactions_copy.merge(
+                    estate_details_copy[['Scraped Estate Name', 'completion_year']],
+                    left_on='estate_name',
+                    right_on='Scraped Estate Name',
+                    how='left'
+                )
+                
+                # Drop the duplicate column
+                if 'Scraped Estate Name' in transactions_copy.columns:
+                    transactions_copy = transactions_copy.drop('Scraped Estate Name', axis=1)
+                
+                # Calculate building age and update year column
+                if 'completion_year' in transactions_copy.columns:
+                    current_year = datetime.now().year
+                    transactions_copy['age'] = transactions_copy['completion_year'].apply(
+                        lambda x: max(0, current_year - x) if pd.notna(x) else None
+                    )
+                    
+                    # Replace the year column with completion_year (this is what we want)
+                    transactions_copy['year'] = transactions_copy['completion_year']
+                    
+                    # Drop the completion_year column since we're using year
+                    transactions_copy = transactions_copy.drop('completion_year', axis=1)
+                    
+                    logger.info(f"✅ Added building completion year and age from {estate_details_copy['completion_year'].notna().sum()} estates")
+                    logger.info(f"✅ Updated year column to contain completion years")
+                else:
+                    logger.warning("⚠️ No completion year data found in estate details")
+                
+                # Add region, district, subdistrict, and code from estate details
+                try:
+                    # Join with estate details to get location information
+                    location_join = transactions_copy.merge(
+                        estate_details_copy[['Scraped Estate Name', 'Region', 'District', 'Subdistrict', 'Code']],
+                        left_on='estate_name',
+                        right_on='Scraped Estate Name',
+                        how='left'
+                    )
+                    
+                    # Update the location columns
+                    transactions_copy['region'] = location_join['Region']
+                    transactions_copy['district'] = location_join['District']
+                    transactions_copy['subdistrict'] = location_join['Subdistrict']
+                    transactions_copy['code'] = location_join['Code']
+                    
+                    # Count records with location data
+                    records_with_location = transactions_copy['region'].notna().sum()
+                    logger.info(f"✅ Added location data to {records_with_location} records")
+                except Exception as e:
+                    logger.warning(f"⚠️ Could not add location data: {e}")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not add building completion year: {e}")
         
         logger.info(f"📊 Processed {len(transactions_copy)} transactions")
         

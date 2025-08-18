@@ -85,7 +85,11 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
 
     if 'date' in df.columns:
         df['date'] = df['date'].apply(clean_date)
-        logger.info(f"   ✅ Converted {df['date'].notna().sum()} dates successfully")
+        # Convert to dd/mm/yyyy format for Excel compatibility
+        df['date'] = df['date'].apply(
+            lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) and hasattr(x, 'strftime') else None
+        )
+        logger.info(f"   ✅ Converted {df['date'].notna().sum()} dates to dd/mm/yyyy format")
     
     # ============ PRICE CLEANING ============
     logger.info("💰 Step 2/6: Converting price columns to numeric values...")
@@ -194,78 +198,23 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         df['ft_price'] = df['ft_price'].apply(clean_ft_price)
         logger.info(f"   ✅ Converted {df['ft_price'].notna().sum()} ft_price values successfully")
     
-    # ============ PRECISE AGE CALCULATION WITH MONTH CONSIDERATION ============
-    logger.info("🏗️ Step 5/6: Calculating precise building age from Occupation Permit with month precision...")
+    # ============ COMPLETION YEAR AND AGE CALCULATION ============
+    logger.info("🏗️ Step 5/6: Calculating completion year and age from year column...")
     
-    def calculate_precise_age(occupation_permit):
-        """Calculate precise building age from occupation permit date (format: 1985/9 or 2004/11) with month consideration"""
+    # The year column should already contain completion years from the enrich_estate_data function
+    if 'year' in df.columns:
         try:
-            if pd.isna(occupation_permit) or occupation_permit == '' or occupation_permit == '--':
-                return None
-                
-            permit_str = str(occupation_permit).strip()
-            if not permit_str or permit_str == '--':
-                return None
-            
-            # Extract year and month from format like "1985/9" or "2004/11"
-            import re
-            match = re.match(r'(\d{4})/(\d{1,2})', permit_str)
-            if match:
-                permit_year = int(match.group(1))
-                permit_month = int(match.group(2))
-                
-                # Current date (June 2025)
-                current_year = 2025
-                current_month = 6
-                
-                # Calculate age in years with month precision
-                age_years = current_year - permit_year
-                age_months = current_month - permit_month
-                
-                # If current month is before permit month, subtract one year
-                if age_months < 0:
-                    age_years -= 1
-                
-                # Ensure age is not negative
-                return max(0, age_years)
-            
-            # Fallback: try to extract just the year
-            year_match = re.match(r'(\d{4})', permit_str)
-            if year_match:
-                permit_year = int(year_match.group(1))
-                current_year = 2025
-                age = current_year - permit_year
-                return max(0, age)
-            
-            return None
-            
+            # Calculate age based on completion year
+            current_year = pd.Timestamp.now().year
+            df['age'] = df['year'].apply(
+                lambda x: max(0, current_year - x) if pd.notna(x) and x != 'None' else None
+            )
+            logger.info(f"   ✅ Calculated age for {df['age'].notna().sum()} properties from completion year")
         except Exception as e:
-            logger.debug(f"Error calculating precise age from '{occupation_permit}': {str(e)}")
-            return None
-    
-    # Find the occupation permit column (could be named differently)
-    occupation_permit_columns = [col for col in df.columns if 'occupation' in col.lower() and 'permit' in col.lower()]
-    if occupation_permit_columns:
-        permit_col = occupation_permit_columns[0]  # Use first match
-        df['age'] = df[permit_col].apply(calculate_precise_age)
-        logger.info(f"   ✅ Calculated precise age for {df['age'].notna().sum()} properties from {permit_col}")
-        
-        # Show some examples of the calculation
-        #sample_data = df[[permit_col, 'age']].dropna().head(5)
-        #if not sample_data.empty:
-        #    logger.info("   📊 Sample age calculations:")
-        #    for _, row in sample_data.iterrows():
-        #        logger.info(f"      {row[permit_col]} → {row['age']} years old")
+            logger.warning(f"   ⚠️ Error calculating age: {e}")
+            df['age'] = None
     else:
-        # Try alternative column names
-        alternative_cols = ['Occupation Permit', 'occupation_permit', 'permit_date']
-        for col in alternative_cols:
-            if col in df.columns:
-                df['age'] = df[col].apply(calculate_precise_age)
-                logger.info(f"   ✅ Calculated precise age for {df['age'].notna().sum()} properties from {col}")
-                break
-        else:
-            logger.warning("   ⚠️ No occupation permit column found - age column not created")
+        logger.warning("   ⚠️ No year column found - age column not created")
     
     # ============ ADDRESS PARSING ============
     logger.info("🏢 Step 6/9: Parsing Tower/Block, Floor, and Flat from address...")
@@ -918,7 +867,7 @@ def cleanse_midland_res(
         # Make a copy to avoid modifying the original dataframe
         processed_df = df.copy()
         
-        # 1. Process date columns - convert from ISO format to date only and add 1 day
+        # 1. Process date columns - fix timezone issues and convert to dd/mm/yyyy format
         date_columns = [
             'building_first_op_date', 'tx_date', 'last_tx_date', 
             'update_date', 'first_op_date', 'market_stat_monthly_0_date'
@@ -927,14 +876,29 @@ def cleanse_midland_res(
         for col in date_columns:
             if col in processed_df.columns:
                 try:
-                    # Convert to datetime, add 1 day, then format as string to avoid Parquet issues
+                    # Convert to datetime first
                     processed_df[col] = pd.to_datetime(processed_df[col], errors='coerce')
-                    processed_df[col] = processed_df[col] + pd.Timedelta(days=1)
-                    processed_df[col] = processed_df[col].dt.strftime('%Y-%m-%d')
-                    # Replace NaT with 'None'
-                    processed_df[col] = processed_df[col].replace('NaT', 'None')
+                    
+                    # Fix timezone issues (convert UTC to HK time if needed)
+                    if processed_df[col].dt.tz is not None:
+                        # Convert from UTC to HK time (UTC+8)
+                        processed_df[col] = processed_df[col].dt.tz_convert('Asia/Hong_Kong')
+                    else:
+                        # Assume it's already in HK time, just localize
+                        processed_df[col] = processed_df[col].dt.tz_localize('Asia/Hong_Kong')
+                    
+                    # Convert to date only (remove time)
+                    processed_df[col] = processed_df[col].dt.date
+                    
+                    # Convert to dd/mm/yyyy format - simplified approach
+                    processed_df[col] = processed_df[col].apply(
+                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) and hasattr(x, 'strftime') else None
+                    )
+                    
+                    logger.info(f"✅ Fixed {col} timezone and converted to dd/mm/yyyy format")
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Error processing date column {col}: {e}")
+                    # Keep original values if processing fails
                     continue
         
         # 2. Add age column based on building_first_op_date
@@ -947,7 +911,6 @@ def cleanse_midland_res(
                 date_col_for_age = 'first_op_date'
             
             if date_col_for_age:
-                current_date = pd.Timestamp.now().date()
                 processed_df['age'] = None
                 
                 # Calculate age only for non-null date values (excluding 'None' strings)
@@ -957,7 +920,9 @@ def cleanse_midland_res(
                     op_dates = pd.to_datetime(processed_df.loc[mask, date_col_for_age], errors='coerce')
                     ages = (pd.Timestamp.now() - op_dates).dt.days / 365.25
                     processed_df.loc[mask, 'age'] = ages.round(1)
-                    logger.info(f"Age calculated for {mask.sum()} records using {date_col_for_age}")
+                    logger.info(f"✅ Age calculated for {mask.sum()} records using {date_col_for_age}")
+                else:
+                    logger.warning(f"No valid dates found in {date_col_for_age} for age calculation")
             else:
                 logger.warning("Neither building_first_op_date nor first_op_date column found, skipping age calculation")
                 
@@ -1044,10 +1009,16 @@ def cleanse_midland_res(
         def fill_none_values(df):
             """Fill empty cells and standardize None values"""
             for col in df.columns:
-                # Replace empty strings, 'none', '--' with 'None'
-                df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
-                # Fill actual NaN values with 'None'
-                df[col] = df[col].fillna('None')
+                # Handle numeric columns differently to avoid type conflicts
+                if col in ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age']:
+                    # For numeric columns, convert to numeric first, then fill NaN with None (actual None, not string)
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+                    df[col] = df[col].fillna(None)
+                else:
+                    # For non-numeric columns, replace empty strings, 'none', '--' with 'None'
+                    df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
+                    # Fill actual NaN values with 'None'
+                    df[col] = df[col].fillna('None')
             return df
         
         processed_df = fill_none_values(processed_df)
@@ -1127,7 +1098,12 @@ def cleanse_midland_ici(
         logger.info("Step 2: Processing ics_type column")
         try:
             if 'ics_type' in df.columns:
+                # Map full words to proper format
                 ics_type_mapping = {
+                    'industrial': 'Industrial',
+                    'commercial': 'Commercial', 
+                    'retail': 'Retail',
+                    # Also handle single letters if they exist
                     'i': 'Industrial',
                     'c': 'Commercial', 
                     's': 'Retail'
@@ -1377,8 +1353,24 @@ def sanitize_worksheet_name(name: str) -> str:
 
 def sanitize_dataframe_content(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Remove illegal characters from all string cells in the DataFrame.
+    Remove illegal characters from all string cells in the DataFrame and handle timezone issues.
     """
+    df_copy = df.copy()
+    
+    # Remove timezone info from all datetime columns to avoid Excel compatibility issues
+    for col in df_copy.columns:
+        if df_copy[col].dtype == 'datetime64[ns, UTC]' or df_copy[col].dtype == 'datetime64[ns, Asia/Hong_Kong]':
+            df_copy[col] = df_copy[col].dt.tz_localize(None)
+        elif df_copy[col].dtype == 'object':
+            # Check if object column contains datetime values
+            try:
+                # Try to convert to datetime and check for timezone
+                temp_dt = pd.to_datetime(df_copy[col], errors='coerce')
+                if temp_dt.dt.tz is not None:
+                    df_copy[col] = temp_dt.dt.tz_localize(None)
+            except:
+                pass
+    
     def clean_cell(cell_value):
         if isinstance(cell_value, str):
             # Remove illegal characters using openpyxl's pattern
@@ -1386,7 +1378,7 @@ def sanitize_dataframe_content(df: pd.DataFrame) -> pd.DataFrame:
         return cell_value
     
     # Apply sanitization to all cells
-    return df.map(clean_cell)
+    return df_copy.map(clean_cell)
 
 def merge_and_excel(
     cr: pd.DataFrame,
@@ -1432,6 +1424,10 @@ def merge_and_excel(
         
         # Handle string dates with error handling for invalid values (create canonical datetime column)
         df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], dayfirst=True, errors='coerce')
+        
+        # Remove timezone info if present to avoid Excel compatibility issues
+        if df_copy['standard_date'].dt.tz is not None:
+            df_copy['standard_date'] = df_copy['standard_date'].dt.tz_localize(None)
         
         # Also surface a unified 'date' column as datetime for Excel filtering
         df_copy['date'] = df_copy['standard_date']
@@ -1481,6 +1477,11 @@ def merge_and_excel(
         df_out = df.copy()
         # Ensure unified 'date' column exists and is datetime
         df_out['date'] = pd.to_datetime(df_out.get('date', df_out['standard_date']), errors='coerce')
+        
+        # Remove timezone info if present to avoid Excel compatibility issues
+        if df_out['date'].dt.tz is not None:
+            df_out['date'] = df_out['date'].dt.tz_localize(None)
+        
         # Drop source-specific date columns to avoid confusion
         original_date_cols = {
             'df_cr': ['standard_date'],
@@ -1535,3 +1536,252 @@ def merge_and_excel(
         'excel_2020_2022': excel_2020_2022,
         'excel_2023_current': excel_2023_current
     }
+
+############################## COLUMN SELECTION FUNCTIONS ##############################
+
+def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Select and reorder columns for Centaline Residential dataset
+    
+    Args:
+        df: Input dataframe with all columns
+        
+    Returns:
+        pd.DataFrame: Dataframe with selected columns only
+    """
+    logger.info("📋 Selecting columns for Centaline Residential...")
+    
+    # Current available columns (commented for reference)
+    # Uncomment and reorder the columns you want to keep
+    selected_columns = [
+         'date',                    # Transaction date
+         'region',                  # Region
+         'district',                # District
+         'subdistrict',             # Subdistrict
+         #'estate_name',             # Estate name
+         'building_name',           # Building name
+         'Tower',                   # Tower/Block
+         'Floor',                   # Floor number
+         'Flat',                    # Flat number
+         'transaction_type',        # Type of transaction
+         'area',                    # Property area
+         'price',                   # Transaction price
+         'ft_price',                # Price per square foot
+         'year',                    # Completion year
+         'age',                     # Building age
+         'Datasource',              # Data source
+         'property_type',           # Property type
+         'agency',                  # Agency name
+         'address',                 # Property address
+         'rooms',                   # Number of rooms
+         'changes',                 # Price changes  
+         #'title_lg',                # Native address separator (backed up)        
+         'Type',                    # Property type
+         'Carpark_Floor',           # Carpark floor
+         'Carpark_Number',          # Carpark number
+    ]
+    
+    # Use the selected columns defined above
+    # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
+    
+    # Filter dataframe to selected columns
+    result_df = df[selected_columns]
+    
+    logger.info(f"✅ Selected {len(selected_columns)} columns for Centaline Residential")
+    logger.info(f"📊 Final shape: {result_df.shape}")
+    
+    return result_df
+
+def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Select and reorder columns for Centaline Office/Industrial/Retail dataset
+    
+    Args:
+        df: Input dataframe with all columns
+        
+    Returns:
+        pd.DataFrame: Dataframe with selected columns only
+    """
+    logger.info("📋 Selecting columns for Centaline Office/Industrial/Retail...")
+    
+    # Current available columns (commented for reference)
+    # Uncomment and reorder the columns you want to keep
+    selected_columns = [
+        'transactionDate',  # Changed from 'date' to 'transactionDate'
+        'transactionType',
+        'propertyNameCn',
+        'propertyNameEn',
+        'propertyUsageDisplayName',
+        'floor',
+        'unit',
+        'transactionArea',
+        'sourceDisplayName',
+        'price',
+        'avgPrice',
+        'grade',
+        'districtNameEn',
+        'zoneEn',
+        'completion_year',
+        'age',
+        #'postUrlInfo_propertyNameEn', 
+        'source_url',
+        'full_address',
+        'management_company',
+        'developers',
+        'carpark',
+        'matched_building_name',
+        'match_score',
+        'Datasource',
+        'id'
+        
+    ]
+    
+    # Use the selected columns defined above
+    # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
+    
+    # Filter dataframe to selected columns
+    result_df = df[selected_columns]
+    
+    logger.info(f"✅ Selected {len(selected_columns)} columns for Centaline OIR")
+    logger.info(f"📊 Final shape: {result_df.shape}")
+    
+    return result_df
+
+def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Select and reorder columns for Midland Residential dataset
+    
+    Args:
+        df: Input dataframe with all columns
+        
+    Returns:
+        pd.DataFrame: Dataframe with selected columns only
+    """
+    logger.info("📋 Selecting columns for Midland Residential...")
+    
+    # Current available columns (commented for reference)
+    # Uncomment and reorder the columns you want to keep
+    selected_columns = [
+        'tx_date',  # Changed from 'date' to 'tx_date'
+        'region_name_trans',
+        'subregion',
+        'district', 
+        'estate',
+        'building',
+        'building_first_op_date',
+        #'unit',
+        'floor',
+        'floor_level',
+        'flat',
+        'area',
+        'net_area',
+        'price',
+        'unit_price_net',
+        'name',
+        'news_name',
+        'tx_type',
+        'tags',
+        'last_tx_date',
+        'holding_period',
+        'last_price',
+        'mkt_type',
+        'source',
+        #'update_date',
+        'gain',
+        'url_desc_trans',
+        'location',
+        #'url_desc_estate',
+        #'tx_history_url_desc',
+        'first_op_date',
+        'age',
+        'total_unit_count',
+        'total_block_count',
+        'primary_school_net',
+        #'location_lat',
+        #'location_lon',
+        'developer_name',
+        #'property_stat_sell_count',
+        #'property_stat_rent_count',
+        'market_stat_monthly_0_date',
+        #'market_stat_net_ft_price',
+       # '#market_stat_net_ft_price_chg',
+        #'market_stat_pre_net_ft_price',
+        #'market_stat_tx_count',
+        #'market_stat_total_tx_amount',
+        'market_stat_yearly_total_tx_amount',
+        'market_stat_yearly_net_ft_price',
+        'market_stat_yearly_net_ft_price_chg',
+        #'parent_estate_id',
+        #'parent_estate_name',        
+    ]
+    
+    # Use the selected columns defined above
+    # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
+    
+    # Filter dataframe to selected columns
+    result_df = df[selected_columns]
+    
+    logger.info(f"✅ Selected {len(selected_columns)} columns for Midland Residential")
+    logger.info(f"📊 Final shape: {result_df.shape}")
+    
+    return result_df
+
+def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Select and reorder columns for Midland Office/Industrial/Retail dataset
+    
+    Args:
+        df: Input dataframe with all columns
+        
+    Returns:
+        pd.DataFrame: Dataframe with selected columns only
+    """
+    logger.info("📋 Selecting columns for Midland Office/Industrial/Retail...")
+    
+    # Current available columns (commented for reference)
+    # Uncomment and reorder the columns you want to keep
+    selected_columns = [
+        'tx_date',  # Changed from 'date' to 'tx_date'
+        'tx_type',
+        'eng_name',
+        'chi_name',
+        'ics_type',
+        'dist_name_en',
+        'floor',
+        'flat',
+        'area',
+        'price',
+        'price_per_feet',
+        'street_name_zh',
+        'street_name_en',
+        'streetno',
+        'area1',
+        'area_desc1',
+        'area2',
+        'area_desc2',
+        'area3',
+        'area_desc3',
+        'area4',
+        'area_desc4',
+        'URL',
+        'Completion',
+        'age',
+        'upload_source',
+        'No. of Floors',
+        'Management Fee (Approx. per sq. ft.)',
+        'Floor Remark',
+        'Grade',
+        'Management Company',
+        'Datasource',
+    ]
+    
+    # Use the selected columns defined above
+    # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
+    
+    # Filter dataframe to selected columns
+    result_df = df[selected_columns]
+    
+    logger.info(f"✅ Selected {len(selected_columns)} columns for Midland ICI")
+    logger.info(f"📊 Final shape: {result_df.shape}")
+    
+    return result_df

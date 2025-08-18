@@ -257,8 +257,18 @@ def scrape_building_details(
     existing_data = pd.DataFrame()
     scraped_ids = set()
     if os.path.exists(details_file):
-        existing_data = pd.read_parquet(details_file, engine='pyarrow')
-        scraped_ids = set(existing_data['property_id'].astype(str))
+        try:
+            existing_data = pd.read_parquet(details_file, engine='pyarrow')
+            if 'property_id' in existing_data.columns:
+                scraped_ids = set(existing_data['property_id'].astype(str))
+            else:
+                logger.warning("Existing building details file has no 'property_id' column; treating as empty.")
+                existing_data = pd.DataFrame()
+                scraped_ids = set()
+        except Exception as e:
+            logger.warning(f"Failed to read existing building details: {e}")
+            existing_data = pd.DataFrame()
+            scraped_ids = set()
 
     # Prepare filtered input dataframe
     building_listing_df = building_listing_df.copy()
@@ -1140,6 +1150,34 @@ def scrape_transaction(
     )
     logger.info(f"Final dataset after deduplication: {len(final_df)} records")
     
+    # Fix data issues before returning
+    try:
+        # Fix completion year column to int
+        completion_year_cols = [col for col in final_df.columns if 'completion' in col.lower() and 'year' in col.lower()]
+        for col in completion_year_cols:
+            try:
+                final_df[col] = pd.to_numeric(final_df[col], errors='coerce').astype('Int64')
+                logger.info(f"✅ Fixed {col} to int")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fix {col}: {e}")
+        
+        # Fix date formats to dd/mm/yyyy
+        date_columns = [col for col in final_df.columns if 'date' in col.lower()]
+        for col in date_columns:
+            try:
+                if col in final_df.columns:
+                    # Convert to datetime first
+                    date_dt = pd.to_datetime(final_df[col], errors='coerce')
+                    # Convert to dd/mm/yyyy format
+                    final_df[col] = date_dt.dt.strftime('%d/%m/%Y')
+                    logger.info(f"✅ Fixed {col} date format to dd/mm/yyyy")
+            except Exception as e:
+                logger.warning(f"⚠️ Could not fix {col} date format: {e}")
+        
+        logger.info("✅ Applied data fixes to Centaline OIR")
+    except Exception as e:
+        logger.warning(f"⚠️ Error applying data fixes: {e}")
+
     # Record node execution
     record_node_execution(
         node_name="scrape_transaction",

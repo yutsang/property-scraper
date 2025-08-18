@@ -161,3 +161,6 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+
+# Data backup folders
+data_backup_*/
