@@ -209,6 +209,11 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
             df['age'] = df['year'].apply(
                 lambda x: max(0, current_year - x) if pd.notna(x) and x != 'None' else None
             )
+            
+            # Ensure correct data types
+            df['year'] = pd.to_numeric(df['year'], errors='coerce').astype('Int64')
+            df['age'] = pd.to_numeric(df['age'], errors='coerce').astype('float64')
+            
             logger.info(f"   ✅ Calculated age for {df['age'].notna().sum()} properties from completion year")
         except Exception as e:
             logger.warning(f"   ⚠️ Error calculating age: {e}")
@@ -318,8 +323,13 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         carpark_number = None
         
         if 'carpark' in address_str.lower() or 'car park' in address_str.lower():
-            # Extract floor information for carparks
+            # Extract floor information for carparks with improved mapping
             floor_patterns = [
+                r'(BM\d+)',  # BM1, BM2, BM3, BM4, BM5
+                r'(LG\d+)',  # LG1, LG2, LG3, LG4
+                r'(M/F)',    # M/F
+                r'(PODIUM)', # PODIUM
+                r'(R/F)',    # R/F
                 r'(U/G|L/G|B\d+|G/F)',  # Underground, Lower Ground, Basement, Ground
                 r'(\d+)/F',  # Numbered floors
             ]
@@ -380,7 +390,6 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         'scraped_blocks',
         'school_net_info',
         'estate_detailed_address',
-        'developer',
         'Link',
         'estate_match_found',
         'high_confidence_match',
@@ -549,13 +558,13 @@ def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
     try:
         # 2. Convert transactionDate to dd/mm/yyyy format
         def convert_transaction_date(date_str):
-            """Convert ISO date format to dd/mm/yyyy"""
+            """Convert date format to dd/mm/yyyy"""
             try:
                 if pd.isna(date_str) or date_str == '':
                     return ''
                 
-                # Parse the ISO format date
-                dt = pd.to_datetime(date_str)
+                # Parse the date as dd/mm/yyyy format (dayfirst=True)
+                dt = pd.to_datetime(date_str, dayfirst=True)
                 return dt.strftime('%d/%m/%Y')
             except (ValueError, TypeError):
                 logger.warning(f"Could not convert date: {date_str}")
@@ -623,6 +632,10 @@ def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
         year_age_results = processed_df['completion_year'].apply(extract_year_age)
         processed_df['completion_year'] = [result[0] for result in year_age_results]
         processed_df['age'] = [result[1] for result in year_age_results]
+        
+        # Ensure correct data types
+        processed_df['completion_year'] = pd.to_numeric(processed_df['completion_year'], errors='coerce').astype('Int64')
+        processed_df['age'] = pd.to_numeric(processed_df['age'], errors='coerce').astype('float64')
         
         logger.info("Successfully extracted year and age from completion_year")
         
@@ -823,6 +836,12 @@ def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
         processed_df['propertyUsageDisplayName'] = processed_df['propertyUsageDisplayName'].apply(clean_property_usage)
         logger.info("   ✅ Cleaned propertyUsageDisplayName column")
     
+    # ============ PROPERTY TYPE CLEANING (Rename Commercial to Office) ============
+    if 'property_type' in processed_df.columns:
+        # Rename Commercial to Office
+        processed_df['property_type'] = processed_df['property_type'].replace('Commercial', 'Office')
+        logger.info("   ✅ Renamed Commercial to Office in property_type column")
+    
     # ============ DATASOURCE COLUMN ============
     logger.info("📊 Adding Datasource column...")
     processed_df['Datasource'] = 'Centaline'
@@ -920,6 +939,10 @@ def cleanse_midland_res(
                     op_dates = pd.to_datetime(processed_df.loc[mask, date_col_for_age], errors='coerce')
                     ages = (pd.Timestamp.now() - op_dates).dt.days / 365.25
                     processed_df.loc[mask, 'age'] = ages.round(1)
+                    
+                    # Ensure age column has correct data type
+                    processed_df['age'] = pd.to_numeric(processed_df['age'], errors='coerce').astype('float64')
+                    
                     logger.info(f"✅ Age calculated for {mask.sum()} records using {date_col_for_age}")
                 else:
                     logger.warning(f"No valid dates found in {date_col_for_age} for age calculation")
@@ -1101,11 +1124,11 @@ def cleanse_midland_ici(
                 # Map full words to proper format
                 ics_type_mapping = {
                     'industrial': 'Industrial',
-                    'commercial': 'Commercial', 
+                    'commercial': 'Office', 
                     'retail': 'Retail',
                     # Also handle single letters if they exist
                     'i': 'Industrial',
-                    'c': 'Commercial', 
+                    'c': 'Office', 
                     's': 'Retail'
                 }
                 df['ics_type'] = df['ics_type'].str.lower().map(ics_type_mapping)
@@ -1218,14 +1241,14 @@ def cleanse_midland_ici(
             if 'Completion Date' in df.columns:
                 df['completion_year'] = pd.to_datetime(df['Completion Date'], errors='coerce').dt.year
                 df['age'] = current_year - df['completion_year']
-                # Convert entire column to string to ensure consistent data type
-                df['age'] = df['age'].astype(str).replace('nan', 'None')
+                # Ensure age column has correct data type
+                df['age'] = pd.to_numeric(df['age'], errors='coerce').astype('float64')
                 logger.info(f"Age column added successfully using current year {current_year}")
             elif 'Completion' in df.columns:
                 df['completion_year'] = pd.to_numeric(df['Completion'], errors='coerce')
                 df['age'] = current_year - df['completion_year']
-                # Convert entire column to string to ensure consistent data type
-                df['age'] = df['age'].astype(str).replace('nan', 'None')
+                # Ensure age column has correct data type
+                df['age'] = pd.to_numeric(df['age'], errors='coerce').astype('float64')
                 logger.info(f"Age column added successfully using current year {current_year}")
 
         except Exception as e:
@@ -1294,10 +1317,14 @@ def cleanse_midland_ici(
         def fill_none_values(df):
             """Fill empty cells and standardize None values"""
             for col in df.columns:
-                # Replace empty strings, 'none', '--' with 'None'
-                df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
-                # Fill actual NaN values with 'None'
-                df[col] = df[col].fillna('None')
+                # Skip numeric columns (age, price, etc.) - keep them as numeric
+                if col in ['age', 'price', 'unit_price_net', 'avgPrice']:
+                    df[col] = df[col].fillna(0.0)
+                else:
+                    # Replace empty strings, 'none', '--' with 'None'
+                    df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
+                    # Fill actual NaN values with 'None'
+                    df[col] = df[col].fillna('None')
             return df
         
         df = fill_none_values(df)
@@ -1364,8 +1391,19 @@ def sanitize_dataframe_content(df: pd.DataFrame) -> pd.DataFrame:
         elif df_copy[col].dtype == 'object':
             # Check if object column contains datetime values
             try:
-                # Try to convert to datetime and check for timezone
-                temp_dt = pd.to_datetime(df_copy[col], errors='coerce')
+                # Try to convert to datetime with specific format to avoid warnings
+                # First try dd/mm/yyyy format, then fallback to pandas inference
+                temp_dt = pd.to_datetime(df_copy[col], format='%d/%m/%Y', errors='coerce')
+                # If that fails, try other common formats
+                if temp_dt.isna().all():
+                    temp_dt = pd.to_datetime(df_copy[col], format='%Y-%m-%d', errors='coerce')
+                # If still fails, use pandas inference but suppress warnings
+                if temp_dt.isna().all():
+                    import warnings
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore")
+                        temp_dt = pd.to_datetime(df_copy[col], errors='coerce')
+                
                 if temp_dt.dt.tz is not None:
                     df_copy[col] = temp_dt.dt.tz_localize(None)
             except:
@@ -1423,7 +1461,8 @@ def merge_and_excel(
         date_col = date_column_mapping[source_key]
         
         # Handle string dates with error handling for invalid values (create canonical datetime column)
-        df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], dayfirst=True, errors='coerce')
+        # Use specific format to avoid warnings and ensure consistent parsing
+        df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], format='%d/%m/%Y', dayfirst=True, errors='coerce')
         
         # Remove timezone info if present to avoid Excel compatibility issues
         if df_copy['standard_date'].dt.tz is not None:
@@ -1569,8 +1608,8 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'ft_price',                # Price per square foot
          'year',                    # Completion year
          'age',                     # Building age
+         'developer',               # Developer
          'Datasource',              # Data source
-         'property_type',           # Property type
          'agency',                  # Agency name
          'address',                 # Property address
          'rooms',                   # Number of rooms
@@ -1631,6 +1670,7 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
         'carpark',
         'matched_building_name',
         'match_score',
+        'property_type',
         'Datasource',
         'id'
         
@@ -1680,7 +1720,6 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
         'name',
         'news_name',
         'tx_type',
-        'tags',
         'last_tx_date',
         'holding_period',
         'last_price',

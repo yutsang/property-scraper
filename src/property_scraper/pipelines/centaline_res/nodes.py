@@ -1392,11 +1392,11 @@ def enrich_estate_data(
                 else:
                     logger.warning("⚠️ No completion year data found in estate details")
                 
-                # Add region, district, subdistrict, and code from estate details
+                # Add region, district, subdistrict, code, and developer from estate details
                 try:
-                    # Join with estate details to get location information
+                    # Join with estate details to get location information and developer
                     location_join = transactions_copy.merge(
-                        estate_details_copy[['Scraped Estate Name', 'Region', 'District', 'Subdistrict', 'Code']],
+                        estate_details_copy[['Scraped Estate Name', 'Region', 'District', 'Subdistrict', 'Code', 'Developer']],
                         left_on='estate_name',
                         right_on='Scraped Estate Name',
                         how='left'
@@ -1407,12 +1407,15 @@ def enrich_estate_data(
                     transactions_copy['district'] = location_join['District']
                     transactions_copy['subdistrict'] = location_join['Subdistrict']
                     transactions_copy['code'] = location_join['Code']
+                    transactions_copy['developer'] = location_join['Developer']
                     
                     # Count records with location data
                     records_with_location = transactions_copy['region'].notna().sum()
+                    records_with_developer = transactions_copy['developer'].notna().sum()
                     logger.info(f"✅ Added location data to {records_with_location} records")
+                    logger.info(f"✅ Added developer data to {records_with_developer} records")
                 except Exception as e:
-                    logger.warning(f"⚠️ Could not add location data: {e}")
+                    logger.warning(f"⚠️ Could not add location and developer data: {e}")
             except Exception as e:
                 logger.warning(f"⚠️ Could not add building completion year: {e}")
         
@@ -1433,6 +1436,11 @@ def enrich_estate_data(
     # Combine with existing data
     try:
         if not existing_enriched.empty:
+            # Ensure existing data has developer column if it doesn't exist
+            if 'developer' not in existing_enriched.columns and 'developer' in transactions_copy.columns:
+                existing_enriched['developer'] = None
+                logger.info("✅ Added developer column to existing data")
+            
             # Use pandas concat to handle different column sets
             final_df = pd.concat([existing_enriched, transactions_copy], ignore_index=True, sort=False)
             logger.info(f"📊 Combined {len(existing_enriched)} existing + {len(transactions_copy)} new = {len(final_df)} total records")
@@ -1457,6 +1465,21 @@ def enrich_estate_data(
     except Exception as e:
         logger.error(f"⚠️ Error generating statistics: {str(e)}")
 
+    # Ensure data types are consistent before saving
+    try:
+        # Convert age column to float64 if it exists
+        if 'age' in final_df.columns:
+            final_df['age'] = pd.to_numeric(final_df['age'], errors='coerce').astype('float64')
+            logger.info("✅ Fixed age column data type to float64")
+        
+        # Convert year column to Int64 if it exists
+        if 'year' in final_df.columns:
+            final_df['year'] = pd.to_numeric(final_df['year'], errors='coerce').astype('Int64')
+            logger.info("✅ Fixed year column data type to Int64")
+            
+    except Exception as e:
+        logger.warning(f"⚠️ Error fixing data types: {e}")
+    
     logger.info("✅ Simplified estate data enrichment completed successfully!")
     logger.info("📝 Note: Complex building matching has been moved to the centralized buildings pipeline")
     

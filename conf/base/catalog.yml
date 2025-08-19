@@ -82,8 +82,8 @@ processed_transactions:
   filepath: data/02_intermediate/centaline_res_trans_lv_1.parquet
 
 centaline_res_base:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/centaline_res_base.csv
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centaline_res_base.parquet
   save_args:
     index: False
 
