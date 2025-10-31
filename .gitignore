@@ -123,6 +123,7 @@ kedro-viz-*
 *.csv
 *.xlsx
 *.parquet
+# Keep only final processed data files
 !data/03_primary/*.parquet
 !data/03_primary/*.xlsx
 res/

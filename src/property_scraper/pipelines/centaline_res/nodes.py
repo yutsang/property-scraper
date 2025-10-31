@@ -228,6 +228,8 @@ def scrape_transaction_data(
             # Find all transaction rows (desktop table format)
             rows = driver.find_elements(By.CSS_SELECTOR, "tr.cv-structured-list-item")
             
+
+            
             for row in rows:
                 try:
                     # Get all cells in the row
@@ -308,41 +310,137 @@ def scrape_transaction_data(
                     logger.debug(f"Error processing row: {str(e)}")
                     continue
                     
-            # Extract title-lg information from mobile card format
+            # Extract title-lg and price information from mobile card format
             mobile_cards = driver.find_elements(By.CSS_SELECTOR, ".transactions-content")
             
-            # Create a list of title-lg values from mobile cards
+            # Create lists for title-lg and price values from mobile cards
             title_lg_values = []
+            price_values = []
+            
             for card in mobile_cards:
                 try:
-                    # First try: .text01 .title-lg (the correct structure)
+                    # Extract title-lg with multiple approaches
+                    title_lg_text = None
+                    
+                    # Method 1: Try .text01 .title-lg
                     text01_elements = card.find_elements(By.CSS_SELECTOR, ".text01")
                     if text01_elements:
                         title_lg_elements = text01_elements[0].find_elements(By.CSS_SELECTOR, ".title-lg")
                         if title_lg_elements:
                             title_lg_text = title_lg_elements[0].text.strip()
-                            if title_lg_text:
-                                title_lg_values.append(title_lg_text)
-                                continue
                     
-                    # Fallback: direct .title-lg
-                    title_lg_elements = card.find_elements(By.CSS_SELECTOR, ".title-lg")
-                    if title_lg_elements:
-                        title_lg_text = title_lg_elements[0].text.strip()
-                        if title_lg_text:
-                            title_lg_values.append(title_lg_text)
+                    # Method 2: Try direct .title-lg
+                    if not title_lg_text:
+                        title_lg_elements = card.find_elements(By.CSS_SELECTOR, ".title-lg")
+                        if title_lg_elements:
+                            title_lg_text = title_lg_elements[0].text.strip()
+                    
+                    # Method 3: Try to extract from the first line of card text
+                    if not title_lg_text:
+                        card_text = card.text.strip()
+                        lines = card_text.split('\n')
+                        if lines:
+                            # The first line usually contains the property name
+                            first_line = lines[0].strip()
+                            if first_line and len(first_line) > 5:  # Reasonable length for a property name
+                                title_lg_text = first_line
+                    
+                    if title_lg_text:
+                        title_lg_values.append(title_lg_text)
+                    
+                    # Extract price from mobile card
+                    price_text = None
+                    try:
+                        # Look for price in content-price section with multiple selectors
+                        price_selectors = [
+                            ".content-price .saleprice span",
+                            ".content-price .saleprice",
+                            ".content-price span",
+                            ".content-price",
+                            ".saleprice span",
+                            ".saleprice"
+                        ]
+                        
+                        for selector in price_selectors:
+                            price_elements = card.find_elements(By.CSS_SELECTOR, selector)
+                            if price_elements:
+                                temp_price = price_elements[0].text.strip()
+                                # Check if it looks like a price (contains $ and numbers)
+                                if temp_price and '$' in temp_price and any(char.isdigit() for char in temp_price):
+                                    # Prefer the largest amount (likely the main price, not per sq ft)
+                                    # Look for patterns like $X,XXX or $X.XM which are likely main prices
+                                    if 'M' in temp_price or (',' in temp_price and len(temp_price) > 6):
+                                        price_text = temp_price
+                                        break
+                                    elif not price_text:
+                                        price_text = temp_price
+                        
+                        # If still no price, try to extract from the entire card text
+                        if not price_text:
+                            card_text = card.text
+                            # Look for price patterns like $X.XM, $X,XXX, etc.
+                            import re
+                            price_patterns = [
+                                r'\$\d+\.?\d*M',  # $1.2M, $2M
+                                r'\$\d{1,3}(?:,\d{3})*',  # $1,234, $12,345
+                                r'\$\d+',  # $1234
+                            ]
+                            for pattern in price_patterns:
+                                matches = re.findall(pattern, card_text)
+                                if matches:
+                                    price_text = matches[0]
+                                    break
+                    except Exception as e:
+                        logger.debug(f"Error extracting price from mobile card: {e}")
+                    
+                    price_values.append(price_text if price_text else "")
+                    
                 except Exception as e:
                     logger.debug(f"Error processing mobile card: {str(e)}")
+                    title_lg_values.append("")
+                    price_values.append("")
                     continue
             
-            # Enrich table data with title-lg information
-            # Since desktop table addresses are often empty, we'll use the mobile card title-lg values
-            # and assign them sequentially to table records
+
+            
+            # Enrich table data with title-lg and price information
+            # Map title-lg and price values to table records based on matching addresses
             for i, record in enumerate(table_data):
-                if i < len(title_lg_values):
-                    record['title_lg'] = title_lg_values[i]
+                record_address = record['address'].lower()
+                matched_title_lg = None
+                matched_price = None
+                
+                # Try to find matching title-lg and price based on address similarity
+                for j, title_lg in enumerate(title_lg_values):
+                    title_lg_lower = title_lg.lower()
+                    record_address_lower = record_address.lower()
+                    
+                    # Method 1: Check if the title-lg contains key parts of the address
+                    if any(part in title_lg_lower for part in record_address_lower.split() if len(part) > 2):
+                        matched_title_lg = title_lg
+                        if j < len(price_values):
+                            matched_price = price_values[j]
+                        break
+                    
+                    # Method 2: Check if address contains key parts of title-lg
+                    elif any(part in record_address_lower for part in title_lg_lower.split() if len(part) > 2):
+                        matched_title_lg = title_lg
+                        if j < len(price_values):
+                            matched_price = price_values[j]
+                        break
+                
+                # If no match found, use the first available title-lg and price or fallback
+                if matched_title_lg:
+                    record['title_lg'] = matched_title_lg
+                    if matched_price and (not record['price'] or record['price'].strip() == ''):
+                        record['price'] = matched_price
+                elif title_lg_values:
+                    record['title_lg'] = title_lg_values[0]  # Use first available
+                    if price_values and (not record['price'] or record['price'].strip() == ''):
+                        record['price'] = price_values[0]
+                    title_lg_values = title_lg_values[1:]  # Remove used value
+                    price_values = price_values[1:]  # Remove used value
                 else:
-                    # If we run out of title-lg values, use the address as fallback
                     record['title_lg'] = record['address'] if record['address'] else ''
             
             return table_data
@@ -610,23 +708,31 @@ def process_transaction_data(
     Process transaction data by filtering out invalid records and cleaning the data
     """
     logger.info(f"🔄 Processing transaction data: {len(trans_df)} records")
-    
+
     # Create a copy to avoid modifying original
     processed_df = trans_df.copy()
-    
+
+    # FIX: Correct field mapping - price data is in 'area' field, ft_price data is in 'changes' field
+    logger.info("🔧 Correcting field mapping: price data is in 'area' field, ft_price data is in 'changes' field")
+
+    # Swap the field values
+    processed_df['price'] = processed_df['area']  # Move area data to price field
+    processed_df['ft_price'] = processed_df['changes'].str.replace('@$', '').str.replace('$', '')  # Extract numeric part from changes field
+    processed_df['area'] = ''  # Clear the area field (it contained price data, not area data)
+
     # Filter out rows with empty or invalid dates
     initial_count = len(processed_df)
-    
+
     # Remove rows where date is empty, None, or invalid
     processed_df = processed_df.dropna(subset=['date'])
     processed_df = processed_df[processed_df['date'] != '']
     processed_df = processed_df[processed_df['date'].str.strip() != '']
-    
+
     # Also filter out rows where address is empty (these are likely failed scrapes)
     processed_df = processed_df.dropna(subset=['address'])
     processed_df = processed_df[processed_df['address'] != '']
     processed_df = processed_df[processed_df['address'].str.strip() != '']
-    
+
     # Remove rows where price is empty (these are likely incomplete records)
     processed_df = processed_df.dropna(subset=['price'])
     processed_df = processed_df[processed_df['price'] != '']
@@ -1479,6 +1585,83 @@ def enrich_estate_data(
             
     except Exception as e:
         logger.warning(f"⚠️ Error fixing data types: {e}")
+    
+    # ============ LOAD AND MERGE OLD DATA ============
+    logger.info("📚 Loading and merging old Centaline Residential data...")
+    try:
+        old_data_file = "./centaline_res.parquet"
+        if os.path.exists(old_data_file):
+            old_data = pd.read_parquet(old_data_file)
+            logger.info(f"📖 Loaded {len(old_data)} records from old data file")
+            
+            # Convert date format to match current data (dd/mm/yyyy)
+            if 'date' in old_data.columns:
+                try:
+                    # Convert from datetime to dd/mm/yyyy format
+                    old_data['date'] = pd.to_datetime(old_data['date'], errors='coerce').dt.strftime('%d/%m/%Y')
+                    logger.info("✅ Converted old data date format to dd/mm/yyyy")
+                except Exception as e:
+                    logger.warning(f"⚠️ Error converting old data date format: {e}")
+            
+            # Standardize column names to match current format
+            column_mapping = {
+                'Name': 'estate_name',
+                'Address': 'address',
+                'Blocks': 'building_name',
+                'Units': 'flat',
+                'Unit Rate': 'ft_price',
+                'Trans Record': 'transaction_type',
+                'Occupation Permit': 'occupation_permit',
+                'School Net Info': 'school_net_info',
+                'Developer': 'developer'
+            }
+            
+            # Rename columns that exist in old data
+            for old_col, new_col in column_mapping.items():
+                if old_col in old_data.columns:
+                    old_data = old_data.rename(columns={old_col: new_col})
+            
+            # Add missing columns to match current format
+            missing_columns = ['title_lg', 'property_name', 'Tower', 'Floor', 'Flat', 'Type', 'Carpark_Floor', 'Carpark_Number']
+            for col in missing_columns:
+                if col not in old_data.columns:
+                    old_data[col] = None
+            
+            # Filter old data to only include records older than 3 years from current date
+            current_date = pd.Timestamp.now()
+            cutoff_date = current_date - pd.DateOffset(years=3)
+            
+            # Convert old data dates to datetime for filtering
+            old_data_dates = pd.to_datetime(old_data['date'], format='%d/%m/%Y', errors='coerce')
+            old_data_filtered = old_data[old_data_dates < cutoff_date].copy()
+            
+            logger.info(f"📅 Filtered to {len(old_data_filtered)} records older than 3 years (before {cutoff_date.strftime('%d/%m/%Y')})")
+            
+            # Merge old data with current data
+            if not old_data_filtered.empty:
+                # Ensure both datasets have the same columns
+                common_columns = list(set(final_df.columns) & set(old_data_filtered.columns))
+                final_df_common = final_df[common_columns]
+                old_data_common = old_data_filtered[common_columns]
+                
+                # Reset indices to avoid conflicts and ensure unique indices
+                final_df_common = final_df_common.reset_index(drop=True)
+                old_data_common = old_data_common.reset_index(drop=True)
+                
+                # Ensure unique indices by adding offset to old data
+                old_data_common.index = old_data_common.index + len(final_df_common)
+                
+                # Concatenate old and new data
+                final_df = pd.concat([old_data_common, final_df_common], ignore_index=True, sort=False)
+                logger.info(f"📊 Merged {len(old_data_common)} old + {len(final_df_common)} new = {len(final_df)} total records")
+            else:
+                logger.info("📊 No old data to merge (all data is within 3 years)")
+                
+        else:
+            logger.info("📚 No old data file found at ./centaline_res.parquet")
+            
+    except Exception as e:
+        logger.error(f"⚠️ Error loading and merging old data: {e}")
     
     logger.info("✅ Simplified estate data enrichment completed successfully!")
     logger.info("📝 Note: Complex building matching has been moved to the centralized buildings pipeline")

@@ -221,8 +221,23 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
     else:
         logger.warning("   ⚠️ No year column found - age column not created")
     
+    # ============ TITLE-LG ADOPTION FOR PROPERTY NAMES ============
+    logger.info("🏠 Step 6/9: Adopting title-lg for property names...")
+    
+    # Adopt title-lg as property name when available (for Centaline Residential)
+    if 'title_lg' in df.columns:
+        try:
+            # Use title-lg as the primary property name when available
+            df['property_name'] = df['title_lg'].fillna(df['address'])
+            logger.info(f"   ✅ Adopted title-lg for {df['title_lg'].notna().sum()} property names")
+        except Exception as e:
+            logger.warning(f"   ⚠️ Error adopting title-lg: {e}")
+            df['property_name'] = df['address']
+    else:
+        df['property_name'] = df['address']
+    
     # ============ ADDRESS PARSING ============
-    logger.info("🏢 Step 6/9: Parsing Tower/Block, Floor, and Flat from address...")
+    logger.info("🏢 Step 7/9: Parsing Tower/Block, Floor, and Flat from address...")
     
     def parse_address_components(address):
         """Parse Tower/Block, Floor, and Flat from address string"""
@@ -300,7 +315,7 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         logger.info(f"   ✅ Parsed address components for {len(df)} records")
     
     # ============ TYPE CLASSIFICATION ============
-    logger.info("🚗 Step 7/9: Creating Type column and parsing carpark details...")
+    logger.info("🚗 Step 8/9: Creating Type column and parsing carpark details...")
     
     def classify_property_type(address):
         """Classify property as Residential or Carpark"""
@@ -357,16 +372,21 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
     
     if 'address' in df.columns:
         df['Type'] = df['address'].apply(classify_property_type)
-        carpark_details = df['address'].apply(extract_carpark_details).apply(pd.Series)
-        df = pd.concat([df, carpark_details], axis=1)
+
+        # Extract carpark details and add them as separate columns
+        carpark_df = df['address'].apply(extract_carpark_details).apply(pd.Series)
+        carpark_df.columns = ['Carpark_Floor', 'Carpark_Number']  # Ensure column names
+
+        # Add the carpark columns to the main dataframe
+        df = pd.concat([df, carpark_df], axis=1)
         logger.info(f"   ✅ Classified {(df['Type'] == 'Carpark').sum()} carpark records")
     
     # ============ DATASOURCE COLUMN ============
-    logger.info("📊 Step 8/9: Adding Datasource column...")
+    logger.info("📊 Step 9/9: Adding Datasource column...")
     df['Datasource'] = 'Centaline'
     
     # ============ COLUMN REMOVAL ============
-    logger.info("🗑️ Step 9/9: Removing unwanted columns...")
+    logger.info("🗑️ Step 10/10: Removing unwanted columns...")
     
     # Remove unwanted columns as specified
     columns_to_remove = [
@@ -1022,6 +1042,66 @@ def cleanse_midland_res(
         # final_order = existing_preferred + other_columns
         # processed_df = processed_df[final_order]
         
+        # ============ LOCATION COLUMN CLEANING ============
+        logger.info("📍 Cleaning location column...")
+        
+        # Convert location column to string format to avoid mixed data types
+        if 'location' in processed_df.columns:
+            try:
+                def clean_location(loc):
+                    """Convert location to string format"""
+                    if pd.isna(loc) or not loc:
+                        return 'None'
+                    
+                    try:
+                        # If it's a dictionary with lat/lon, convert to string
+                        if isinstance(loc, dict):
+                            if 'lat' in loc and 'lon' in loc:
+                                return f"{loc['lat']:.6f}, {loc['lon']:.6f}"
+                            else:
+                                return str(loc)
+                        else:
+                            return str(loc)
+                    except:
+                        return 'None'
+                
+                processed_df['location'] = processed_df['location'].apply(clean_location)
+                logger.info(f"   ✅ Cleaned location column for {len(processed_df)} records")
+            except Exception as e:
+                logger.warning(f"   ⚠️ Error cleaning location column: {e}")
+        
+        # ============ ADDRESS EXTRACTION FROM URLS ============
+        logger.info("📍 Extracting address information from URLs...")
+        
+        # Extract address information from url_desc_trans for Midland Residential
+        if 'url_desc_trans' in processed_df.columns:
+            try:
+                def extract_address_from_url(url):
+                    """Extract address information from Midland transaction URL"""
+                    if pd.isna(url) or not url:
+                        return None
+                    
+                    try:
+                        # URL format: https://www.midland.com.hk/en/transaction/Hong-Kong-Island-Mid-Levels-West-Euston-Court-I20240802455
+                        # Extract the location part between 'transaction/' and the last identifier
+                        url_parts = str(url).split('/transaction/')
+                        if len(url_parts) > 1:
+                            location_part = url_parts[1]
+                            # Remove the identifier at the end (e.g., I20240802455)
+                            address_parts = location_part.split('-')
+                            if len(address_parts) > 3:
+                                # Reconstruct address from parts
+                                address = ' '.join(address_parts[:-1])  # Exclude the last identifier
+                                return address.replace('-', ' ').strip()
+                        return None
+                    except:
+                        return None
+                
+                processed_df['address'] = processed_df['url_desc_trans'].apply(extract_address_from_url)
+                logger.info(f"   ✅ Extracted address from {processed_df['address'].notna().sum()} URLs")
+            except Exception as e:
+                logger.warning(f"   ⚠️ Error extracting address from URLs: {e}")
+        
         # ============ DATASOURCE COLUMN ============
         logger.info("📊 Adding Datasource column...")
         processed_df['Datasource'] = 'Midland'
@@ -1032,15 +1112,20 @@ def cleanse_midland_res(
         def fill_none_values(df):
             """Fill empty cells and standardize None values"""
             for col in df.columns:
-                # Handle numeric columns differently to avoid type conflicts
-                if col in ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age']:
-                    # For numeric columns, convert to numeric first, then fill NaN with None (actual None, not string)
-                    df[col] = pd.to_numeric(df[col], errors='coerce')
-                    df[col] = df[col].fillna(None)
-                else:
-                    # For non-numeric columns, replace empty strings, 'none', '--' with 'None'
-                    df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
-                    # Fill actual NaN values with 'None'
+                try:
+                    # Handle numeric columns differently to avoid type conflicts
+                    if col in ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age', 'total_unit_count', 'total_block_count', 'primary_school_net', 'market_stat_yearly_total_tx_amount', 'market_stat_yearly_net_ft_price', 'market_stat_yearly_net_ft_price_chg']:
+                        # For numeric columns, convert to numeric first, then fill NaN with 0.0 to keep numeric type
+                        df[col] = pd.to_numeric(df[col], errors='coerce')
+                        df[col] = df[col].fillna(0.0)
+                    else:
+                        # For non-numeric columns, replace empty strings, 'none', '--' with 'None'
+                        df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
+                        # Fill actual NaN values with 'None'
+                        df[col] = df[col].fillna('None')
+                except Exception as e:
+                    logger.warning(f"Error processing column {col}: {e}")
+                    # If there's an error, just fill with 'None' as string
                     df[col] = df[col].fillna('None')
             return df
         
@@ -1052,8 +1137,8 @@ def cleanse_midland_res(
         
     except Exception as e:
         logger.error(f"Error in process_final_data_cleaning: {e}")
-        # Return original dataframe if processing fails
-        return df
+        # Return processed dataframe if processing fails
+        return processed_df
 
 
     
@@ -1306,6 +1391,38 @@ def cleanse_midland_ici(
             other_cols = [col for col in df.columns if col not in desired_column_order]
             df = df[existing_desired_cols + other_cols]
             logger.info("Columns reordered successfully")
+        
+        # ============ ADDRESS EXTRACTION FROM URLS ============
+        logger.info("📍 Extracting address information from URLs...")
+        
+        # Extract address information from url_desc_trans for Midland Residential
+        if 'url_desc_trans' in df.columns:
+            try:
+                def extract_address_from_url(url):
+                    """Extract address information from Midland transaction URL"""
+                    if pd.isna(url) or not url:
+                        return None
+                    
+                    try:
+                        # URL format: https://www.midland.com.hk/en/transaction/Hong-Kong-Island-Mid-Levels-West-Euston-Court-I20240802455
+                        # Extract the location part between 'transaction/' and the last identifier
+                        url_parts = str(url).split('/transaction/')
+                        if len(url_parts) > 1:
+                            location_part = url_parts[1]
+                            # Remove the identifier at the end (e.g., I20240802455)
+                            address_parts = location_part.split('-')
+                            if len(address_parts) > 3:
+                                # Reconstruct address from parts
+                                address = ' '.join(address_parts[:-1])  # Exclude the last identifier
+                                return address.replace('-', ' ').strip()
+                        return None
+                    except:
+                        return None
+                
+                df['address'] = df['url_desc_trans'].apply(extract_address_from_url)
+                logger.info(f"   ✅ Extracted address from {df['address'].notna().sum()} URLs")
+            except Exception as e:
+                logger.warning(f"   ⚠️ Error extracting address from URLs: {e}")
         
         # ============ DATASOURCE COLUMN ============
         logger.info("📊 Adding Datasource column...")
@@ -1612,6 +1729,7 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'Datasource',              # Data source
          'agency',                  # Agency name
          'address',                 # Property address
+         'property_name',           # Property name (title-lg adopted)
          'rooms',                   # Number of rooms
          'changes',                 # Price changes  
          #'title_lg',                # Native address separator (backed up)        
@@ -1729,6 +1847,7 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
         'gain',
         'url_desc_trans',
         'location',
+        'address',
         #'url_desc_estate',
         #'tx_history_url_desc',
         'first_op_date',
@@ -1757,10 +1876,16 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     # Use the selected columns defined above
     # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
     
-    # Filter dataframe to selected columns
-    result_df = df[selected_columns]
+    # Filter dataframe to selected columns that actually exist
+    available_columns = [col for col in selected_columns if col in df.columns]
+    missing_columns = [col for col in selected_columns if col not in df.columns]
     
-    logger.info(f"✅ Selected {len(selected_columns)} columns for Midland Residential")
+    if missing_columns:
+        logger.warning(f"⚠️ Missing columns: {missing_columns}")
+    
+    result_df = df[available_columns]
+    
+    logger.info(f"✅ Selected {len(available_columns)} columns for Midland Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
     
     return result_df
