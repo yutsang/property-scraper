@@ -120,12 +120,13 @@ kedro-viz-*
 .kedro/
 
 # Data and large files (GitHub size limits)
-*.csv
-*.xlsx
-*.parquet
+!*.csv
+!*.xlsx
+!*.parquet
 # Keep only final processed data files
 !data/03_primary/*.parquet
 !data/03_primary/*.xlsx
+
 res/
 ici/
 "data copy"/

@@ -1,0 +1,131 @@
+subdistrict_code,parent_district_id,parent_district_name,subdistrict_name,sort_order
+130ND10001,53ND10001,Central And Western,Mid-Levels West,1
+130ND10002,53ND10001,Central And Western,Sai Ying Poon,2
+130ND10003,53ND10001,Central And Western,Kennedy Town,3
+130ND10004,53ND10001,Central And Western,Central / Sheung Wan,4
+130ND10005,53ND10002,Mid-Levels Central,Admiralty Mid-Levels,5
+130ND10006,53ND10002,Mid-Levels Central,Mid-Levels Central,6
+130ND10007,53ND10003,The Peak,The Peak,7
+130ND10011,53ND10004,Mid-Levels East / Happy Valley,Happy Valley,8
+130ND10008,53ND10004,Mid-Levels East / Happy Valley,Stubbs Road,9
+130ND10009,53ND10004,Mid-Levels East / Happy Valley,Tai Hang Road,10
+130ND10010,53ND10004,Mid-Levels East / Happy Valley,Jardine's Lookout,11
+130ND10012,53ND10005,Wahchai / Causeway Bay,Wanchai,12
+130ND10013,53ND10005,Wahchai / Causeway Bay,Causeway Bay,13
+130ND10014,53ND10006,North Point,Tin Hau,14
+130ND10015,53ND10006,North Point,North Point / Fortress Hill,15
+130ND10016,53ND10007,North Point Mid-Levels,North Point Mid-Levels,16
+130ND10017,53ND10007,North Point Mid-Levels,Braemar Hill,17
+130ND10018,53ND10008,Eastern,Chai Wan,18
+130ND10019,53ND10008,Eastern,Siu Sai Wan,19
+130ND10020,53ND10008,Eastern,Heng Fa Chuen,20
+130ND10021,53ND10008,Eastern,Shau Kei Wan,21
+130ND10022,53ND10008,Eastern,Sai Wan Ho,22
+130ND10023,53ND10008,Eastern,Taikoo,23
+130ND10024,53ND10008,Eastern,Quarry Bay,24
+130ND10025,53ND10009,Ap Lei Chau / Aberdeen / Tin Wan / Wah Fu,Ap Lei Chau,25
+130ND10026,53ND10009,Ap Lei Chau / Aberdeen / Tin Wan / Wah Fu,Wah Fu,26
+130ND10027,53ND10009,Ap Lei Chau / Aberdeen / Tin Wan / Wah Fu,Aberdeen / Tin Wan,27
+130ND10028,53ND10010,Wong Chuk Hang / Sham Wan,Wong Chuk Hang / Sham Wan,28
+130ND10029,53ND10011,Chung Hom Kok / Stanley / Tai Tam / Shek O / Redhill Peninsula,Tai Tam / Redhill Peninsula,29
+130ND10030,53ND10011,Chung Hom Kok / Stanley / Tai Tam / Shek O / Redhill Peninsula,Shek O,30
+130ND10031,53ND10011,Chung Hom Kok / Stanley / Tai Tam / Shek O / Redhill Peninsula,Chung Hom Kok,31
+130ND10032,53ND10011,Chung Hom Kok / Stanley / Tai Tam / Shek O / Redhill Peninsula,Stanley,32
+130ND10033,53ND10012,Repulse Bay / Hong Kong Parkview / South Bay,Repulse Bay / Hong Kong Parkview,33
+130ND10034,53ND10012,Repulse Bay / Hong Kong Parkview / South Bay,South Bay / Headland Road,34
+130ND10035,53ND10013,Deep Water Bay / Shouson Hill,Deep Water Bay,35
+130ND10036,53ND10013,Deep Water Bay / Shouson Hill,Shouson Hill,36
+130ND10037,53ND10014,Residence Bel-Air / Pokfulam,Pokfulam,37
+130ND10038,53ND10014,Residence Bel-Air / Pokfulam,Residence Bel-Air,38
+130ND20001,53ND20001,Kai Tak,Kai Tak,39
+130ND20002,53ND20002,To Kwa Wan / Kowloon City,Ma Tau Wai,40
+130ND20003,53ND20002,To Kwa Wan / Kowloon City,To Kwa Wan,41
+130ND20004,53ND20002,To Kwa Wan / Kowloon City,Kowloon City,42
+130ND20005,53ND20003,Kowloon Tong,Kowloon Tong,43
+130ND20006,53ND20003,Kowloon Tong,New Beacon Hill,44
+130ND20007,53ND20003,Kowloon Tong,Beacon Hill,45
+130ND20008,53ND20004,Yau Yat Chuen,Yau Yat Chuen,46
+130ND20009,53ND20005,Ho Man Tin / Kingspark,Kingspark,47
+130ND20010,53ND20005,Ho Man Tin / Kingspark,Ho Man Tin,48
+130ND20011,53ND20006,Kadoorie Hill,Kadoorie Hill,49
+130ND20012,53ND20007,Hung Hom / Whampoa / Laguna,Hung Hom Station,50
+130ND20013,53ND20007,Hung Hom / Whampoa / Laguna,Laguna,51
+130ND20014,53ND20007,Hung Hom / Whampoa / Laguna,Whampoa,52
+130ND20015,53ND20007,Hung Hom / Whampoa / Laguna,Hung Hom,53
+130ND20016,53ND20008,Tsim Sha Tsui / Jordan,Tsim Sha Tsui,54
+130ND20017,53ND20008,Tsim Sha Tsui / Jordan,Jordan,55
+130ND20018,53ND20009,Kowloon Station,Kowloon Station,56
+130ND20019,53ND20010,Olympic Station,Olympic Station,57
+130ND20020,53ND20011,Nam Cheong Station,Nam Cheong Station,58
+130ND20021,53ND20012,Yau Ma Tei / Mongkok / Prince Edward / Tai Kok Tsui,Yau Ma Tei,59
+130ND20022,53ND20012,Yau Ma Tei / Mongkok / Prince Edward / Tai Kok Tsui,Tai Kok Tsui,60
+130ND20023,53ND20012,Yau Ma Tei / Mongkok / Prince Edward / Tai Kok Tsui,Mongkok,61
+130ND20024,53ND20012,Yau Ma Tei / Mongkok / Prince Edward / Tai Kok Tsui,Prince Edward,62
+130ND20025,53ND20013,Cheung Sha Wan / Sham Shui Po,Sham Shui Po,63
+130ND20026,53ND20013,Cheung Sha Wan / Sham Shui Po,Cheung Sha Wan,64
+130ND20028,53ND20014,Four Little Dragons / Lai Chi Kok,Four Little Dragons / Lai Chi Kok,66
+130ND20029,53ND20015,Mei Foo Station / Lai King Station / Wonderland,Lai King Station / Wonderland,67
+130ND20030,53ND20015,Mei Foo Station / Lai King Station / Wonderland,Mei Foo Station,68
+130ND20031,53ND20016,Wong Tai Sin / Diamond Hill,Lok Fu,69
+130ND20032,53ND20016,Wong Tai Sin / Diamond Hill,San Po Kong,70
+130ND20033,53ND20016,Wong Tai Sin / Diamond Hill,Diamond Hill,71
+130ND20034,53ND20016,Wong Tai Sin / Diamond Hill,Tsz Wan Shan,72
+130ND20035,53ND20016,Wong Tai Sin / Diamond Hill,Wong Tai Sin,73
+130ND20036,53ND20016,Wong Tai Sin / Diamond Hill,Choi Hung / Ngau Chi Wan,74
+130ND20037,53ND20017,Kowloon Bay,Kowloon Bay,75
+130ND20038,53ND20017,Kowloon Bay,Ngau Tau Kok,76
+130ND20039,53ND20018,Kwun Tong,Kwun Tong,77
+130ND20040,53ND20018,Kwun Tong,Anderson,78
+130ND20041,53ND20019,Lam Tin / Yau Tong,Lam Tin,79
+130ND20042,53ND20019,Lam Tin / Yau Tong,Yau Tong,80
+130ND20043,53ND20020,Tseung Kwan O,Lohas Park,81
+130ND20044,53ND20020,Tseung Kwan O,Hang Hau,82
+130ND20045,53ND20020,Tseung Kwan O,Po Lam,83
+130ND20046,53ND20020,Tseung Kwan O,Tseung Kwan O Town Centre,84
+130ND20047,53ND20020,Tseung Kwan O,Tiu Keng Leng,85
+130ND20048,53ND20021,Sai Kung,Clear Water Bay,86
+130ND20049,53ND20021,Sai Kung,Sai Kung,87
+130ND30001,53ND30001,Tsuen Wan,Riviera Area,88
+130ND30002,53ND30001,Tsuen Wan,Tsuen Wan West,89
+130ND30003,53ND30001,Tsuen Wan,Tsuen Wan Town Centre,90
+130ND30004,53ND30001,Tsuen Wan,Tai Wo Hau,91
+130ND30005,53ND30002,Sham Tseng / Tsing Lung Tau / Castle Peak Road / So Kwun Wat,Siu Lam / So Kwun Wat / Castle Peak Bay,92
+130ND30006,53ND30002,Sham Tseng / Tsing Lung Tau / Castle Peak Road / So Kwun Wat,Sham Tseng / Tsing Lung Tau,93
+130ND30007,53ND30002,Sham Tseng / Tsing Lung Tau / Castle Peak Road / So Kwun Wat,Belvedere / Ting Kau,94
+130ND30008,53ND30003,Ma Wan / Park Island,Park Island,95
+130ND30009,53ND30004,Kwai Chung / Tsing Yi,Tsing Yi,96
+130ND30010,53ND30004,Kwai Chung / Tsing Yi,Kwai Chung,97
+130ND30011,53ND30005,Tuen Mun,Lam Tei,98
+130ND30012,53ND30005,Tuen Mun,Tuen Mun Ferry,99
+130ND30013,53ND30005,Tuen Mun,Tuen Mun Town Centre,100
+130ND30014,53ND30006,Yuen Long,Yuen Long Town Centre,101
+130ND30015,53ND30006,Yuen Long,Kam Tin,102
+130ND30016,53ND30006,Yuen Long,Long Ping,103
+130ND30017,53ND30007,Tin Shui Wai,Tin Shui Wai,104
+130ND30018,53ND30007,Tin Shui Wai,Lau Fau Shan,105
+130ND30019,53ND30008,Hung Shui Kiu,South Hung Shui Kiu New Development,106
+130ND30020,53ND30008,Hung Shui Kiu,North Hung Shui Kiu New Development,107
+130ND30021,53ND30009,Palm Springs / Fairview,Palm Springs / Fairview,108
+130ND30022,53ND30010,Sheung Shui / Fanling / Kwu Tung,Kwu Tung,109
+130ND30023,53ND30010,Sheung Shui / Fanling / Kwu Tung,Fanling / Fanling North / Sha Tau Kok / Ta Ku Ling,110
+130ND30024,53ND30010,Sheung Shui / Fanling / Kwu Tung,Sheung Shui,111
+130ND30044,53ND30010,Sheung Shui / Fanling / Kwu Tung,Northern Lux. Res.,131
+130ND30025,53ND30011,Shatin,Shatin Town Centre,112
+130ND30026,53ND30011,Shatin,Siu Lek Yuen,113
+130ND30027,53ND30011,Shatin,City One / Shek Mun,114
+130ND30028,53ND30012,Ma On Shan,Wu Kai Sha,115
+130ND30029,53ND30012,Ma On Shan,Ma On Shan,116
+130ND30030,53ND30013,Tai Wai,Tai Wai Mid-Levels,117
+130ND30031,53ND30013,Tai Wai,Tai Wai,118
+130ND30032,53ND30014,Fo Tan / Kau To Shan,Fo Tan,119
+130ND30033,53ND30014,Fo Tan / Kau To Shan,Kau To Shan,120
+130ND30034,53ND30015,Tai Po,Tai Po Town Centre,121
+130ND30035,53ND30015,Tai Po,Tai Po Market / Tai Wo,122
+130ND30036,53ND30016,Tai Po Lux. Res. / Pak Shek Kok,Hong Lok Yuen,123
+130ND30037,53ND30016,Tai Po Lux. Res. / Pak Shek Kok,Pak Shek Kok,124
+130ND30038,53ND30016,Tai Po Lux. Res. / Pak Shek Kok,Tai Po Mid-Levels,125
+130ND30039,53ND30016,Tai Po Lux. Res. / Pak Shek Kok,Ting Kok Road Lux. Res.,126
+130ND30040,53ND30017,Lantau Island / Discovery Bay,Discovery Bay,127
+130ND30041,53ND30017,Lantau Island / Discovery Bay,South Lantau Island,128
+130ND30042,53ND30017,Lantau Island / Discovery Bay,Other Islands,129
+130ND30043,53ND30018,Tung Chung,Tung Chung,130
