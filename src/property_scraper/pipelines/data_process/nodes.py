@@ -85,11 +85,11 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
 
     if 'date' in df.columns:
         df['date'] = df['date'].apply(clean_date)
-        # Convert to dd/mm/yyyy format for Excel compatibility
+        # Convert to yyyy-mm-dd format
         df['date'] = df['date'].apply(
-            lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) and hasattr(x, 'strftime') else None
+            lambda x: x.strftime('%Y-%m-%d') if pd.notna(x) and hasattr(x, 'strftime') else None
         )
-        logger.info(f"   ✅ Converted {df['date'].notna().sum()} dates to dd/mm/yyyy format")
+        logger.info(f"   ✅ Converted {df['date'].notna().sum()} dates to yyyy-mm-dd format")
     
     # ============ PRICE CLEANING ============
     logger.info("💰 Step 2/6: Converting price columns to numeric values...")
@@ -372,13 +372,8 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
     
     if 'address' in df.columns:
         df['Type'] = df['address'].apply(classify_property_type)
-
-        # Extract carpark details and add them as separate columns
-        carpark_df = df['address'].apply(extract_carpark_details).apply(pd.Series)
-        carpark_df.columns = ['Carpark_Floor', 'Carpark_Number']  # Ensure column names
-
-        # Add the carpark columns to the main dataframe
-        df = pd.concat([df, carpark_df], axis=1)
+        carpark_details = df['address'].apply(extract_carpark_details).apply(pd.Series)
+        df = pd.concat([df, carpark_details], axis=1)
         logger.info(f"   ✅ Classified {(df['Type'] == 'Carpark').sum()} carpark records")
     
     # ============ DATASOURCE COLUMN ============
@@ -576,20 +571,20 @@ def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
         # Continue processing with original price column
     
     try:
-        # 2. Convert transactionDate to dd/mm/yyyy format
+        # 2. Convert transactionDate to yyyy-mm-dd format
         def convert_transaction_date(date_str):
-            """Convert date format to dd/mm/yyyy"""
+            """Convert date format to yyyy-mm-dd"""
             try:
                 if pd.isna(date_str) or date_str == '':
                     return ''
-                
+
                 # Parse the date as dd/mm/yyyy format (dayfirst=True)
                 dt = pd.to_datetime(date_str, dayfirst=True)
-                return dt.strftime('%d/%m/%Y')
+                return dt.strftime('%Y-%m-%d')
             except (ValueError, TypeError):
                 logger.warning(f"Could not convert date: {date_str}")
                 return str(date_str)  # Return original if conversion fails
-        
+
         processed_df['transactionDate'] = processed_df['transactionDate'].apply(convert_transaction_date)
         logger.info("Successfully converted transactionDate format")
         
@@ -929,12 +924,12 @@ def cleanse_midland_res(
                     # Convert to date only (remove time)
                     processed_df[col] = processed_df[col].dt.date
                     
-                    # Convert to dd/mm/yyyy format - simplified approach
+                    # Convert to yyyy-mm-dd format
                     processed_df[col] = processed_df[col].apply(
-                        lambda x: x.strftime('%d/%m/%Y') if pd.notna(x) and hasattr(x, 'strftime') else None
+                        lambda x: x.strftime('%Y-%m-%d') if pd.notna(x) and hasattr(x, 'strftime') else None
                     )
-                    
-                    logger.info(f"✅ Fixed {col} timezone and converted to dd/mm/yyyy format")
+
+                    logger.info(f"✅ Fixed {col} timezone and converted to yyyy-mm-dd format")
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Error processing date column {col}: {e}")
                     # Keep original values if processing fails
@@ -1353,7 +1348,7 @@ def cleanse_midland_ici(
                     # Convert from ISO format (2008-08-27T16:00:00.000Z) to dd/mm/yyyy and add 1 day
                     df[col] = pd.to_datetime(df[col], errors='coerce')
                     df[col] = df[col] + timedelta(days=1)  # Add 1 day
-                    df[col] = df[col].dt.strftime('%d/%m/%Y')  # Format as dd/mm/yyyy
+                    df[col] = df[col].dt.strftime('%Y-%m-%d')  # Format as yyyy-mm-dd
                     logger.info(f"Processed date column: {col}")
             
             logger.info("Date columns processed successfully")
@@ -1558,10 +1553,10 @@ def merge_and_excel(
     
     # Define date column mapping for each input
     date_column_mapping = {
-        'df_cr': 'date',     
-        'df_co': 'transactionDate',          
-        'df_mr': 'tx_date',         
-        'df_mi': 'tx_date'           
+        'df_cr': 'date',
+        'df_co': 'date',          # Centaline OIR now uses 'date' column
+        'df_mr': 'date',          # Midland Res now uses 'date' column
+        'df_mi': 'date'           # Midland ICI now uses 'date' column
     }
     
     # Define tab names with sanitization
@@ -1579,7 +1574,7 @@ def merge_and_excel(
         
         # Handle string dates with error handling for invalid values (create canonical datetime column)
         # Use specific format to avoid warnings and ensure consistent parsing
-        df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], format='%d/%m/%Y', dayfirst=True, errors='coerce')
+        df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], format='%Y-%m-%d', errors='coerce')
         
         # Remove timezone info if present to avoid Excel compatibility issues
         if df_copy['standard_date'].dt.tz is not None:
@@ -1707,18 +1702,17 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("📋 Selecting columns for Centaline Residential...")
     
-    # Current available columns (commented for reference)
-    # Uncomment and reorder the columns you want to keep
+    # Current available columns from centaline_res_base (after enrich_estate_data)
+    # Only select columns that actually exist in the data
     selected_columns = [
          'date',                    # Transaction date
          'region',                  # Region
          'district',                # District
          'subdistrict',             # Subdistrict
-         #'estate_name',             # Estate name
-         'building_name',           # Building name
-         'Tower',                   # Tower/Block
+         'estate_name',             # Estate name (will be renamed to "Name")
+         'Tower',                   # Building tower
          'Floor',                   # Floor number
-         'Flat',                    # Flat number
+         'Flat',                    # Flat/unit number
          'transaction_type',        # Type of transaction
          'area',                    # Property area
          'price',                   # Transaction price
@@ -1726,27 +1720,28 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'year',                    # Completion year
          'age',                     # Building age
          'developer',               # Developer
-         'Datasource',              # Data source
-         'agency',                  # Agency name
+         'source',                  # Data source (not 'Datasource')
          'address',                 # Property address
-         'property_name',           # Property name (title-lg adopted)
          'rooms',                   # Number of rooms
-         'changes',                 # Price changes  
-         #'title_lg',                # Native address separator (backed up)        
-         'Type',                    # Property type
-         'Carpark_Floor',           # Carpark floor
-         'Carpark_Number',          # Carpark number
+         'changes',                 # Price changes
+         'property_type',           # Property type (not 'Type')
+         'code',                    # Area code
     ]
     
     # Use the selected columns defined above
     # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
-    
+
     # Filter dataframe to selected columns
-    result_df = df[selected_columns]
-    
-    logger.info(f"✅ Selected {len(selected_columns)} columns for Centaline Residential")
+    available_columns = [col for col in selected_columns if col in df.columns]
+    result_df = df[available_columns]
+
+    # Rename estate_name to Name
+    if 'estate_name' in result_df.columns:
+        result_df = result_df.rename(columns={'estate_name': 'Name'})
+
+    logger.info(f"✅ Selected {len(available_columns)} columns for Centaline Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
-    
+
     return result_df
 
 def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -1764,34 +1759,31 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
     selected_columns = [
-        'transactionDate',  # Changed from 'date' to 'transactionDate'
-        'transactionType',
-        'propertyNameCn',
-        'propertyNameEn',
-        'propertyUsageDisplayName',
-        'floor',
-        'unit',
-        'transactionArea',
-        'sourceDisplayName',
-        'price',
-        'avgPrice',
-        'grade',
-        'districtNameEn',
-        'zoneEn',
-        'completion_year',
-        'age',
-        #'postUrlInfo_propertyNameEn', 
-        'source_url',
-        'full_address',
-        'management_company',
-        'developers',
-        'carpark',
-        'matched_building_name',
-        'match_score',
-        'property_type',
-        'Datasource',
-        'id'
-        
+        'transactionDate',  # Will be renamed to 'date'
+        'zoneEn',  # zoneEn
+        'districtNameEn',  # districtNameEn
+        'propertyUsageDisplayName',  # propertyUsageDisplayName
+        'grade',  # grade
+        'propertyNameEn',  # propertyNameEn
+        'propertyNameCn',  # propertyNameCn
+        'floor',  # floor
+        'unit',  # unit
+        'transactionType',  # transactionType
+        'transactionArea',  # transactionArea
+        'price',  # price
+        'avgPrice',  # avgPrice
+        'full_address',  # full_address
+        'completion_year',  # completion_year
+        'age',  # age
+        'source_url',  # source_url
+        'management_company',  # management_company
+        'developers',  # developers
+        'carpark',  # carpark
+        'matched_building_name',  # matched_building_name
+        'match_score',  # match_score
+        'sourceDisplayName',  # sourceDisplayName
+        'Datasource',  # Datasource
+        'id'  # id
     ]
     
     # Use the selected columns defined above
@@ -1799,10 +1791,14 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
     
     # Filter dataframe to selected columns
     result_df = df[selected_columns]
-    
+
+    # Rename transactionDate to date
+    if 'transactionDate' in result_df.columns:
+        result_df = result_df.rename(columns={'transactionDate': 'date'})
+
     logger.info(f"✅ Selected {len(selected_columns)} columns for Centaline OIR")
     logger.info(f"📊 Final shape: {result_df.shape}")
-    
+
     return result_df
 
 def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -1820,57 +1816,35 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
     selected_columns = [
-        'tx_date',  # Changed from 'date' to 'tx_date'
-        'region_name_trans',
-        'subregion',
-        'district', 
-        'estate',
-        'building',
-        'building_first_op_date',
-        #'unit',
-        'floor',
-        'floor_level',
-        'flat',
-        'area',
-        'net_area',
-        'price',
-        'unit_price_net',
-        'name',
-        'news_name',
-        'tx_type',
-        'last_tx_date',
-        'holding_period',
-        'last_price',
-        'mkt_type',
-        'source',
-        #'update_date',
-        'gain',
-        'url_desc_trans',
-        'location',
-        'address',
-        #'url_desc_estate',
-        #'tx_history_url_desc',
-        'first_op_date',
-        'age',
-        'total_unit_count',
-        'total_block_count',
-        'primary_school_net',
-        #'location_lat',
-        #'location_lon',
-        'developer_name',
-        #'property_stat_sell_count',
-        #'property_stat_rent_count',
-        'market_stat_monthly_0_date',
-        #'market_stat_net_ft_price',
-       # '#market_stat_net_ft_price_chg',
-        #'market_stat_pre_net_ft_price',
-        #'market_stat_tx_count',
-        #'market_stat_total_tx_amount',
-        'market_stat_yearly_total_tx_amount',
-        'market_stat_yearly_net_ft_price',
-        'market_stat_yearly_net_ft_price_chg',
-        #'parent_estate_id',
-        #'parent_estate_name',        
+        'tx_date',  # date
+        'region_name_trans',  # region_name_trans
+        'subregion',  # subregion
+        'district',  # district
+        'estate',  # estate
+        'building',  # building
+        'news_name',  # news_name
+        'floor',  # floor
+        'floor_level',  # floor_level
+        'flat',  # flat
+        'tx_type',  # tx_type
+        'price',  # price
+        'net_area',  # net_area
+        'unit_price_net',  # unit_price_net
+        'building_first_op_date',  # building_first_op_date
+        'age',  # age
+        'developer_name',  # developer_name
+        'source',  # source
+        'address',  # address
+        'url_desc_trans',  # url_desc_trans
+        'location',  # location
+        'last_tx_date',  # last_tx_date
+        'last_price',  # last_price
+        'mkt_type',  # mkt_type
+        'area',  # area
+        'total_unit_count',  # total_unit_count
+        'total_block_count',  # total_block_count
+        'primary_school_net',  # primary_school_net
+        'market_stat_monthly_0_date'  # market_stat_monthly_0_date
     ]
     
     # Use the selected columns defined above
@@ -1884,10 +1858,14 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
         logger.warning(f"⚠️ Missing columns: {missing_columns}")
     
     result_df = df[available_columns]
-    
+
+    # Rename tx_date to date
+    if 'tx_date' in result_df.columns:
+        result_df = result_df.rename(columns={'tx_date': 'date'})
+
     logger.info(f"✅ Selected {len(available_columns)} columns for Midland Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
-    
+
     return result_df
 
 def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -1905,38 +1883,38 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
     selected_columns = [
-        'tx_date',  # Changed from 'date' to 'tx_date'
-        'tx_type',
-        'eng_name',
-        'chi_name',
-        'ics_type',
-        'dist_name_en',
-        'floor',
-        'flat',
-        'area',
-        'price',
-        'price_per_feet',
-        'street_name_zh',
-        'street_name_en',
-        'streetno',
-        'area1',
-        'area_desc1',
-        'area2',
-        'area_desc2',
-        'area3',
-        'area_desc3',
-        'area4',
-        'area_desc4',
-        'URL',
-        'Completion',
-        'age',
-        'upload_source',
-        'No. of Floors',
-        'Management Fee (Approx. per sq. ft.)',
-        'Floor Remark',
-        'Grade',
-        'Management Company',
-        'Datasource',
+        'tx_date',  # date
+        'dist_name_en',  # dist_name_en
+        'ics_type',  # ics_type
+        'Grade',  # Grade
+        'eng_name',  # eng_name
+        'chi_name',  # chi_name
+        'floor',  # floor
+        'flat',  # flat
+        'tx_type',  # tx_type
+        'area',  # area
+        'price',  # price
+        'price_per_feet',  # price_per_feet
+        'street_name_zh',  # street_name_zh
+        'street_name_en',  # street_name_en
+        'streetno',  # streetno
+        'Completion',  # Completion
+        'age',  # age
+        'area1',  # area1
+        'area_desc1',  # area_desc1
+        'area2',  # area2
+        'area_desc2',  # area_desc2
+        'area3',  # area3
+        'area_desc3',  # area_desc3
+        'area4',  # area_desc4
+        'area_desc4',  # area_desc4
+        'URL',  # URL
+        'upload_source',  # upload_source
+        'No. of Floors',  # No. of Floors
+        'Management Fee (Approx. per sq. ft.)',  # Management Fee (Approx. per sq. ft.)
+        'Floor Remark',  # Floor Remark
+        'Management Company',  # Management Company
+        'Datasource'  # Datasource
     ]
     
     # Use the selected columns defined above
@@ -1944,8 +1922,12 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
     
     # Filter dataframe to selected columns
     result_df = df[selected_columns]
-    
+
+    # Rename tx_date to date
+    if 'tx_date' in result_df.columns:
+        result_df = result_df.rename(columns={'tx_date': 'date'})
+
     logger.info(f"✅ Selected {len(selected_columns)} columns for Midland ICI")
     logger.info(f"📊 Final shape: {result_df.shape}")
-    
+
     return result_df

@@ -72,7 +72,7 @@ estate_details_raw:
   #filepath: data/02_intermediate/estate_details_raw.parquet
   filepath: data/01_raw/centaline_estate_lv_2.parquet
 
-raw_transaction_data: # Check incremental
+raw_transaction_data:
   type: pandas.ParquetDataset
   filepath: data/01_raw/centaline_res_trans_lv_0.parquet
 

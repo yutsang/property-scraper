@@ -9,15 +9,15 @@ Far East Finance Centre,Far East Finance Centre,100.0
 Admiralty Centre Tower 2,Admiralty Centre Tower 2,100.0
 Two Pacific Place,Two Pacific Place,100.0
 Far East Finance CentreHarcourt Road,Far East Finance Centre,82.05128205128204
-Admiralty Centre 2Harcourt Road,Admiralty Centre Tower 1,80.0
+Admiralty Centre 2Harcourt Road,Admiralty Centre,100.0
 Fairmont House,Fairmont House,100.0
 Cheung Kong Center II,Cheung Kong Center,100.0
 Bank of America Tower,Bank of America Tower,100.0
 ICBC Tower (Garden Road),ICBC Tower (Garden Road),100.0
 Cheung Kong Centre II,Fu Cheung Centre,89.65517241379311
 Three Pacific Place,Three Pacific Place,100.0
-Admiralty Centre 2 Harcourt Road,Admiralty Centre Tower 2,85.71428571428571
-Admiralty Centre Harcourt Road,Admiralty Centre Tower 1,80.0
+Admiralty Centre 2 Harcourt Road,Admiralty Centre,100.0
+Admiralty Centre Harcourt Road,Admiralty Centre,100.0
 United Centre Queensway,United Centre,100.0
 United Centre ,United Centre,100.0
 Citic Tower Tim Mei Avenue,Citic Tower,100.0
@@ -806,6 +806,7 @@ Loke Yew Building,Bcc Building,80.0
 New York House,York House,100.0
 76 Wellington Street,The Wellington,83.33333333333333
 Yau Shun Building,Shun Yee Factory Building,86.66666666666667
+Coda Plaza,Concordia Plaza,80.0
 Century Square,Century Square,100.0
 Kailey Tower,Manley Tower,83.33333333333333
 1 Wellington StreetWellington Street,The Wellington,83.33333333333333
@@ -1007,6 +1008,7 @@ Hung Tak Building ,Hong Tai Building,88.23529411764706
 Yuen Yick Building ,Cheung Yick Industrial Building,83.87096774193549
 Three Exchange Square ,Three Exchange Square,100.0
 Demolished-66 Wellington Street ,The Wellington,83.33333333333333
+Coda Plaza ,Concordia Plaza,80.0
 China Building ,China Fen Hin Building,100.0
 Heung Lam Building ,Heung Wah Industrial Building,87.5
 Far East Consortium Building,Bcc Building,80.0
@@ -3163,6 +3165,7 @@ Tai Chi Factory Building,Tai Chi Factory Building,100.0
 Gee Chang Factory Building,Gee Fat Factory Building,90.9090909090909
 Wah On Building ,On Wah Industrial Building,100.0
 Lippo Sun Plaza,Lippo Sun Plaza,100.0
+Concordia Plaza,Concordia Plaza,100.0
 Southgate Commercial Centre,Boss Commercial Centre,87.17948717948718
 New Mandarin Plaza Tower B,New Mandarin Plaza Tower B,100.0
 New East Ocean Centre,East Ocean Centre,100.0
@@ -3409,6 +3412,7 @@ Wardley Centre Prat Avenue,Prat Avenue,100.0
 The Nate Nathan Road,238 Nathan Road,84.61538461538461
 One Peking Peking Road,One Peking,100.0
 Goldsland Building Minden Avenue,Bcc Building,80.0
+Concordia Plaza ,Concordia Plaza,100.0
 10 Prat Prat Avenue,Prat Avenue,100.0
 Hang Seng Bank Tst Branch Building Carnarvon Road,Bcc Building,80.0
 Austin Commercial Centre Austin Avenue,Boss Commercial Centre,87.17948717948718
@@ -6187,6 +6191,7 @@ Tak Lee Industrial Centre A,Tak Lee Industrial Centre A,100.0
 Tuen Mun Central Square,Tuen Mun Central Square,100.0
 Hang Wai Industrial Centre Block C,Hang Wai Industrial Centre Block C,100.0
 CRL East Asia Industrial Building,CRL East Asia Industrial Building,100.0
+One Vista Summit,One Vista Summit,100.0
 Hang Wai Industrial Centre Block A,Hang Wai Industrial Centre Block A,100.0
 Man Sun Logistics Centre,Man Sun Logistics Centre,100.0
 Delya Industrial Centre Block A,Delya Industrial Centre Block A,100.0
@@ -6210,6 +6215,7 @@ Tuen Mun Central SquareHoi Wing Road,Tuen Mun Central Square,82.05128205128204
 Kwong Kin Trade Centre,Kwong Kin Trade Centre,100.0
 Hung Cheung Industrial Centre I,Hung Cheung Industrial Centre I,100.0
 Ming Fat Industrial Centre,Ming Fat Industrial Centre,100.0
+My Loft,My Loft,100.0
 Foo Yik Commercial Building,Witty Commercial Building,86.36363636363636
 Tuen Mun Industrial Centre D,Tuen Mun Industrial Centre D,100.0
 Yick Shiu Industrial Building,Yick Shiu Industrial Building,100.0
@@ -6274,6 +6280,7 @@ Wellpoint Industrial Building,Wellpoint Industrial Building,100.0
 Lin Won Building Yan Ching Street,Bcc Building,80.0
 Waldorf Garden Tuen Lee Street,Lee Garden Two,83.33333333333333
 Yick Lee Building Lee Fat Path,Tung Lee Building,82.75862068965517
+My Loft Hoi Wing Road,My Loft,100.0
 Hoi Shing Budg Tak Ching Court,Lo Tak Court,85.71428571428571
 Cheung Lung Building Tseng Choi Street,Bcc Building,80.0
 Top Court Tak Ching Court,Lo Tak Court,85.71428571428571
@@ -6283,6 +6290,7 @@ Rich Building,Bcc Building,80.0
 Tuen Mun Central Square ,Tuen Mun Central Square,100.0
 Tuen King Building,Yue Hing Building,85.71428571428571
 Lakeshore Building,Bcc Building,80.0
+One Vista Summit ,One Vista Summit,100.0
 Kin Wing Commercial Building ,Wing Fai Building,86.66666666666667
 Tuen Mun Centre,Tuen Mun Industrial Centre E,100.0
 Success Industrial Building,Success Industrial Building (SPK),100.0

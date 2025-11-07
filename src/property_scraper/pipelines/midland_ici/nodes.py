@@ -644,6 +644,10 @@ def ml_ici_scrape_trans(
                     response.raise_for_status()
                     data = response.json()
 
+                    if data is None:
+                        logger.warning(f"Received None response from API for cursor {cursor}")
+                        break
+
                     if not data.get('transactions'):
                         break
 

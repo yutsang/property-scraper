@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import chromedriver_autoinstaller
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from tqdm import tqdm
 import configparser
 import re
@@ -19,7 +19,6 @@ import os
 import json
 from pathlib import Path
 from typing import Optional, Set
-from typing import Dict, Any, List, Tuple
 import pickle
 import hashlib
 import yaml
@@ -228,14 +227,12 @@ def scrape_transaction_data(
             # Find all transaction rows (desktop table format)
             rows = driver.find_elements(By.CSS_SELECTOR, "tr.cv-structured-list-item")
             
-
-            
             for row in rows:
                 try:
                     # Get all cells in the row
                     cells = row.find_elements(By.CSS_SELECTOR, "td.cv-structured-list-data")
                     
-                    if len(cells) >= 5:  # Ensure we have enough cells (minimum 5 for basic data)
+                    if len(cells) >= 6:  # Ensure we have enough cells (minimum 6 for basic data with title_lg)
                         # Extract date from the first cell
                         try:
                             date_element = cells[0].find_element(By.CSS_SELECTOR, ".info-date span")
@@ -251,46 +248,39 @@ def scrape_transaction_data(
                         except:
                             # Fallback: use cell text directly
                             address_text = cells[1].text.strip()
-                        
-                        # For desktop table format, title-lg is not available, so we'll use the address
-                        title_lg_text = address_text
-                        
-                        # Extract rooms from the third cell
-                        rooms_text = cells[2].text.strip()
-                        
-                        # Determine transaction type and extract price from the fourth cell
+
+                        # Extract title_lg from the third cell (ACTUAL TITLE_LG COLUMN)
+                        title_lg_text = cells[2].text.strip()
+
+                        # Extract rooms from the fourth cell
+                        rooms_text = cells[3].text.strip()
+
+                        # Determine transaction type and extract price from the FIFTH cell
                         transaction_type = "SALE"
-                        price_text = cells[3].text.strip()
-                        
+                        price_text = cells[4].text.strip()
+
                         # Check if it's a rent transaction (usually contains "租" or "$" with smaller amounts)
                         if "租" in price_text or (price_text.startswith("$") and any(char.isdigit() for char in price_text)):
                             # Additional check for rent vs sale based on price format
                             if price_text.startswith("$") and len(price_text) < 10:  # Likely rent
                                 transaction_type = "RENT"
-                        
-                        # Extract area from the fifth cell
-                        area_text = cells[4].text.strip()
-                        
+
+                        # Extract area from the SIXTH cell
+                        area_text = cells[5].text.strip()
+
                         # Initialize optional fields
                         ft_price_text = ""
                         changes_text = ""
-                        agency_text = ""
-                        
+
                         # Extract additional data if available
-                        if len(cells) >= 6:
-                            ft_price_text = cells[5].text.strip()
                         if len(cells) >= 7:
-                            try:
-                                changes_element = cells[6].find_element(By.CSS_SELECTOR, ".riseBox span")
-                                changes_text = changes_element.text.strip()
-                            except:
-                                changes_text = cells[6].text.strip()
+                            ft_price_text = cells[6].text.strip()
                         if len(cells) >= 8:
                             try:
-                                agency_element = cells[7].find_element(By.CSS_SELECTOR, ".label")
-                                agency_text = agency_element.text.strip()
+                                changes_element = cells[7].find_element(By.CSS_SELECTOR, ".riseBox span")
+                                changes_text = changes_element.text.strip()
                             except:
-                                agency_text = cells[7].text.strip()
+                                changes_text = cells[7].text.strip()
                         
                         record = {
                             'date': date_text,
@@ -301,7 +291,6 @@ def scrape_transaction_data(
                             'area': area_text,
                             'ft_price': ft_price_text,
                             'changes': changes_text,
-                            'agency': agency_text,
                             'transaction_type': transaction_type,
                         }
                         table_data.append(record)
@@ -708,31 +697,23 @@ def process_transaction_data(
     Process transaction data by filtering out invalid records and cleaning the data
     """
     logger.info(f"🔄 Processing transaction data: {len(trans_df)} records")
-
+    
     # Create a copy to avoid modifying original
     processed_df = trans_df.copy()
-
-    # FIX: Correct field mapping - price data is in 'area' field, ft_price data is in 'changes' field
-    logger.info("🔧 Correcting field mapping: price data is in 'area' field, ft_price data is in 'changes' field")
-
-    # Swap the field values
-    processed_df['price'] = processed_df['area']  # Move area data to price field
-    processed_df['ft_price'] = processed_df['changes'].str.replace('@$', '').str.replace('$', '')  # Extract numeric part from changes field
-    processed_df['area'] = ''  # Clear the area field (it contained price data, not area data)
-
+    
     # Filter out rows with empty or invalid dates
     initial_count = len(processed_df)
-
+    
     # Remove rows where date is empty, None, or invalid
     processed_df = processed_df.dropna(subset=['date'])
     processed_df = processed_df[processed_df['date'] != '']
     processed_df = processed_df[processed_df['date'].str.strip() != '']
-
+    
     # Also filter out rows where address is empty (these are likely failed scrapes)
     processed_df = processed_df.dropna(subset=['address'])
     processed_df = processed_df[processed_df['address'] != '']
     processed_df = processed_df[processed_df['address'].str.strip() != '']
-
+    
     # Remove rows where price is empty (these are likely incomplete records)
     processed_df = processed_df.dropna(subset=['price'])
     processed_df = processed_df[processed_df['price'] != '']
@@ -1467,10 +1448,13 @@ def enrich_estate_data(
                 
                 # Extract completion year from Occupation Permit
                 estate_details_copy['completion_year'] = estate_details_copy['Occupation Permit'].apply(extract_completion_year)
-                
+
+                # Deduplicate estate details before joining to prevent duplicates
+                estate_completion_unique = estate_details_copy.drop_duplicates(subset='Scraped Estate Name', keep='first')
+
                 # Join with estate details to get completion year
                 transactions_copy = transactions_copy.merge(
-                    estate_details_copy[['Scraped Estate Name', 'completion_year']],
+                    estate_completion_unique[['Scraped Estate Name', 'completion_year']],
                     left_on='estate_name',
                     right_on='Scraped Estate Name',
                     how='left'
@@ -1500,21 +1484,25 @@ def enrich_estate_data(
                 
                 # Add region, district, subdistrict, code, and developer from estate details
                 try:
+                    # First, deduplicate estate details to ensure each estate name appears only once
+                    # This prevents creating multiple rows for the same transaction
+                    estate_unique = estate_details_copy.drop_duplicates(subset='Scraped Estate Name', keep='first')
+
                     # Join with estate details to get location information and developer
                     location_join = transactions_copy.merge(
-                        estate_details_copy[['Scraped Estate Name', 'Region', 'District', 'Subdistrict', 'Code', 'Developer']],
+                        estate_unique[['Scraped Estate Name', 'Region', 'District', 'Subdistrict', 'Code', 'Developer']],
                         left_on='estate_name',
                         right_on='Scraped Estate Name',
                         how='left'
                     )
-                    
+
                     # Update the location columns
                     transactions_copy['region'] = location_join['Region']
                     transactions_copy['district'] = location_join['District']
                     transactions_copy['subdistrict'] = location_join['Subdistrict']
                     transactions_copy['code'] = location_join['Code']
                     transactions_copy['developer'] = location_join['Developer']
-                    
+
                     # Count records with location data
                     records_with_location = transactions_copy['region'].notna().sum()
                     records_with_developer = transactions_copy['developer'].notna().sum()
