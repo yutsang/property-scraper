@@ -36,7 +36,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         ),
         node(
             func=enrich_estate_data,
-            inputs=["estate_details_raw", "processed_transactions"],
+            inputs=["estate_details_raw", "processed_transactions", "params:webscraper"],
             outputs="centaline_res_base",
             name="estate_data_enricher"
         )

@@ -169,11 +169,28 @@ def scrape_transaction_data(
     
     # ============ DEFINE NESTED FUNCTIONS FIRST ============
     def parse_date_from_string(date_str):
-        """Enhanced date parsing with multiple format support"""
+        """Enhanced date parsing with ISO format support for JavaScript extraction"""
         if not date_str or pd.isna(date_str):
             return None
         date_str = str(date_str).strip()
-        date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y%m%d', '%d-%m-%Y']
+        
+        # Try pandas first (handles ISO: "2026-01-14T00:00:00" and other formats)
+        try:
+            parsed = pd.to_datetime(date_str, errors='coerce')
+            if pd.notna(parsed):
+                return parsed.date()
+        except:
+            pass
+        
+        # Fallback to manual parsing
+        date_formats = [
+            '%Y-%m-%dT%H:%M:%S',  # ISO from JavaScript
+            '%Y-%m-%d',
+            '%d/%m/%Y',
+            '%m/%d/%Y',
+            '%Y%m%d',
+            '%d-%m-%Y'
+        ]
         for fmt in date_formats:
             try:
                 return datetime.strptime(date_str, fmt).date()
@@ -218,8 +235,131 @@ def scrape_transaction_data(
             last_height = new_height
             scroll_attempts += 1
 
+    def extract_nuxt_transactions(driver):
+        """
+        IMPROVED: Extract transaction data from window.__NUXT__ JavaScript object.
+        Gets ALL data: gArea, nArea, gUnitPrice, nUnitPrice, region, district, building codes.
+        Much more reliable and complete than HTML scraping.
+        """
+        try:
+            # Execute JavaScript to get the __NUXT__ object
+            nuxt_data = driver.execute_script("return window.__NUXT__;")
+            
+            if not nuxt_data:
+                logger.warning("window.__NUXT__ is empty")
+                return []
+            
+            # Navigate to transactions: state.transaction.transactionList.data
+            transactions = nuxt_data.get('state', {}).get('transaction', {}).get('transactionList', {}).get('data', [])
+            
+            if not transactions:
+                logger.debug("No transactions found in __NUXT__ object")
+                return []
+            
+            # Parse each transaction
+            parsed_transactions = []
+            
+            for txn in transactions:
+                try:
+                    # Extract nested data
+                    scope = txn.get('scope', {})
+                    display_text = txn.get('displayText', {}).get('addr', {})
+                    
+                    # Extract building information
+                    estate = txn.get('estateName', '').strip()
+                    building = txn.get('buildingName', '').strip()
+                    formatted_address = display_text.get('line1', '').strip()
+                    
+                    # Build full name - use formatted address if estate/building are missing
+                    if estate and building:
+                        full_name = f"{estate} {building}"
+                    elif building:
+                        full_name = building
+                    elif estate:
+                        full_name = estate
+                    elif formatted_address:
+                        # Extract building name from formatted address
+                        # Format: "Building Name Floor Flat" - take first part before Floor
+                        parts = formatted_address.split()
+                        name_parts = []
+                        for part in parts:
+                            # Stop at floor indicators
+                            if part in ['Upper', 'Middle', 'Lower', 'High', 'Mid', 'Low'] or 'Floor' in part or '/F' in part:
+                                break
+                            name_parts.append(part)
+                        full_name = ' '.join(name_parts) if name_parts else formatted_address
+                    else:
+                        full_name = ''
+                    
+                    # Extract completion year and convert to number
+                    completion_year_str = txn.get('opYear', '')
+                    completion_year = None
+                    if completion_year_str:
+                        import re
+                        # Extract 4-digit year from strings like "2021年" or "1983年"
+                        year_match = re.search(r'(\d{4})', completion_year_str)
+                        if year_match:
+                            try:
+                                completion_year = int(year_match.group(1))
+                            except:
+                                pass
+                    
+                    # Calculate age
+                    from datetime import datetime
+                    current_year = datetime.now().year
+                    age = None
+                    if completion_year:
+                        age = current_year - completion_year
+                        if age < 0:
+                            age = None
+                    
+                    record = {
+                        # Match your required column order exactly
+                        'date': txn.get('insDate', ''),
+                        'region': scope.get('terr', ''),
+                        'district': scope.get('db', ''),
+                        'subdistrict': scope.get('hma', ''),
+                        'Name': full_name if full_name else None,  # Use None instead of empty string
+                        'Tower': building if building else (estate if estate and not building else None),
+                        'Floor': txn.get('yAxis', ''),
+                        'Flat': txn.get('xAxis', ''),
+                        'transaction_type': 'SALE' if txn.get('postType') == 'S' else 'RENT' if txn.get('postType') == 'R' else '',
+                        'area': txn.get('nArea'),
+                        'price': txn.get('transactionPrice'),
+                        'ft_price': txn.get('nUnitPrice'),
+                        'source': 'centaline_res',
+                        'property_type': 'residential',
+                        'address': formatted_address,  # KEEP the full formatted address from JavaScript
+                        'street_address': txn.get('address', ''),
+                        'building_code': txn.get('typeCode', ''),
+                        'g_area': txn.get('gArea'),
+                        'g_unit_price': txn.get('gUnitPrice'),
+                        'completion_year': completion_year,
+                        'age': age,
+                        'estate_type': txn.get('estateType', ''),
+                        'transaction_url': txn.get('detailUrl', ''),
+                        'transaction_id': txn.get('id', ''),
+                        'title_lg': display_text.get('line5', ''),
+                        'rooms': txn.get('bedroomCount'),
+                        'direction': txn.get('direction', ''),
+                        'estate_name': estate if estate else None,
+                        'building_name': building if building else None,
+                    }
+                    
+                    parsed_transactions.append(record)
+                    
+                except Exception as e:
+                    logger.debug(f"Error parsing transaction: {e}")
+                    continue
+            
+            return parsed_transactions
+            
+        except Exception as e:
+            logger.error(f"Error extracting __NUXT__ data: {e}")
+            return []
+    
     def extract_table_data(driver):
-        """Extract transaction data from the structured table layout."""
+        """DEPRECATED - kept for fallback only. Use extract_nuxt_transactions instead."""
         table_data = []
         try:
             enhanced_scroll_down(driver)
@@ -233,6 +373,19 @@ def scrape_transaction_data(
                     cells = row.find_elements(By.CSS_SELECTOR, "td.cv-structured-list-data")
                     
                     if len(cells) >= 6:  # Ensure we have enough cells (minimum 6 for basic data with title_lg)
+                        # IMPORTANT: Extract transaction URL for later duplicate estate matching
+                        transaction_url = ""
+                        try:
+                            # Try to find a link in the row that leads to transaction details
+                            link_element = row.find_element(By.CSS_SELECTOR, "a[href*='/transaction/'], a.transaction-link")
+                            transaction_url = link_element.get_attribute('href')
+                        except:
+                            # Try alternative: check if row itself is clickable
+                            try:
+                                transaction_url = row.get_attribute('data-href')
+                            except:
+                                pass
+                        
                         # Extract date from the first cell
                         try:
                             date_element = cells[0].find_element(By.CSS_SELECTOR, ".info-date span")
@@ -259,11 +412,13 @@ def scrape_transaction_data(
                         transaction_type = "SALE"
                         price_text = cells[4].text.strip()
 
-                        # Check if it's a rent transaction (usually contains "租" or "$" with smaller amounts)
-                        if "租" in price_text or (price_text.startswith("$") and any(char.isdigit() for char in price_text)):
-                            # Additional check for rent vs sale based on price format
-                            if price_text.startswith("$") and len(price_text) < 10:  # Likely rent
-                                transaction_type = "RENT"
+                        # Check if it's a rent transaction
+                        # Priority 1: If price contains "租" (Chinese character for rent), it's definitely a rent transaction
+                        if "租" in price_text:
+                            transaction_type = "RENT"
+                        # Priority 2: If price starts with "$" and is short (likely rent amount), it's a rent transaction
+                        elif price_text.startswith("$") and len(price_text) < 10 and any(char.isdigit() for char in price_text):
+                            transaction_type = "RENT"
 
                         # Extract area from the SIXTH cell
                         area_text = cells[5].text.strip()
@@ -292,6 +447,7 @@ def scrape_transaction_data(
                             'ft_price': ft_price_text,
                             'changes': changes_text,
                             'transaction_type': transaction_type,
+                            'transaction_url': transaction_url,  # NEW: URL for duplicate matching
                         }
                         table_data.append(record)
                         
@@ -490,10 +646,10 @@ def scrape_transaction_data(
                 if not valid_dates.empty:
                     max_date = valid_dates.max()
                     control_date = max_date + timedelta(days=1)
-                    logger.info(f"Using incremental control date: {control_date}")
+                    logger.info(f"✅ Using incremental control date: {control_date} (max existing: {max_date})")
                 else:
                     control_date = pd.to_datetime(params.get('centaline_res', {}).get('control_date', params['global']['start_date'])).date()
-                    logger.info(f"No valid dates found, using parameter control date: {control_date}")
+                    logger.info(f"⚠️ No valid dates found in existing data, using parameter control date: {control_date}")
             else:
                 control_date = pd.to_datetime(params.get('centaline_res', {}).get('control_date', params['global']['start_date'])).date()
                 logger.info(f"No date column found, using parameter control date: {control_date}")
@@ -515,75 +671,114 @@ def scrape_transaction_data(
         logger.info("No new transactions to scrape - control date is current")
         return existing_data if not existing_data.empty else pd.DataFrame()
 
-    # ============ MAIN SCRAPING LOGIC ============
-    driver = initialize_driver()
-    base_url = "https://hk.centanet.com/findproperty/en/list/transaction"
-    all_data = []
-
-    try:
-        with tqdm(total=len(area_df), desc="Processing areas", unit="area") as pbar:
-            for area_idx, area_row in area_df.iterrows():
-                subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
-                session_id = f"session_{area_idx}_{int(datetime.now().timestamp())}"
-                url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
-                
-                max_retries = params['global'].get('max_retries', 3)
-                for attempt in range(max_retries):
+    # ============ MAIN SCRAPING LOGIC WITH MULTI-THREADING ============
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import threading
+    
+    # Thread-local storage for drivers
+    thread_local = threading.local()
+    
+    def get_thread_driver():
+        """Get or create driver for current thread"""
+        if not hasattr(thread_local, 'driver'):
+            thread_local.driver = initialize_driver()
+        return thread_local.driver
+    
+    def scrape_area_transactions(area_row):
+        """Scrape transactions for a single area (thread-safe)"""
+        driver = get_thread_driver()
+        base_url = "https://hk.centanet.com/findproperty/en/list/transaction"
+        area_data = []
+        
+        try:
+            subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
+            session_id = f"session_{int(datetime.now().timestamp())}_{threading.get_ident()}"
+            url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
+            
+            driver.get(url)
+            smart_sleep()
+            
+            page = 1
+            date_reached = False
+            max_pages = params['global'].get('max_pages_per_area', 50)
+            
+            while not date_reached and page <= max_pages:
+                # Use NEW JavaScript extraction method
+                page_data = extract_nuxt_transactions(driver)
+                            
+                for record in page_data:
+                    # Check control date
                     try:
-                        driver.get(url)
-                        smart_sleep()
-                        
-                        page = 1
-                        date_reached = False
-                        max_pages = params['global'].get('max_pages_per_area', 50)
-                        
-                        while not date_reached and page <= max_pages:
-                            page_data = extract_table_data(driver)
-                            
-                            for record in page_data:
-                                # Check control date
-                                try:
-                                    transaction_date = parse_date_from_string(record['date'])
-                                    if transaction_date and transaction_date < control_date:
-                                        date_reached = True
-                                        break
-                                except:
-                                    continue
-                                
-                                # Add area metadata - **FIXED TIMESTAMP FORMAT**
-                                record.update({
-                                    'region': area_row['Region'],
-                                    'district': area_row['District'],
-                                    'subdistrict': area_row['Subdistrict'],
-                                    'code': area_row['Code'],
-                                    'scrape_timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # STRING FORMAT
-                                })
-                                all_data.append(record)
-                            
-                            if date_reached:
-                                break
-                                
-                            if not go_to_next_page(driver):
-                                break
-                            page += 1
-                        
-                        break  # Success, exit retry loop
-                    except Exception:
-                        if attempt == max_retries - 1:
-                            continue
-                        time.sleep(2 ** attempt)
+                        transaction_date = parse_date_from_string(record['date'])
+                        if transaction_date and transaction_date < control_date:
+                            date_reached = True
+                            break
+                    except:
+                        pass
+                    
+                    # Add area_code for reference
+                    record['area_code'] = area_row['Code']
+                    record['scrape_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    area_data.append(record)
                 
+                if date_reached:
+                    break
+                    
+                if not go_to_next_page(driver):
+                    break
+                page += 1
+            
+            return {'success': True, 'data': area_data, 'area': area_row['Subdistrict']}
+            
+        except Exception as e:
+            logger.debug(f"Error scraping {area_row['Subdistrict']}: {e}")
+            return {'success': False, 'data': [], 'area': area_row['Subdistrict'], 'error': str(e)}
+    
+    # Execute scraping with thread pool
+    max_threads = params.get('global', {}).get('max_threads', 3)
+    logger.info(f"🚀 Using {max_threads} parallel threads for transaction scraping")
+    
+    all_data = []
+    failed_areas = []
+    
+    from tqdm.auto import tqdm
+    
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+        # Submit all area scraping tasks
+        future_to_area = {executor.submit(scrape_area_transactions, row): row for _, row in area_df.iterrows()}
+        
+        # Process completed tasks with progress bar
+        with tqdm(total=len(future_to_area), desc=f"Scraping areas ({max_threads} threads)") as pbar:
+            for future in as_completed(future_to_area):
+                result = future.result()
+                if result['success']:
+                    all_data.extend(result['data'])
+                    pbar.set_postfix({'area': result['area'][:15], 'total': len(all_data)})
+                else:
+                    failed_areas.append(result)
                 pbar.update(1)
-                pbar.set_postfix({
-                    'current': area_row['Subdistrict'][:15],
-                    'transactions': len(all_data)
-                })
-                
-    finally:
-        driver.quit()
+    
+    logger.info(f"✅ Successfully scraped {len(all_data)} transactions from {len(future_to_area) - len(failed_areas)} areas")
+    if failed_areas:
+        logger.warning(f"⚠️ Failed to scrape {len(failed_areas)} areas")
 
     # ============ COMBINE AND CLEAN DATA ============
     new_data_df = pd.DataFrame(all_data)
+    
+    # Log data quality
+    if not new_data_df.empty:
+        logger.info(f"📊 New data quality:")
+        logger.info(f"  Total records: {len(new_data_df)}")
+        logger.info(f"  With region: {new_data_df['region'].notna().sum()} ({new_data_df['region'].notna().sum()/len(new_data_df)*100:.1f}%)")
+        logger.info(f"  With district: {new_data_df['district'].notna().sum()} ({new_data_df['district'].notna().sum()/len(new_data_df)*100:.1f}%)")
+        logger.info(f"  With building_code: {new_data_df['building_code'].notna().sum()} ({new_data_df['building_code'].notna().sum()/len(new_data_df)*100:.1f}%)")
+        
+        # Transaction type breakdown
+        if 'transaction_type' in new_data_df.columns:
+            type_counts = new_data_df['transaction_type'].value_counts()
+            logger.info(f"  Transaction types:")
+            for ttype, count in type_counts.items():
+                logger.info(f"    {ttype}: {count} ({count/len(new_data_df)*100:.1f}%)")
     
     if not existing_data.empty and not new_data_df.empty:
         logger.info(f"Combining {len(existing_data)} existing and {len(new_data_df)} new transactions")
@@ -600,23 +795,47 @@ def scrape_transaction_data(
 
     # Deduplicate and clean data types
     if not combined_df.empty:
-        # **CRITICAL FIX: Normalize timestamp column for consistent parquet serialization**
+        # Normalize timestamp
         if 'scrape_timestamp' in combined_df.columns:
             combined_df['scrape_timestamp'] = pd.to_datetime(
                 combined_df['scrape_timestamp'], errors='coerce'
             ).dt.strftime('%Y-%m-%d %H:%M:%S')
         
-        # Deduplicate based on key columns
-        dedup_columns = ['date', 'address', 'price', 'area', 'region', 'district', 'subdistrict']
-        dedup_columns = [col for col in dedup_columns if col in combined_df.columns]
+        # Fix data types for parquet compatibility
+        # Fix rooms column - convert to Int64 (nullable integer)
+        if 'rooms' in combined_df.columns:
+            combined_df['rooms'] = pd.to_numeric(combined_df['rooms'], errors='coerce').astype('Int64')
         
-        if dedup_columns:
+        # Fix completion_year - ensure it's Int64
+        if 'completion_year' in combined_df.columns:
+            combined_df['completion_year'] = pd.to_numeric(combined_df['completion_year'], errors='coerce').astype('Int64')
+        
+        # Fix age - ensure it's Int64
+        if 'age' in combined_df.columns:
+            combined_df['age'] = pd.to_numeric(combined_df['age'], errors='coerce').astype('Int64')
+        
+        # Fix price columns - ensure numeric
+        for col in ['price', 'area', 'ft_price', 'g_area', 'g_unit_price', 'n_area', 'n_unit_price']:
+            if col in combined_df.columns:
+                combined_df[col] = pd.to_numeric(combined_df[col], errors='coerce')
+        
+        # Deduplicate based on transaction_id (if available) or key columns
+        if 'transaction_id' in combined_df.columns:
             before_dedup = len(combined_df)
-            combined_df = combined_df.drop_duplicates(subset=dedup_columns, keep='last')
+            combined_df = combined_df.drop_duplicates(subset=['transaction_id'], keep='last')
             after_dedup = len(combined_df)
-            
             if before_dedup != after_dedup:
-                logger.info(f"Removed {before_dedup - after_dedup} duplicate transactions")
+                logger.info(f"Removed {before_dedup - after_dedup} duplicate transactions by ID")
+        else:
+            # Fallback dedup
+            dedup_columns = ['date', 'address', 'price', 'area']
+            dedup_columns = [col for col in dedup_columns if col in combined_df.columns]
+            if dedup_columns:
+                before_dedup = len(combined_df)
+                combined_df = combined_df.drop_duplicates(subset=dedup_columns, keep='last')
+                after_dedup = len(combined_df)
+                if before_dedup != after_dedup:
+                    logger.info(f"Removed {before_dedup - after_dedup} duplicate transactions")
 
     logger.info(f"Final dataset contains {len(combined_df)} transactions")
     
@@ -627,6 +846,7 @@ def scrape_transaction_data(
         metadata={
             "records_processed": len(combined_df),
             "areas_processed": len(area_df),
+            "failed_areas": len(failed_areas),
             "execution_time": datetime.now().isoformat()
         }
     )
@@ -694,7 +914,8 @@ def process_transaction_data(
     params: Dict[str, Any]
 ) -> pd.DataFrame:
     """
-    Process transaction data by filtering out invalid records and cleaning the data
+    Process transaction data - UPDATED for JavaScript extraction.
+    Data from JavaScript is already clean, just do minimal validation.
     """
     logger.info(f"🔄 Processing transaction data: {len(trans_df)} records")
     
@@ -705,19 +926,23 @@ def process_transaction_data(
     initial_count = len(processed_df)
     
     # Remove rows where date is empty, None, or invalid
-    processed_df = processed_df.dropna(subset=['date'])
-    processed_df = processed_df[processed_df['date'] != '']
-    processed_df = processed_df[processed_df['date'].str.strip() != '']
+    if 'date' in processed_df.columns:
+        processed_df = processed_df.dropna(subset=['date'])
+        processed_df = processed_df[processed_df['date'] != '']
+        if processed_df['date'].dtype == 'object':
+            processed_df = processed_df[processed_df['date'].astype(str).str.strip() != '']
     
-    # Also filter out rows where address is empty (these are likely failed scrapes)
-    processed_df = processed_df.dropna(subset=['address'])
-    processed_df = processed_df[processed_df['address'] != '']
-    processed_df = processed_df[processed_df['address'].str.strip() != '']
+    # Check Name column instead of address (JavaScript extraction uses 'Name' not 'address')
+    if 'Name' in processed_df.columns:
+        processed_df = processed_df.dropna(subset=['Name'])
+        processed_df = processed_df[processed_df['Name'] != '']
+        if processed_df['Name'].dtype == 'object':
+            processed_df = processed_df[processed_df['Name'].astype(str).str.strip() != '']
     
     # Remove rows where price is empty (these are likely incomplete records)
-    processed_df = processed_df.dropna(subset=['price'])
-    processed_df = processed_df[processed_df['price'] != '']
-    processed_df = processed_df[processed_df['price'].str.strip() != '']
+    if 'price' in processed_df.columns:
+        processed_df = processed_df.dropna(subset=['price'])
+        processed_df = processed_df[processed_df['price'] != 0]
     
     final_count = len(processed_df)
     removed_count = initial_count - final_count
@@ -728,23 +953,8 @@ def process_transaction_data(
     logger.info(f"  - Removed invalid records: {removed_count:,}")
     logger.info(f"  - Success rate: {(final_count/initial_count)*100:.1f}%")
     
-    # Additional data cleaning
+    # Additional data cleaning (minimal - JavaScript data is already clean)
     if len(processed_df) > 0:
-        # Clean up date format
-        processed_df['date'] = processed_df['date'].str.strip()
-        
-        # Clean up address format
-        processed_df['address'] = processed_df['address'].str.strip()
-        
-        # Clean up price format
-        processed_df['price'] = processed_df['price'].str.strip()
-        
-        # Ensure title_lg is populated (use address if title_lg is empty)
-        processed_df['title_lg'] = processed_df['title_lg'].fillna(processed_df['address'])
-        # Replace empty strings with address values
-        mask = (processed_df['title_lg'] == '') | (processed_df['title_lg'].isna())
-        processed_df.loc[mask, 'title_lg'] = processed_df.loc[mask, 'address']
-        
         logger.info(f"✅ Data processing completed successfully")
     
     return processed_df
@@ -774,7 +984,7 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
     driver = initialize_driver(params)
     required_columns = [
         'Name', 'Address', 'Blocks', 'Units', 'UnitRate',
-        'MoM', 'ForSale', 'ForRent', 'Link', 'Region',
+        'MoM', 'ForSale', 'ForRent', 'Link', 'EstateCode', 'Region',
         'District', 'Subdistrict', 'Code', 'LastScraped'
     ]
     
@@ -1010,7 +1220,11 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
             }
         )
         
-        return final_df[final_df['Name'].notnull()]
+        # Drop rows where Name is None or empty
+        final_df = final_df[final_df['Name'].notnull() & (final_df['Name'].str.strip() != '')]
+        logger.info(f"📋 Final dataset after dropping None names: {len(final_df)} estates")
+        
+        return final_df
         
     except Exception as e:
         logger.error(f"Data consolidation failed: {str(e)}")
@@ -1048,6 +1262,16 @@ def estate_changed(existing: pd.Series, new: dict) -> bool:
 
 def process_estate_item(item, district_row) -> dict:
     """Extract structured data from individual estate elements."""
+    link = item.get('href', '')
+    
+    # Extract estate code from URL by splitting on last "/"
+    estate_code = ''
+    if link:
+        try:
+            estate_code = link.rstrip('/').split('/')[-1]
+        except:
+            estate_code = ''
+    
     return {
         'Name': item.select_one("div.main-text").get_text(strip=True),
         'Address': item.select_one("div.address.f-middle").get_text(strip=True),
@@ -1057,7 +1281,8 @@ def process_estate_item(item, district_row) -> dict:
         'MoM': safe_extract(item, "div:-soup-contains('MoM') + div"),
         'ForSale': safe_extract(item, "div:-soup-contains('For Sale') + div"),
         'ForRent': safe_extract(item, "div:-soup-contains('For Rent') + div"),
-        'Link': item.get('href'),
+        'Link': link,
+        'EstateCode': estate_code,
         'Region': district_row['Region'],
         'District': district_row['District'],
         'Subdistrict': district_row['Subdistrict'],
@@ -1085,9 +1310,14 @@ def safe_get_text(element, selector):
     except Exception:
         return None
 
-# nodes.py (Kedro compatible version)
+# nodes.py (Kedro compatible version with multi-threading and gap-filling)
 def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
-    """Scrape detailed estate information with full data fields using incremental updates."""
+    """
+    Scrape detailed estate information with multi-threading, incremental updates, and gap-filling.
+    - Uses multiple threads for parallel scraping
+    - Re-scrapes rows with missing critical data
+    - Resilient to failures with automatic retry on next run
+    """
     logger = logging.getLogger(__name__)
     
     # Check if node should be run based on last execution date
@@ -1106,102 +1336,193 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
         return pd.DataFrame()
     
     details_file = params.get('estate_details_file', 'data/01_raw/centaline_estate_lv_2.parquet')
-    print("Details File:", details_file)
+    logger.info(f"Details File: {details_file}")
     
     # Load existing details
     existing_details = pd.DataFrame()
     if os.path.exists(details_file):
-        #print("inside!!inside!!inside!!inside!!")
         existing_details = pd.read_parquet(details_file)
-        #print('Checkpoint:', existing_details['Name'])
-        logger.info(f"Loaded {len(existing_details)} existing estate details")
+        logger.info(f"📊 Loaded {len(existing_details)} existing estate details")
+        
+        # Check for incomplete records (gap-filling mechanism)
+        critical_fields = ['scraped_estate_name', 'occupation_permit', 'estate_code']
+        if not existing_details.empty:
+            incomplete_mask = existing_details[critical_fields].isna().any(axis=1)
+            incomplete_count = incomplete_mask.sum()
+            if incomplete_count > 0:
+                logger.info(f"🔧 Found {incomplete_count} incomplete records - will re-scrape them")
+                # Add incomplete records back to scraping queue
+                incomplete_names = set(existing_details[incomplete_mask]['Name'].tolist())
+    else:
+        incomplete_names = set()
     
-    # Get existing links and filter new listings
-    existing_items = set(existing_details['Name']) if 'Name' in existing_details.columns else set()
-    new_listings = listings_df[~listings_df['Name'].isin(existing_items)]
+    # Determine which estates need scraping
+    # 1. New estates not in existing data
+    # 2. Incomplete estates (missing critical fields)
+    existing_complete_names = set()
+    if not existing_details.empty and 'Name' in existing_details.columns:
+        # Only consider estates complete if they have all critical fields
+        critical_fields = ['scraped_estate_name', 'occupation_permit', 'estate_code']
+        complete_mask = existing_details[critical_fields].notna().all(axis=1)
+        existing_complete_names = set(existing_details[complete_mask]['Name'].tolist())
+        logger.info(f"✓ {len(existing_complete_names)} estates are complete")
     
-    if new_listings.empty:
-        logger.info("No new estates to scrape")
+    estates_to_scrape = listings_df[~listings_df['Name'].isin(existing_complete_names)]
+    
+    if estates_to_scrape.empty:
+        logger.info("✅ No estates to scrape - all complete")
         return existing_details
-
-    driver = initialize_driver(params)
-    new_details = []
-
-    try:
-        for _, row in tqdm(new_listings.iterrows(), total=len(new_listings), desc="Scraping new estates"):
+    
+    logger.info(f"🎯 Will scrape {len(estates_to_scrape)} estates ({len(estates_to_scrape) - len(incomplete_names if 'incomplete_names' in locals() else [])} new, {len(incomplete_names if 'incomplete_names' in locals() else [])} retry)")
+    
+    # Multi-threading setup
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import threading
+    
+    # Get thread count from params or use default
+    max_threads = params.get('global', {}).get('max_threads', 5)
+    logger.info(f"🚀 Using {max_threads} parallel threads for scraping")
+    
+    # Thread-local storage for drivers
+    thread_local = threading.local()
+    
+    def get_thread_driver():
+        """Get or create driver for current thread"""
+        if not hasattr(thread_local, 'driver'):
+            thread_local.driver = initialize_driver(params)
+        return thread_local.driver
+    
+    def scrape_single_estate(row):
+        """Scrape a single estate (thread-safe)"""
+        driver = get_thread_driver()
+        
+        try:
+            driver.get(row['Link'])
+            random_sleep(params['global']['min_delay'], params['global']['max_delay'])
+            
+            # Extract estate code from URL
+            estate_code = ''
             try:
-                driver.get(row['Link'])
-                random_sleep(params['global']['min_delay'], params['global']['max_delay'])
-                
-                # Extract core information
-                detail_data = {
-                    'scraped_estate_name': WebDriverWait(driver, 10).until(
-                        EC.presence_of_element_located((By.CSS_SELECTOR, ".estate-detail-banner-title"))
-                    ).text.strip(),
-                    'occupation_permit': extract_element_text(
-                        driver, 
-                        "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
-                    ),
-                    'scraped_blocks': extract_element_text(
-                        driver,
-                        "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
-                    ),
-                    # New fields
-                    'school_net_info': None,
-                    'estate_detailed_address': None,
-                    'developer': None,
-                    'Link': row['Link'],
-                    'Region': row['Region'],
-                    'District': row['District']
-                }
-
-                # Extract School Net information
+                estate_code = row['Link'].rstrip('/').split('/')[-1]
+            except:
+                estate_code = ''
+            
+            # Extract core information
+            detail_data = {
+                'Name': row['Name'],
+                'scraped_estate_name': WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, ".estate-detail-banner-title"))
+                ).text.strip(),
+                'occupation_permit': extract_element_text(
+                    driver, 
+                    "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
+                ),
+                'scraped_blocks': extract_element_text(
+                    driver,
+                    "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
+                ),
+                'chinese_name': None,
+                'school_net_info': None,
+                'estate_detailed_address': None,
+                'developer': None,
+                'estate_code': estate_code,
+                'Link': row['Link'],
+                'Region': row['Region'],
+                'District': row['District']
+            }
+            
+            # Extract Chinese name
+            try:
+                chinese_name_elem = driver.find_element(By.CSS_SELECTOR, ".estate-detail-banner-title-cn, .chinese-name, h1.cn, .title-cn")
+                detail_data['chinese_name'] = chinese_name_elem.text.strip()
+            except:
                 try:
-                    items_divs = driver.find_elements(By.CLASS_NAME, "item")
-                    for div in items_divs:
-                        try:
-                            label = div.find_element(By.CLASS_NAME, "label-item-left").text.strip()
-                            if "School Net" in label:
-                                links = div.find_elements(By.TAG_NAME, "a")
-                                if len(links) >= 2:
-                                    primary = links[0].text.strip()
-                                    secondary = links[1].text.strip()
-                                    detail_data['school_net_info'] = f"{primary} | {secondary}"
-                                break
-                        except Exception:
-                            continue
-                except Exception as e:
-                    logger.debug(f"School net extraction failed: {str(e)}")
-
-                # Extract Detailed Address
-                try:
-                    address_elem = driver.find_element(By.CLASS_NAME, "estate-detail-banner-position")
-                    detail_data['estate_detailed_address'] = address_elem.text.strip()
-                except Exception as e:
-                    logger.debug(f"Address extraction failed: {str(e)}")
-
-                # Extract Developer
-                try:
-                    items = driver.find_elements(By.CLASS_NAME, "item")
-                    for item in items:
-                        try:
-                            label = item.find_element(By.CLASS_NAME, "label-item-left").text.strip()
-                            if "Developer" in label:
-                                developer = item.find_element(By.CLASS_NAME, "label-item-right").text.strip()
-                                detail_data['developer'] = developer
-                                break
-                        except Exception:
-                            continue
-                except Exception as e:
-                    logger.debug(f"Developer extraction failed: {str(e)}")
-
-                new_details.append(detail_data)
-                
-            except Exception as e:
-                logger.error(f"Failed to process {row['Link']}: {str(e)}")
-                continue
-
-        # Merge and save results
+                    import re
+                    chinese_pattern = re.compile(r'[\u4e00-\u9fff]+')
+                    title_section = driver.find_element(By.CSS_SELECTOR, ".estate-detail-banner")
+                    chinese_matches = chinese_pattern.findall(title_section.text)
+                    if chinese_matches:
+                        detail_data['chinese_name'] = ''.join(chinese_matches[:10])
+                except:
+                    pass
+            
+            # Extract School Net information
+            try:
+                items_divs = driver.find_elements(By.CLASS_NAME, "item")
+                for div in items_divs:
+                    try:
+                        label = div.find_element(By.CLASS_NAME, "label-item-left").text.strip()
+                        if "School Net" in label:
+                            links = div.find_elements(By.TAG_NAME, "a")
+                            if len(links) >= 2:
+                                primary = links[0].text.strip()
+                                secondary = links[1].text.strip()
+                                detail_data['school_net_info'] = f"{primary} | {secondary}"
+                            break
+                    except:
+                        continue
+            except:
+                pass
+            
+            # Extract Detailed Address
+            try:
+                address_elem = driver.find_element(By.CLASS_NAME, "estate-detail-banner-position")
+                detail_data['estate_detailed_address'] = address_elem.text.strip()
+            except:
+                pass
+            
+            # Extract Developer
+            try:
+                items = driver.find_elements(By.CLASS_NAME, "item")
+                for item in items:
+                    try:
+                        label = item.find_element(By.CLASS_NAME, "label-item-left").text.strip()
+                        if "Developer" in label:
+                            developer = item.find_element(By.CLASS_NAME, "label-item-right").text.strip()
+                            detail_data['developer'] = developer
+                            break
+                    except:
+                        continue
+            except:
+                pass
+            
+            return {'success': True, 'data': detail_data}
+            
+        except Exception as e:
+            logger.debug(f"Failed to scrape {row.get('Name', 'Unknown')}: {str(e)}")
+            return {'success': False, 'name': row.get('Name', 'Unknown'), 'link': row.get('Link', ''), 'error': str(e)}
+    
+    # Execute scraping with thread pool
+    new_details = []
+    failed_estates = []
+    
+    with ThreadPoolExecutor(max_workers=max_threads) as executor:
+        # Submit all tasks
+        future_to_estate = {executor.submit(scrape_single_estate, row): row for _, row in estates_to_scrape.iterrows()}
+        
+        # Process completed tasks with progress bar
+        from tqdm.auto import tqdm
+        with tqdm(total=len(future_to_estate), desc=f"Scraping estates ({max_threads} threads)") as pbar:
+            for future in as_completed(future_to_estate):
+                result = future.result()
+                if result['success']:
+                    new_details.append(result['data'])
+                else:
+                    failed_estates.append(result)
+                pbar.update(1)
+    
+    # Close all thread-local drivers
+    logger.info("🔒 Closing all thread drivers...")
+    # Note: ThreadPoolExecutor will clean up threads, drivers will be garbage collected
+    
+    # Report results
+    logger.info(f"✅ Successfully scraped: {len(new_details)} estates")
+    if failed_estates:
+        logger.warning(f"⚠️  Failed to scrape: {len(failed_estates)} estates")
+        logger.info("   These will be retried on next run (gap-filling mechanism)")
+    
+    # Merge and save results
+    try:
         if new_details:
             new_df = pd.DataFrame(new_details)
             updated_df = pd.concat([existing_details, new_df], ignore_index=True)
@@ -1232,15 +1553,13 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
             }
         )
         
-        return existing_details[existing_details['Name'].notnull()]
-
-    finally:
-        # Robust driver termination with exception handling
-        if driver is not None:
-            try:
-                driver.quit()
-            except Exception as e:
-                logger.debug(f"Driver termination exception: {str(e)}")
+        return existing_details
+    
+    except Exception as e:
+        logger.error(f"Fatal error in scrape_estate_details: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return existing_details if not existing_details.empty else pd.DataFrame()
 
 def extract_element_text(driver, xpath: str) -> Optional[str]:
     """Helper function to safely extract text from elements."""
@@ -1331,15 +1650,188 @@ def update_control_date(params: Dict[str, Any]) -> None:
         suffixes=('', '_estate')
     )'''
 
-def enrich_estate_data(
+def create_same_name_list(estate_details_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a list of estates with duplicate names based on Name + Region + District + Subdistrict.
+    Returns DataFrame with duplicate estates and their codes.
+    """
+    logger.info("🔍 Creating same_name list for duplicate estates...")
+    
+    if estate_details_df.empty:
+        return pd.DataFrame()
+    
+    # Group by Name, Region, District, Subdistrict (3 layers of region)
+    grouped = estate_details_df.groupby(['Scraped Estate Name', 'Region', 'District', 'Subdistrict']).size()
+    
+    # Find groups with more than one estate
+    duplicates = grouped[grouped > 1]
+    
+    if len(duplicates) == 0:
+        logger.info("✅ No duplicate estate names found")
+        return pd.DataFrame()
+    
+    # Get full details of duplicate estates
+    duplicate_keys = duplicates.index.tolist()
+    same_name_list = []
+    
+    for name, region, district, subdistrict in duplicate_keys:
+        mask = (
+            (estate_details_df['Scraped Estate Name'] == name) &
+            (estate_details_df['Region'] == region) &
+            (estate_details_df['District'] == district) &
+            (estate_details_df['Subdistrict'] == subdistrict)
+        )
+        duplicate_estates = estate_details_df[mask]
+        same_name_list.append(duplicate_estates)
+    
+    same_name_df = pd.concat(same_name_list, ignore_index=True) if same_name_list else pd.DataFrame()
+    
+    logger.info(f"📋 Found {len(duplicates)} groups with duplicate names, totaling {len(same_name_df)} estates")
+    logger.info(f"   Duplicate names: {duplicates.head(10).to_dict()}")
+    
+    return same_name_df
+
+
+def match_transaction_to_duplicate_estates(transaction_link: str, estate_codes: list, driver) -> str:
+    """
+    Visit transaction detail page and find which estate code appears in the HTML.
+    Returns the matching estate code or empty string if none found.
+    """
+    if not transaction_link or not estate_codes:
+        return ''
+    
+    try:
+        driver.get(transaction_link)
+        time.sleep(2)  # Wait for page to load
+        
+        # Get page HTML
+        page_html = driver.page_source.lower()
+        
+        # Check which estate code appears in the HTML
+        for code in estate_codes:
+            if code.lower() in page_html:
+                return code
+        
+        return ''
+    except Exception as e:
+        logger.debug(f"Error checking transaction HTML: {str(e)}")
+        return ''
+
+
+def refine_duplicate_estate_matching(
+    transactions_df: pd.DataFrame,
     estate_details_df: pd.DataFrame,
-    transactions_df: pd.DataFrame
+    params: Dict[str, Any]
 ) -> pd.DataFrame:
     """
-    Simplified estate data enrichment - building matching now handled by centralized buildings pipeline.
-    This function now only adds basic building information without complex matching logic.
+    OPTIONAL NODE: Refine estate matching for duplicate estate names by checking transaction HTML.
+    This node checks the HTML of transaction detail pages to find which estate code appears,
+    allowing precise matching when multiple estates share the same name.
+    
+    Only processes transactions where:
+    - Estate name appears in multiple estates (same name, region, district, subdistrict)
+    - Transaction needs more precise estate matching
+    
+    Args:
+        transactions_df: Transaction data with estate_name column
+        estate_details_df: Estate details with estate_code column
+        params: Pipeline parameters
+        
+    Returns:
+        Updated transactions DataFrame with refined estate_code matches
     """
-    logger.info("🏗️ Starting simplified estate data enrichment (building matching moved to centralized pipeline)")
+    logger.info("🔍 Starting optional duplicate estate matching refinement...")
+    
+    # Create same_name list
+    same_name_df = create_same_name_list(estate_details_df)
+    
+    if same_name_df.empty:
+        logger.info("✅ No duplicate estates found - skipping refinement")
+        return transactions_df
+    
+    duplicate_estate_names = set(same_name_df['Scraped Estate Name'].unique())
+    
+    # Find transactions that need refinement
+    needs_refinement = transactions_df[
+        transactions_df['estate_name'].isin(duplicate_estate_names) &
+        transactions_df['estate_code'].isna()  # Only refine if estate_code is not set
+    ]
+    
+    if needs_refinement.empty:
+        logger.info("✅ No transactions need refinement")
+        return transactions_df
+    
+    logger.info(f"🔧 Refining {len(needs_refinement)} transactions with duplicate estate names...")
+    
+    # Initialize driver
+    driver = initialize_driver(params)
+    transactions_copy = transactions_df.copy()
+    
+    try:
+        # Group duplicate estates by name for faster lookup
+        duplicate_estates_grouped = same_name_df.groupby('Scraped Estate Name')
+        
+        refined_count = 0
+        from tqdm.auto import tqdm
+        
+        for idx, row in tqdm(needs_refinement.iterrows(), total=len(needs_refinement), desc="Refining duplicates"):
+            estate_name = row['estate_name']
+            
+            # Get all possible estate codes for this name
+            if estate_name in duplicate_estates_grouped.groups:
+                possible_estates = duplicate_estates_grouped.get_group(estate_name)
+                estate_codes = possible_estates['estate_code'].dropna().tolist()
+                
+                if estate_codes:
+                    # Check transaction HTML to find matching estate code
+                    # First, construct transaction detail link if not available
+                    transaction_link = row.get('transaction_detail_link', '')
+                    
+                    if not transaction_link and 'address' in row:
+                        # Transaction links might need to be constructed from transaction data
+                        # This depends on the website structure
+                        logger.debug(f"No transaction detail link available for {estate_name}")
+                        continue
+                    
+                    matched_code = match_transaction_to_duplicate_estates(
+                        transaction_link,
+                        estate_codes,
+                        driver
+                    )
+                    
+                    if matched_code:
+                        transactions_copy.at[idx, 'estate_code'] = matched_code
+                        refined_count += 1
+                        logger.debug(f"Matched {estate_name} to estate code {matched_code}")
+        
+        logger.info(f"✅ Refined {refined_count} transactions with precise estate code matching")
+        
+        return transactions_copy
+        
+    except Exception as e:
+        logger.error(f"Error in duplicate estate refinement: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return transactions_df
+    finally:
+        driver.quit()
+
+
+def enrich_estate_data(
+    estate_details_df: pd.DataFrame,
+    transactions_df: pd.DataFrame,
+    params: Dict[str, Any] = None
+) -> pd.DataFrame:
+    """
+    Enhanced estate data enrichment with 3-layer region matching and duplicate estate handling.
+    Matches transactions to estates using Name + Region + District + Subdistrict.
+    For duplicate estates, checks transaction HTML to find correct match.
+    """
+    logger.info("🏗️ Starting enhanced estate data enrichment with 3-layer region matching")
+    
+    # Set default params if not provided
+    if params is None:
+        params = {}
     
     # Load existing data if available
     output_file = "data/02_intermediate/centaline_res_base.parquet"
@@ -1391,30 +1883,41 @@ def enrich_estate_data(
             logger.debug(f"Error extracting estate name from '{address}': {str(e)}")
             return ""
 
-    # Process transactions
-    logger.info("🔍 Extracting basic estate names from transaction addresses...")
+    # Process transactions - NEW APPROACH: Use building_code for matching
+    logger.info("🔍 Starting two-step estate enrichment (building_code -> name)...")
     
     try:
         transactions_copy = transactions_df.copy()
         
-        # Extract estate names
-        transactions_copy['estate_name'] = transactions_copy['address'].apply(
-            lambda x: extract_estate_name_from_address(x) if pd.notna(x) else ""
-        )
+        # Transactions from JavaScript already have:
+        # - region, district, subdistrict (100% complete)
+        # - building_code (for matching)
+        # - estate_name, building_name
+        # We just need to enrich with estate details
         
-        # Add basic building information columns
-        transactions_copy['building_name'] = transactions_copy['estate_name']
+        logger.info(f"📊 Transaction data quality:")
+        logger.info(f"  Total transactions: {len(transactions_copy)}")
+        if 'region' in transactions_copy.columns:
+            logger.info(f"  With region: {transactions_copy['region'].notna().sum()} ({transactions_copy['region'].notna().sum()/len(transactions_copy)*100:.1f}%)")
+        if 'building_code' in transactions_copy.columns:
+            logger.info(f"  With building_code: {transactions_copy['building_code'].notna().sum()} ({transactions_copy['building_code'].notna().sum()/len(transactions_copy)*100:.1f}%)")
         
-        # Initialize region/district/subdistrict columns (will be populated from estate details)
-        transactions_copy['region'] = None
-        transactions_copy['district'] = None
-        transactions_copy['subdistrict'] = None
-        transactions_copy['code'] = None
+        # Initialize enrichment columns
+        transactions_copy['matched_estate_name'] = ''
+        transactions_copy['estate_region'] = ''
+        transactions_copy['estate_district'] = ''
+        transactions_copy['estate_subdistrict'] = ''
+        transactions_copy['estate_blocks'] = ''
+        transactions_copy['estate_units'] = ''
+        transactions_copy['match_method'] = 'no_match'
         
-        # Add processing metadata
-        transactions_copy['processing_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        transactions_copy['source'] = 'centaline_res'
-        transactions_copy['property_type'] = 'residential'
+        # Add processing metadata (if not already present)
+        if 'processing_timestamp' not in transactions_copy.columns:
+            transactions_copy['processing_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        if 'source' not in transactions_copy.columns:
+            transactions_copy['source'] = 'centaline_res'
+        if 'property_type' not in transactions_copy.columns:
+            transactions_copy['property_type'] = 'residential'
         
         # Fix date format (remove the incorrect year column creation)
         if 'date' in transactions_copy.columns:
@@ -1482,34 +1985,225 @@ def enrich_estate_data(
                 else:
                     logger.warning("⚠️ No completion year data found in estate details")
                 
-                # Add region, district, subdistrict, code, and developer from estate details
+                # TWO-STEP MAPPING: building_code -> name
                 try:
-                    # First, deduplicate estate details to ensure each estate name appears only once
-                    # This prevents creating multiple rows for the same transaction
-                    estate_unique = estate_details_copy.drop_duplicates(subset='Scraped Estate Name', keep='first')
-
-                    # Join with estate details to get location information and developer
-                    location_join = transactions_copy.merge(
-                        estate_unique[['Scraped Estate Name', 'Region', 'District', 'Subdistrict', 'Code', 'Developer']],
-                        left_on='estate_name',
-                        right_on='Scraped Estate Name',
-                        how='left'
-                    )
-
-                    # Update the location columns
-                    transactions_copy['region'] = location_join['Region']
-                    transactions_copy['district'] = location_join['District']
-                    transactions_copy['subdistrict'] = location_join['Subdistrict']
-                    transactions_copy['code'] = location_join['Code']
-                    transactions_copy['developer'] = location_join['Developer']
-
-                    # Count records with location data
+                    logger.info(f"🔍 Enriching {len(transactions_copy)} transactions with estate details...")
+                    logger.info(f"   Using two-step matching: building_code (primary) -> name (fallback)")
+                    
+                    # Prepare estate details and create lookup maps
+                    # Extract estate codes from estate listings (level 1)
+                    estate_listings = pd.DataFrame()
+                    try:
+                        estate_file = 'data/01_raw/centaline_estate_lv_1.parquet'
+                        if os.path.exists(estate_file):
+                            estate_listings = pd.read_parquet(estate_file)
+                            if 'EstateCode' not in estate_listings.columns and 'Link' in estate_listings.columns:
+                                estate_listings['EstateCode'] = estate_listings['Link'].apply(
+                                    lambda x: x.rstrip('/').split('/')[-1] if pd.notna(x) else ''
+                                )
+                            logger.info(f"   Loaded {len(estate_listings)} estates for matching")
+                    except Exception as e:
+                        logger.warning(f"Could not load estate listings: {e}")
+                    
+                    # Create building code -> estate mapping
+                    building_code_map = {}
+                    if not estate_listings.empty:
+                        for _, estate in estate_listings.iterrows():
+                            code = estate.get('EstateCode', '')
+                            if code:
+                                building_code_map[code] = estate.to_dict()
+                    
+                    # Create name -> estate mapping (fallback)
+                    name_map = {}
+                    if not estate_listings.empty:
+                        for _, estate in estate_listings.iterrows():
+                            name = estate.get('Name', '')
+                            if name:
+                                if name not in name_map:
+                                    name_map[name] = []
+                                name_map[name].append(estate.to_dict())
+                    
+                    logger.info(f"   Building code map: {len(building_code_map)} codes")
+                    logger.info(f"   Name map: {len(name_map)} names")
+                    
+                    # Process each transaction with two-step matching
+                    logger.info("   Starting two-step enrichment...")
+                    
+                    matched_by_code = 0
+                    matched_by_name = 0
+                    no_match = 0
+                    
+                    from tqdm.auto import tqdm
+                    
+                    for idx, row in tqdm(transactions_copy.iterrows(), total=len(transactions_copy), desc="Enriching"):
+                        building_code = row.get('building_code', '')
+                        txn_name = row.get('Name', '')
+                        
+                        estate_info = None
+                        
+                        # Step 1: Match by building_code (PRIMARY)
+                        if building_code and building_code in building_code_map:
+                            estate_info = building_code_map[building_code]
+                            matched_by_code += 1
+                            transactions_copy.at[idx, 'match_method'] = 'building_code'
+                        
+                        # Step 2: Fallback to name matching
+                        elif txn_name and txn_name in name_map:
+                            estate_info = name_map[txn_name][0]
+                            matched_by_name += 1
+                            transactions_copy.at[idx, 'match_method'] = 'name'
+                        else:
+                            no_match += 1
+                        
+                        # Enrich with estate details if matched
+                        if estate_info:
+                            transactions_copy.at[idx, 'matched_estate_name'] = estate_info.get('Name', '')
+                            transactions_copy.at[idx, 'estate_region'] = estate_info.get('Region', '')
+                            transactions_copy.at[idx, 'estate_district'] = estate_info.get('District', '')
+                            transactions_copy.at[idx, 'estate_subdistrict'] = estate_info.get('Subdistrict', '')
+                            transactions_copy.at[idx, 'estate_blocks'] = estate_info.get('Blocks', '')
+                            transactions_copy.at[idx, 'estate_units'] = estate_info.get('Units', '')
+                    
+                    logger.info(f"\n   📊 Enrichment Statistics:")
+                    logger.info(f"      Matched via building code: {matched_by_code:,} ({matched_by_code/len(transactions_copy)*100:.1f}%)")
+                    logger.info(f"      Matched via name: {matched_by_name:,} ({matched_by_name/len(transactions_copy)*100:.1f}%)")
+                    logger.info(f"      No match (already complete): {no_match:,} ({no_match/len(transactions_copy)*100:.1f}%)")
+                    
+                    for idx, row in tqdm(transactions_copy.iterrows(), total=len(transactions_copy), desc="Mapping transactions"):
+                        estate_name = row.get('estate_name', '')
+                        
+                        # Skip if no estate name
+                        if pd.isna(estate_name) or estate_name == '':
+                            unmatched += 1
+                            continue
+                        
+                        # Check if this estate name is in the duplicate list
+                        if estate_name in duplicate_estate_names and estate_name in same_name_codes:
+                            # This is a duplicate - need to check transaction HTML to find correct estate
+                            possible_codes = same_name_codes[estate_name]
+                            possible_estates = same_name_estates[estate_name]
+                            
+                            if not possible_codes:
+                                unmatched += 1
+                                continue
+                            
+                            # Get transaction URL
+                            transaction_url = row.get('transaction_url', '')
+                            
+                            if not transaction_url:
+                                # No URL available - cannot determine which estate
+                                unmatched += 1
+                                if unmatched <= 5:
+                                    logger.debug(f"   No transaction URL for duplicate estate: {estate_name}")
+                                continue
+                            
+                            # Initialize driver if needed
+                            if driver is None:
+                                try:
+                                    driver = initialize_driver(params)
+                                    logger.info("   🌐 Driver initialized for HTML-based duplicate matching")
+                                except Exception as e:
+                                    logger.warning(f"   Could not initialize driver: {e}")
+                                    unmatched += 1
+                                    continue
+                            
+                            # Visit transaction URL and check HTML for estate codes
+                            matched_code = None
+                            try:
+                                driver.get(transaction_url)
+                                time.sleep(1.5)  # Wait for page load
+                                
+                                # Get page HTML
+                                page_html = driver.page_source.lower()
+                                
+                                # Check which estate code from same_name list appears in HTML
+                                for code in possible_codes:
+                                    if code and code.lower() in page_html:
+                                        matched_code = code
+                                        logger.debug(f"   ✓ Found estate code {code} in transaction HTML for {estate_name}")
+                                        break
+                                
+                            except Exception as e:
+                                logger.debug(f"   Error checking transaction HTML: {e}")
+                            
+                            if matched_code:
+                                # Find the estate info for this code
+                                matching_estate = possible_estates[possible_estates['estate_code'] == matched_code]
+                                if len(matching_estate) > 0:
+                                    estate_info = matching_estate.iloc[0]
+                                    transactions_copy.at[idx, 'region'] = estate_info.get('Region')
+                                    transactions_copy.at[idx, 'district'] = estate_info.get('District')
+                                    transactions_copy.at[idx, 'subdistrict'] = estate_info.get('Subdistrict')
+                                    transactions_copy.at[idx, 'code'] = estate_info.get('Code')
+                                    transactions_copy.at[idx, 'developer'] = estate_info.get('Developer')
+                                    transactions_copy.at[idx, 'estate_code'] = matched_code
+                                    matched_via_html += 1
+                                else:
+                                    unmatched += 1
+                            else:
+                                # Could not find estate code in HTML
+                                unmatched += 1
+                                if unmatched <= 5:
+                                    logger.debug(f"   Could not find any estate code in HTML for {estate_name}")
+                            
+                            continue
+                        else:
+                            # Not a duplicate - use simple name matching
+                            estate_matches = estate_details_copy[estate_details_copy['Scraped Estate Name'] == estate_name]
+                            
+                            if len(estate_matches) == 1:
+                                # Unique match found
+                                estate_info = estate_matches.iloc[0]
+                                transactions_copy.at[idx, 'region'] = estate_info.get('Region')
+                                transactions_copy.at[idx, 'district'] = estate_info.get('District')
+                                transactions_copy.at[idx, 'subdistrict'] = estate_info.get('Subdistrict')
+                                transactions_copy.at[idx, 'code'] = estate_info.get('Code')
+                                transactions_copy.at[idx, 'developer'] = estate_info.get('Developer')
+                                transactions_copy.at[idx, 'estate_code'] = estate_info.get('estate_code', '')
+                                matched_via_simple += 1
+                            elif len(estate_matches) > 1:
+                                # Multiple matches but not in duplicate list (shouldn't happen)
+                                # Take first match
+                                estate_info = estate_matches.iloc[0]
+                                transactions_copy.at[idx, 'region'] = estate_info.get('Region')
+                                transactions_copy.at[idx, 'district'] = estate_info.get('District')
+                                transactions_copy.at[idx, 'subdistrict'] = estate_info.get('Subdistrict')
+                                transactions_copy.at[idx, 'code'] = estate_info.get('Code')
+                                transactions_copy.at[idx, 'developer'] = estate_info.get('Developer')
+                                transactions_copy.at[idx, 'estate_code'] = estate_info.get('estate_code', '')
+                                matched_via_simple += 1
+                            else:
+                                # No match found - leave empty
+                                unmatched += 1
+                    
+                    # Close driver if we opened it
+                    if driver:
+                        try:
+                            driver.quit()
+                            logger.info("   Driver closed")
+                        except:
+                            pass
+                    
+                    # Report matching statistics
+                    logger.info(f"\n   📊 Mapping Statistics:")
+                    logger.info(f"      Matched via simple mapping: {matched_via_simple:,}")
+                    logger.info(f"      Matched via HTML checking: {matched_via_html:,}")
+                    logger.info(f"      Unmatched (to handle later): {unmatched:,}")
+                    
+                    # Count final results
                     records_with_location = transactions_copy['region'].notna().sum()
                     records_with_developer = transactions_copy['developer'].notna().sum()
-                    logger.info(f"✅ Added location data to {records_with_location} records")
-                    logger.info(f"✅ Added developer data to {records_with_developer} records")
+                    records_with_estate_code = transactions_copy['estate_code'].notna().sum()
+                    
+                    logger.info(f"\n   ✅ Final Results:")
+                    logger.info(f"      Records with location data: {records_with_location:,}")
+                    logger.info(f"      Records with developer: {records_with_developer:,}")
+                    logger.info(f"      Records with estate code: {records_with_estate_code:,}")
+                    
                 except Exception as e:
                     logger.warning(f"⚠️ Could not add location and developer data: {e}")
+                    import traceback
+                    logger.warning(traceback.format_exc())
             except Exception as e:
                 logger.warning(f"⚠️ Could not add building completion year: {e}")
         
@@ -1546,18 +2240,84 @@ def enrich_estate_data(
         logger.error(f"⚠️ Error in combining data: {str(e)}")
         final_df = transactions_copy
 
+    # Fix all data types for parquet compatibility
+    try:
+        logger.info("\n🔧 Fixing data types for parquet compatibility...")
+        
+        # Integer columns (nullable)
+        int_cols = ['rooms', 'completion_year', 'age']
+        for col in int_cols:
+            if col in final_df.columns:
+                final_df[col] = pd.to_numeric(final_df[col], errors='coerce').astype('Int64')
+        
+        # Float columns
+        float_cols = ['area', 'price', 'ft_price', 'g_area', 'g_unit_price']
+        for col in float_cols:
+            if col in final_df.columns:
+                final_df[col] = pd.to_numeric(final_df[col], errors='coerce').astype('float64')
+        
+        # String columns - ensure they're strings
+        str_cols = ['date', 'region', 'district', 'subdistrict', 'Name', 'Tower', 'Floor', 'Flat',
+                    'transaction_type', 'source', 'property_type', 'street_address', 'building_code',
+                    'estate_type', 'transaction_url', 'transaction_id', 'title_lg', 'direction',
+                    'estate_name', 'building_name', 'matched_estate_name', 'estate_region',
+                    'estate_district', 'estate_subdistrict', 'estate_blocks', 'estate_units', 'match_method']
+        for col in str_cols:
+            if col in final_df.columns:
+                final_df[col] = final_df[col].astype(str).replace('nan', '').replace('<NA>', '')
+        
+        logger.info(f"✅ Data types fixed")
+        
+    except Exception as e:
+        logger.error(f"⚠️ Error fixing data types: {e}")
+    
+    # Set final column order as requested
+    try:
+        logger.info("\n📋 Setting final column order...")
+        
+        # Exact column order as requested
+        requested_columns = [
+            'date', 'region', 'district', 'subdistrict', 'Name', 'Tower', 'Floor', 'Flat',
+            'transaction_type', 'area', 'price', 'ft_price', 'source', 'property_type',
+            'street_address', 'building_code', 'g_area', 'g_unit_price', 'completion_year',
+            'age', 'estate_type', 'transaction_url', 'transaction_id', 'title_lg',
+            'matched_estate_name', 'estate_region', 'estate_district', 'estate_subdistrict',
+            'estate_blocks', 'estate_units', 'match_method'
+        ]
+        
+        # Add any remaining columns
+        remaining = [col for col in final_df.columns if col not in requested_columns]
+        all_columns = requested_columns + remaining
+        
+        # Reorder (only existing columns)
+        existing_columns = [col for col in all_columns if col in final_df.columns]
+        final_df = final_df[existing_columns]
+        
+        logger.info(f"✅ Column order set: {len(existing_columns)} columns")
+        
+    except Exception as e:
+        logger.error(f"⚠️ Error setting column order: {e}")
+    
     # Generate statistics
     try:
-        logger.info("\n📈 Simplified Estate Enrichment Statistics:")
-        total_processed = len(transactions_copy)
-        estate_names_extracted = len(transactions_copy[transactions_copy['estate_name'].str.len() > 0])
+        logger.info("\n📈 Enrichment Statistics:")
         
-        logger.info(f"   - Transactions processed: {total_processed:,}")
-        logger.info(f"   - Estate names extracted: {estate_names_extracted:,} ({estate_names_extracted/total_processed*100:.1f}%)")
-        logger.info(f"   - Note: Building matching now handled by centralized buildings pipeline")
+        if 'match_method' in final_df.columns:
+            match_counts = final_df['match_method'].value_counts()
+            logger.info(f"   Matching results:")
+            for method, count in match_counts.items():
+                logger.info(f"     {method}: {count:,} ({count/len(final_df)*100:.1f}%)")
+        
+        if 'transaction_type' in final_df.columns:
+            type_counts = final_df['transaction_type'].value_counts()
+            logger.info(f"   Transaction types:")
+            for ttype, count in type_counts.items():
+                logger.info(f"     {ttype}: {count:,} ({count/len(final_df)*100:.1f}%)")
+        
+        logger.info(f"   Total records: {len(final_df):,}")
             
     except Exception as e:
-        logger.error(f"⚠️ Error generating statistics: {str(e)}")
+        logger.error(f"⚠️ Error generating statistics: {e}")
 
     # Ensure data types are consistent before saving
     try:

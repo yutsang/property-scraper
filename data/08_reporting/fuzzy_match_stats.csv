@@ -1,7 +1,7 @@
 transaction_name,matched_building_name,match_score
 "Lippo Centre, Tower 1","Lippo Centre, Tower 1",100.0
 "Lippo Centre, Tower 2","Lippo Centre, Tower 2",100.0
-Admiralty Centre Tower 1,Admiralty Centre Tower 1,100.0
+Admiralty Centre Tower 1,Admiralty Centre,100.0
 United Centre,United Centre,100.0
 Citic Tower,Citic Tower,100.0
 One Pacific Place,One Pacific Place,100.0
@@ -28,8 +28,8 @@ Admiralty Centre 2,Admiralty Centre Tower 2,100.0
 Two Pacific Place ,Two Pacific Place,100.0
 "Lippo Centre, Tower 1 ","Lippo Centre, Tower 1",100.0
 Fairmont House ,Fairmont House,100.0
-Admiralty Centre,Admiralty Centre Tower 1,100.0
-Admiralty Centre Tower 1 ,Admiralty Centre Tower 1,100.0
+Admiralty Centre,Admiralty Centre Tower 2,100.0
+Admiralty Centre Tower 1 ,Admiralty Centre,100.0
 Admiralty Centre Tower 2 ,Admiralty Centre Tower 2,100.0
 Citic Tower ,Citic Tower,100.0
 Lippo Tower,"Lippo Centre, Tower 2",100.0
@@ -617,7 +617,6 @@ Unicorn Trade Centre,HK Trade Centre,88.88888888888889
 Wings Building,Wing Fai Building,83.87096774193549
 The Centrium,The Centrium,100.0
 Prosperity Tower,Prosperity Tower,100.0
-8 Wyndham Street,8 Wyndham Street,100.0
 BOC Group Life Assurance Tower,YF Life Tower,86.95652173913044
 Wing On House,Wing On House,100.0
 Chinese General Chamber Of Commerce Building,Bcc Building,80.0
@@ -647,7 +646,6 @@ Wong Chung Ming Comm House,Wu Chung House,88.0
 New World Tower II,New World Tower II,100.0
 Cheong K Building,Cheong Lee Building,93.75
 Grand Building,Grand Industrial Building,100.0
-The Wellington,The Wellington,100.0
 Duke Wellington House,Duke Wellington House,100.0
 Two Chinachem Plaza,Two Chinachem Plaza,100.0
 128 Wellington Street,The Wellington,83.33333333333333
@@ -666,6 +664,7 @@ Two Chinachem PlazaDes Voeux Road Central,Two Chinachem Central,100.0
 Pearl Oriental House,Pearl Oriental House,100.0
 1 Lyndhurst Tower,1 Lyndhurst Tower,100.0
 Tai Sang Bank Building (Central),Tai Yau Building,85.71428571428571
+The Wellington,The Wellington,100.0
 Cheung Kong Center,Cheung Kong Center,100.0
 Hong Kong Diamond Exchange Building,Hong Kong Diamond Exchange Building,100.0
 The Chinese Bank Building,Bcc Building,80.0
@@ -678,6 +677,7 @@ Wyndham Place,M Place,83.33333333333333
 Euro Trade Centre,Euro Trade Centre,100.0
 Li Dong Building,Hong Tai Building,84.84848484848484
 One Exchange Square,One Exchange Square,100.0
+8 Wyndham Street,8 Wyndham Street,100.0
 100 Queen's Road Central,100 Queen's Road Central,100.0
 18Wyndham Street,8 Wyndham Street,93.75
 Champion Tower,Champion Tower,100.0
@@ -806,7 +806,6 @@ Loke Yew Building,Bcc Building,80.0
 New York House,York House,100.0
 76 Wellington Street,The Wellington,83.33333333333333
 Yau Shun Building,Shun Yee Factory Building,86.66666666666667
-Coda Plaza,Concordia Plaza,80.0
 Century Square,Century Square,100.0
 Kailey Tower,Manley Tower,83.33333333333333
 1 Wellington StreetWellington Street,The Wellington,83.33333333333333
@@ -1008,7 +1007,6 @@ Hung Tak Building ,Hong Tai Building,88.23529411764706
 Yuen Yick Building ,Cheung Yick Industrial Building,83.87096774193549
 Three Exchange Square ,Three Exchange Square,100.0
 Demolished-66 Wellington Street ,The Wellington,83.33333333333333
-Coda Plaza ,Concordia Plaza,80.0
 China Building ,China Fen Hin Building,100.0
 Heung Lam Building ,Heung Wah Industrial Building,87.5
 Far East Consortium Building,Bcc Building,80.0
@@ -1038,7 +1036,7 @@ Dah Sing Life Building ,Bcc Building,80.0
 The Wellington ,The Wellington,100.0
 Bank Of China Tower ,Bank Of China Tower,100.0
 Malahon Centre ,Malahon Centre,100.0
-Tern Centre Tower 1,Admiralty Centre Tower 1,84.84848484848484
+Tern Centre Tower 1,Harbour Centre Tower 1,84.84848484848484
 Tin On Sing Commercial Building ,Witty Commercial Building,86.36363636363636
 8 Wyndham Street ,8 Wyndham Street,100.0
 Jardine House ,Jardine House,100.0
@@ -2579,7 +2577,7 @@ Civic Commercial Building,Prosperous Commercial Building,86.36363636363636
 Ocean Building,Ocean Building,100.0
 Ultragrace Commercial Building,Witty Commercial Building,86.36363636363636
 Hang Bong Commercial Centre,Boss Commercial Centre,87.17948717948718
-Y Centre,Admiralty Centre Tower 1,85.71428571428571
+Y Centre,United Centre,85.71428571428571
 Fu Lee Commercial Building,Witty Commercial Building,86.36363636363636
 Chung Wo Commercial Centre,Boss Commercial Centre,87.17948717948718
 Po Yip Building (Jordan),Po Wai Building,84.61538461538461
@@ -2744,7 +2742,7 @@ Pilkem Commercial Centre ,Boss Commercial Centre,87.17948717948718
 Wai Ching Commercial Building ,Chung Wai Commercial Building,96.55172413793103
 Luen Tak Building,Luen Fat Loong Factory Building,86.66666666666667
 Bowring Commercial Center,Arion Commercial Centre,83.33333333333333
-Y Centre ,Admiralty Centre Tower 1,85.71428571428571
+Y Centre ,United Centre,85.71428571428571
 Wing Kwok Centre ,Wing On Centre,88.0
 238 Nathan Road ,238 Nathan Road,100.0
 Man Yiu Building,Man Yee Building,87.5
@@ -3165,7 +3163,6 @@ Tai Chi Factory Building,Tai Chi Factory Building,100.0
 Gee Chang Factory Building,Gee Fat Factory Building,90.9090909090909
 Wah On Building ,On Wah Industrial Building,100.0
 Lippo Sun Plaza,Lippo Sun Plaza,100.0
-Concordia Plaza,Concordia Plaza,100.0
 Southgate Commercial Centre,Boss Commercial Centre,87.17948717948718
 New Mandarin Plaza Tower B,New Mandarin Plaza Tower B,100.0
 New East Ocean Centre,East Ocean Centre,100.0
@@ -3412,7 +3409,6 @@ Wardley Centre Prat Avenue,Prat Avenue,100.0
 The Nate Nathan Road,238 Nathan Road,84.61538461538461
 One Peking Peking Road,One Peking,100.0
 Goldsland Building Minden Avenue,Bcc Building,80.0
-Concordia Plaza ,Concordia Plaza,100.0
 10 Prat Prat Avenue,Prat Avenue,100.0
 Hang Seng Bank Tst Branch Building Carnarvon Road,Bcc Building,80.0
 Austin Commercial Centre Austin Avenue,Boss Commercial Centre,87.17948717948718
@@ -4552,7 +4548,7 @@ Lee May Building,Cheung Lee Industrial Building,85.71428571428571
 Golden Plaza - Prince EdwardNathan Road,Golden Era Plaza,85.71428571428571
 Fuk Chiu Factory Building,Fuk Chiu Factory Building,100.0
 Arran Tower,Arran Tower,100.0
-IW Centre,Admiralty Centre Tower 1,80.0
+IW Centre,United Centre,80.0
 Kwok Hong Building PodiumLai Chi Kok Road,Hong Tai Building,86.66666666666667
 Prince Commercial Building,Witty Commercial Building,86.36363636363636
 100Lai Chi Kok Road,822 Lai Chi Kok Road,82.05128205128204
@@ -4587,7 +4583,7 @@ Union Park Centre Nathan Road,Nathan Centre,100.0
 134 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Hung Luen Building,Yue Hing Building,85.71428571428571
 137 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-IW Centre ,Admiralty Centre Tower 1,80.0
+IW Centre ,United Centre,80.0
 Workingbond Commercial Centre ,Boss Commercial Centre,87.17948717948718
 Yun Kei Commercial Building ,Tung Hip Commercial Building,87.27272727272728
 Grand Century Place I ,Grand Century Place I,100.0
@@ -5037,6 +5033,7 @@ Lai Chi Kok Bay Garden Lai King Hill Road,822 Lai Chi Kok Road,88.88888888888889
 Good Harvest Centre,Good Harvest Centre,100.0
 Lincoln Centre,Lincoln Centre,100.0
 World Trade Square,Trade Square,100.0
+Hi-Speed Centre 1,Hi-Speed Centre 1,100.0
 Fanling Industrial Centre,Fanling Industrial Centre,100.0
 Fuk Shing Commercial Building,Fuk Shing Commercial Building,100.0
 Raleigh Centre,Raleigh Centre,100.0
@@ -5212,6 +5209,7 @@ Metex House,Metex House,100.0
 Thriving Industrial Centre,Thriving Industrial Centre,100.0
 Grand City Plaza,Grand Business Plaza,81.48148148148148
 TML Tower,TML Tower,100.0
+KOLOUR . Tsuen Wan I,KOLOUR . Tsuen Wan I,100.0
 ADP Pentagon Centre,ADP Pentagon Centre,100.0
 Golden Bear Industrial Centre,Golden Centre,100.0
 EW International Tower,EW International Tower,100.0
@@ -5367,6 +5365,7 @@ Hing Hing Building Tai Ho Road,Yue Hing Building,86.66666666666667
 Fou Wah Centre Castle Peak Road,K Wah Centre,90.9090909090909
 Wo Shing Building Shiu Wo Street,Kut Shing Building,87.5
 Sze Yuen Building Sha Tsui Road,Bcc Building,80.0
+KOLOUR TSUEN WAN II Tsuen Wan Market Street,KOLOUR . Tsuen Wan I,88.88888888888889
 Kam Shing Building Heung Wo Street,Kut Shing Building,87.5
 Po Yip Building Sha Tsui Road,Po Wai Building,84.61538461538461
 Tai Yan Building Hoi Pa Street,Tai Yau Building,85.71428571428571
@@ -5467,6 +5466,7 @@ Tai Yan Building,Tai Yau Building,93.75
 Chuen Lung Building,Shing Chuen Industrial Building,84.84848484848484
 Chau's Building,China Building,82.75862068965517
 Kwong Fat Building,Kwong Ga Factory Building,87.5
+KOLOUR . Tsuen Wan I ,KOLOUR . Tsuen Wan I,100.0
 Wah Shing Building,Wah Shing Industrial Building,100.0
 Yuen May Building,Tong Yuen Factory Building,86.66666666666667
 Chau's Commercial Centre,Boss Commercial Centre,87.17948717948718
@@ -6191,7 +6191,6 @@ Tak Lee Industrial Centre A,Tak Lee Industrial Centre A,100.0
 Tuen Mun Central Square,Tuen Mun Central Square,100.0
 Hang Wai Industrial Centre Block C,Hang Wai Industrial Centre Block C,100.0
 CRL East Asia Industrial Building,CRL East Asia Industrial Building,100.0
-One Vista Summit,One Vista Summit,100.0
 Hang Wai Industrial Centre Block A,Hang Wai Industrial Centre Block A,100.0
 Man Sun Logistics Centre,Man Sun Logistics Centre,100.0
 Delya Industrial Centre Block A,Delya Industrial Centre Block A,100.0
@@ -6290,7 +6289,6 @@ Rich Building,Bcc Building,80.0
 Tuen Mun Central Square ,Tuen Mun Central Square,100.0
 Tuen King Building,Yue Hing Building,85.71428571428571
 Lakeshore Building,Bcc Building,80.0
-One Vista Summit ,One Vista Summit,100.0
 Kin Wing Commercial Building ,Wing Fai Building,86.66666666666667
 Tuen Mun Centre,Tuen Mun Industrial Centre E,100.0
 Success Industrial Building,Success Industrial Building (SPK),100.0
@@ -6341,3 +6339,99 @@ Kinetic Industrial CentreWang Kwong Road,Kinetic Industrial Centre,83.7209302325
 Kwong On Bank Mongkok Branch Building,Pang Kwong Building,84.84848484848484
 Tsuen Wan Mansion (Stage 2)Lo Tak Court,Lo Tak Court,85.71428571428571
 543 Castle Peak Road Kwai Chung,543 Castle Peak Road Kwai Chung,100.0
+Far East Finance Centre Harcourt Road,Far East Finance Centre,100.0
+Hoi Shing Building Electric Road,Kut Shing Building,87.5
+Merlin Garden Electric Road,228 Electric Road,86.66666666666667
+LEE KING MANSION Electric Road,228 Electric Road,86.66666666666667
+Hoi Fung Centre Po Man Street,Nan Fung Centre,84.61538461538461
+Wealth Building High Street,Bcc Building,80.0
+296-302 Des Voeux Road West,9 Des Voeux Road West,95.0
+Tower 535 Jaffe Road,Tower 535,100.0
+Winland Commercial Building,Wayson Commercial Building,86.79245283018868
+Unicorn Trade Centre Des Voeux Road Central,308 Central Des Voeux,89.47368421052632
+Wings Building Queen's Road Central,8 Queen's Road Central,95.23809523809524
+Sun Lee Bldg. Wellington Street,The Wellington,83.33333333333333
+Universal Trade Centre Caine Road,Universal Trade Centre,100.0
+Yu Yuet Lai Building Wyndham Street,8 Wyndham Street,93.33333333333333
+Malahon Centre Stanley Street,Malahon Centre,100.0
+Sea Bird House Wyndham Street,8 Wyndham Street,93.33333333333333
+Jade Centre Wellington Street,The Wellington,83.33333333333333
+Coda Commercial Centre Queen's Road Central,8 Queen's Road Central,95.23809523809524
+Man Hing Commercial Building Queen's Road Central,8 Queen's Road Central,95.23809523809524
+Kamming House Queen's Road Central,8 Queen's Road Central,95.23809523809524
+Winway Building Wellington Street,The Wellington,83.33333333333333
+Duke Wellington House Wellington Street,Duke Wellington House,100.0
+Wing On House Des Voeux Road Central,Wing On House,100.0
+44 Wyndham Street,8 Wyndham Street,93.33333333333333
+Pedder Building Pedder Street,Bcc Building,80.0
+Ming Fai Building Wharf Road,Wing Fai Building,82.75862068965517
+North Point Asia-Pac Centre North Point Road,East Point Centre,82.75862068965517
+Henan Electric Development Building King's Road,228 Electric Road,86.66666666666667
+2 Hoi Wan Street,23B Mei Wan Street,82.35294117647058
+Golden Sun Building Bonham Strand West,Park Sun Building,82.75862068965517
+Wing Cheong Commercial Building Jervois Street,Cheong Lee Building,88.23529411764706
+Lucky Commercial Centre Des Voeux Road West,9 Des Voeux Road West,95.0
+11 Wing Wo Street,9 Wing Hong Street,80.0
+Fung Woo Centre Des Voeux Road Central,308 Central Des Voeux,89.47368421052632
+Lee Kee Commercial Building,Witty Commercial Building,86.36363636363636
+Shum Tower Des Voeux Road Central,Central Tower,100.0
+Wayson Commercial Building Connaught Road West,Wayson Commercial Building,100.0
+8 Wing Kut Street,19 Kiu Wong Street,80.0
+Kam Chung Building Jaffe Road,Kam Chung Factory Building,81.81818181818181
+Siu Fung Building Tin Lok Lane,Bcc Building,80.0
+172 Johnston Road,Johnston Road,100.0
+Dr. Kong Centre,Hong Kong Pacific Centre,84.61538461538461
+Kimberland Centre Wing Hong St,Kimberland Centre,100.0
+On Fat Building Cheung Fat Street,Cheung Fat Building (WD),88.37209302325581
+Hong Fook Building Shun Ning Road,Hong Tai Building,86.66666666666667
+196-198 Nathan Road,238 Nathan Road,84.61538461538461
+Hang Bong Commercial Centre Shanghai Street,Boss Commercial Centre,87.17948717948718
+Tak Cheong Building Battery Street,Cheong Lee Building,88.23529411764706
+Parkes Building Parkes Street,Bcc Building,80.0
+Wai Hang Building Canton Road,Po Wai Building,88.88888888888889
+Pearl Oriental Tower Nathan Road,238 Nathan Road,84.61538461538461
+Kam Bit Building Victory Avenue,Victory Factory Building,80.0
+Maxgrand Plaza Tai Yau Street,Maxgrand Plaza,100.0
+Chung Yew Building Kok Cheung Street,Bcc Building,80.0
+Prince Tower Hankow Road,Prince Tower,100.0
+Lee Wai Commercial Building Hart Avenue,Po Wai Building,88.88888888888889
+8 Observatory Road Observatory Road,8 Observatory Road,100.0
+Prat Commercial Building Prat Avenue,Prat Avenue,100.0
+Hermes Commercial Centre Hillwood Road,Boss Commercial Centre,87.17948717948718
+Golden Dragon Centre Cameron Road,Golden Centre,100.0
+Hon Kwok Tst Centre Observatory Court,Luk Kwok Centre,84.61538461538461
+Victory Building Lion Rock Road,Victory Factory Building,80.0
+Sun Tai Building Junction Road,Tai Yau Building,85.71428571428571
+De Hua Tower Hung To Road,1 Hung To Road,92.3076923076923
+Sui Tai Wai Kee Plaza Hung To Road,Sui Tai Wai Kee Plaza,100.0
+Hung Kwong Building Tung Choi Street,Tung Lee Building,86.66666666666667
+Garfull Building Reclamation Street,Bcc Building,80.0
+Yuen King Building Sai Yeung Choi Street South,South Asia Building,84.84848484848484
+Yau Shing Commercial Centre Sai Yeung Choi Street South,Boss Commercial Centre,87.17948717948718
+On Hong Ning Commercial Building,Hong Tai Building,86.66666666666667
+792 Nathan Road,238 Nathan Road,86.66666666666667
+Hong Cheong Building Tai Nan Street,Hong Tai Building,100.0
+Hang Shing Building Fuk Wing Street,Kut Shing Building,87.5
+1-5 Cheung Sha Wan Road,790-796 Cheung Sha Wan Road,90.47619047619048
+United Chinese Bank Building (SSP),Bcc Building,80.0
+109 Cheung Sha Wan Road,909 Cheung Sha Wan Road,95.65217391304348
+Jubilant Place Ma Tau Kok Road,M Place,83.33333333333333
+Kam Wah Bld (YMT) Nathan Road,238 Nathan Road,84.61538461538461
+Callton Center Nathan Road,238 Nathan Road,84.61538461538461
+On Yue Building Tsuen Wan Market Street,Yue Xiu Building,85.71428571428571
+45 Texaco Road,Texaco Road Industrial Centre Block B,88.0
+Brighton Place Shiu Wo Street,M Place,83.33333333333333
+20-24 Lo Tak Court,Lo Tak Court,100.0
+Chung On Building Sha Tsui Road,Bcc Building,80.0
+Heung Wo Building Heung Wo Street,Bcc Building,80.0
+157 Castle Peak Road,483D-483E Castle Peak Road,88.88888888888889
+Wang Fung Building Fau Tsoi Street,Bcc Building,80.0
+iCITY Tower 1,iCITY,100.0
+Man Shing Building Kwai Chung Wo Tong Tsui Street,Kut Shing Building,87.5
+Kwai Fong Commercial Centre Shing Fong Street,Boss Commercial Centre,87.17948717948718
+Sing Shing Building Wo Yi Hop Road,Kut Shing Building,87.5
+60 San Hong Street,20 Wing Hong Street,81.08108108108108
+Transport City Building Shing Wan Road,Transport City Building,100.0
+Koon Hing Building Tuen Mun Heung Sze Wui Road,Koon Wah Building,86.66666666666667
+Ming Wai Building Tuen Mun Heung Sze Wui Road,Po Wai Building,88.88888888888889
+Fu Hang Building Yan Ching Street,Bcc Building,80.0

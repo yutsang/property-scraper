@@ -222,19 +222,29 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         logger.warning("   ⚠️ No year column found - age column not created")
     
     # ============ TITLE-LG ADOPTION FOR PROPERTY NAMES ============
-    logger.info("🏠 Step 6/9: Adopting title-lg for property names...")
+    logger.info("🏠 Step 6/9: Setting property names...")
     
-    # Adopt title-lg as property name when available (for Centaline Residential)
-    if 'title_lg' in df.columns:
-        try:
-            # Use title-lg as the primary property name when available
-            df['property_name'] = df['title_lg'].fillna(df['address'])
-            logger.info(f"   ✅ Adopted title-lg for {df['title_lg'].notna().sum()} property names")
-        except Exception as e:
-            logger.warning(f"   ⚠️ Error adopting title-lg: {e}")
-            df['property_name'] = df['address']
-    else:
+    # Support both old and new data formats
+    if 'Name' in df.columns:
+        # New JavaScript extraction format
+        df['property_name'] = df['Name']
+        logger.info(f"   ✅ Used Name column for {df['Name'].notna().sum()} property names")
+    elif 'title_lg' in df.columns and 'address' in df.columns:
+        # Old format with both
+        df['property_name'] = df['title_lg'].fillna(df['address'])
+        logger.info(f"   ✅ Used title_lg/address for property names")
+    elif 'title_lg' in df.columns:
+        # Has title_lg only
+        df['property_name'] = df['title_lg']
+        logger.info(f"   ✅ Used title_lg for property names")
+    elif 'address' in df.columns:
+        # Old format
         df['property_name'] = df['address']
+        logger.info(f"   ✅ Used address for property names")
+    else:
+        # No suitable column
+        df['property_name'] = ''
+        logger.warning(f"   ⚠️ No name column found - using empty")
     
     # ============ ADDRESS PARSING ============
     logger.info("🏢 Step 7/9: Parsing Tower/Block, Floor, and Flat from address...")
@@ -370,11 +380,24 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         
         return {'Carpark_Floor': carpark_floor, 'Carpark_Number': carpark_number}
     
-    if 'address' in df.columns:
+    if 'estate_type' in df.columns:
+        # JavaScript provides estate_type already
+        df['Type'] = df['estate_type']
+        logger.info(f"   ✅ Used estate_type from JavaScript")
+    elif 'Name' in df.columns:
+        # Classify from Name
+        df['Type'] = df['Name'].apply(classify_property_type)
+        carpark_details = df['Name'].apply(extract_carpark_details).apply(pd.Series)
+        df = pd.concat([df, carpark_details], axis=1)
+        logger.info(f"   ✅ Classified {(df['Type'] == 'Carpark').sum()} carpark records from Name")
+    elif 'address' in df.columns:
         df['Type'] = df['address'].apply(classify_property_type)
         carpark_details = df['address'].apply(extract_carpark_details).apply(pd.Series)
         df = pd.concat([df, carpark_details], axis=1)
         logger.info(f"   ✅ Classified {(df['Type'] == 'Carpark').sum()} carpark records")
+    else:
+        df['Type'] = 'Residential'
+        logger.info(f"   ℹ No classification column - defaulted to Residential")
     
     # ============ DATASOURCE COLUMN ============
     logger.info("📊 Step 9/9: Adding Datasource column...")
@@ -482,21 +505,34 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
     #logger.info(f"   - Remaining columns: {list(df.columns)}")
     
     # ============ FILL NONE VALUES ============
-    logger.info("🔄 Final step: Filling empty cells with 'None'...")
+    logger.info("🔄 Final step: Cleaning empty cells...")
     
     def fill_none_values(df):
-        """Fill empty cells and standardize None values - simplified to avoid Parquet type issues"""
+        """Fill empty cells and standardize None values - preserve data types for important columns"""
+        
+        # Critical columns that should preserve their data types and NOT be converted to string
+        preserve_columns = [
+            'estate_name', 'Name', 'title_lg', 'building_name',  # Name-related columns
+            'date', 'price', 'area', 'ft_price', 'age', 'year',  # Numeric/date columns
+            'Tower', 'Floor', 'Flat',  # Address components
+        ]
         
         for col in df.columns:
-            # Convert everything to string to avoid complex type conflicts
-            df[col] = df[col].astype(str)
-            df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], 'None')
-            # Fill actual NaN values with 'None'
-            df[col] = df[col].fillna('None')
+            if col in preserve_columns:
+                # For important columns, just clean up obvious null indicators but preserve data type
+                # Replace string representations of null with actual NaN
+                if df[col].dtype == 'object':
+                    df[col] = df[col].replace(['', ' ', '--', 'NULL', 'null', 'N/A'], None)
+                # Don't convert to string, keep as-is (dates stay dates, numbers stay numbers, strings stay strings)
+            else:
+                # For other columns, apply the full string conversion (backward compatibility)
+                df[col] = df[col].astype(str)
+                df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], 'None')
+                df[col] = df[col].fillna('None')
         return df
     
     df = fill_none_values(df)
-    logger.info("   ✅ Filled empty values with 'None'")
+    logger.info("   ✅ Cleaned empty values while preserving important data types")
     
     # ============ REMOVE DUPLICATES ============
     initial_count = len(df)
@@ -1709,7 +1745,8 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'region',                  # Region
          'district',                # District
          'subdistrict',             # Subdistrict
-         'estate_name',             # Estate name (will be renamed to "Name")
+         'Name',                    # Property name from transaction data (always populated)
+         'title_lg',                # Property title/location from transaction data
          'Tower',                   # Building tower
          'Floor',                   # Floor number
          'Flat',                    # Flat/unit number
@@ -1733,11 +1770,9 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     # Filter dataframe to selected columns
     available_columns = [col for col in selected_columns if col in df.columns]
-    result_df = df[available_columns]
-
-    # Rename estate_name to Name
-    if 'estate_name' in result_df.columns:
-        result_df = result_df.rename(columns={'estate_name': 'Name'})
+    result_df = df[available_columns].copy()  # Use .copy() to avoid SettingWithCopyWarning
+    
+    # No need to rename or fill - Name column from transaction data is already complete!
 
     logger.info(f"✅ Selected {len(available_columns)} columns for Centaline Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
