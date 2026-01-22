@@ -266,12 +266,28 @@ def scrape_transaction_data(
                     display_text = txn.get('displayText', {}).get('addr', {})
                     
                     # Extract building information
-                    estate = txn.get('estateName', '').strip()
-                    building = txn.get('buildingName', '').strip()
+                    big_estate = txn.get('bigEstateName', '').strip()  # Main estate name (e.g. "Residence Bel-Air")
+                    estate = txn.get('estateName', '').strip()  # Phase/sub-estate (e.g. "Phase 2 South Tower")
+                    building = txn.get('buildingName', '').strip()  # Tower/Block (e.g. "Tower 1")
                     formatted_address = display_text.get('line1', '').strip()
                     
-                    # Build full name - use formatted address if estate/building are missing
-                    if estate and building:
+                    # Build full name with priority: big_estate > estate > building
+                    # For phased developments: "Estate Name Phase X Tower Y"
+                    # For simple buildings: "Building Name"
+                    if big_estate and estate and building:
+                        # Full hierarchy: "Residence Bel-Air Phase 2 South Tower Tower 1"
+                        full_name = f"{big_estate} {estate} {building}"
+                    elif big_estate and estate:
+                        # Main estate + phase: "Residence Bel-Air Phase 2 South Tower"
+                        full_name = f"{big_estate} {estate}"
+                    elif big_estate and building:
+                        # Main estate + building: "Residence Bel-Air Tower 1"
+                        full_name = f"{big_estate} {building}"
+                    elif big_estate:
+                        # Just main estate: "Residence Bel-Air"
+                        full_name = big_estate
+                    elif estate and building:
+                        # Phase + building: "Phase 2 South Tower Tower 1"
                         full_name = f"{estate} {building}"
                     elif building:
                         full_name = building
@@ -304,18 +320,64 @@ def scrape_transaction_data(
                             except:
                                 pass
                     
-                    # Calculate age
+                    # Calculate age with month precision if available
                     from datetime import datetime
                     current_year = datetime.now().year
+                    current_month = datetime.now().month
                     age = None
                     if completion_year:
+                        # Calculate age based on year and month if available
+                        # If building completed in December 2023 and now is January 2026:
+                        # Age = (2026 - 2023) = 3 years (simple)
+                        # Or with month: if completed Dec 2023, now Jan 2026 = ~2 years 1 month
+                        # For simplicity, use year-based age (more accurate would need completion month)
                         age = current_year - completion_year
                         if age < 0:
                             age = None
                     
+                    # Extract area with multiple fallbacks: prefer nArea (net), then gArea (gross), then any other area field
+                    n_area = txn.get('nArea')
+                    g_area = txn.get('gArea')
+                    
+                    # Try additional area fields that might exist
+                    salable_area = txn.get('salableArea')
+                    floor_area = txn.get('floorArea')
+                    build_area = txn.get('buildUpArea')
+                    usable_area = txn.get('usableArea')
+                    
+                    # Use first available area value
+                    area_value = (n_area if n_area is not None 
+                                 else g_area if g_area is not None
+                                 else salable_area if salable_area is not None
+                                 else floor_area if floor_area is not None
+                                 else build_area if build_area is not None
+                                 else usable_area)
+                    
+                    # Log if no area found for non-carpark properties
+                    if area_value is None:
+                        property_name = full_name if full_name else ''
+                        if 'carpark' not in property_name.lower():
+                            logger.debug(f"No area found for: {property_name} (ID: {txn.get('id')})")
+                    
+                    # Extract unit price with same fallback logic
+                    n_unit_price = txn.get('nUnitPrice')
+                    g_unit_price = txn.get('gUnitPrice')
+                    ft_price_value = n_unit_price if n_unit_price is not None else g_unit_price
+                    
+                    # Detect if this is a carpark transaction
+                    is_carpark = False
+                    if full_name and 'carpark' in full_name.lower():
+                        is_carpark = True
+                    elif building and 'carpark' in building.lower():
+                        is_carpark = True
+                    
+                    # Set property type based on carpark detection
+                    property_type = 'Carpark' if is_carpark else 'residential'
+                    
                     record = {
                         # Match your required column order exactly
                         'date': txn.get('insDate', ''),
+                        'date_original': txn.get('insDate', ''),  # Keep original date for fallback sorting
                         'region': scope.get('terr', ''),
                         'district': scope.get('db', ''),
                         'subdistrict': scope.get('hma', ''),
@@ -324,18 +386,18 @@ def scrape_transaction_data(
                         'Floor': txn.get('yAxis', ''),
                         'Flat': txn.get('xAxis', ''),
                         'transaction_type': 'SALE' if txn.get('postType') == 'S' else 'RENT' if txn.get('postType') == 'R' else '',
-                        'area': txn.get('nArea'),
+                        'area': area_value,  # Use nArea with gArea fallback
                         'price': txn.get('transactionPrice'),
-                        'ft_price': txn.get('nUnitPrice'),
+                        'ft_price': ft_price_value,  # Use nUnitPrice with gUnitPrice fallback
                         'source': 'centaline_res',
-                        'property_type': 'residential',
+                        'property_type': property_type,  # 'Carpark' or 'residential'
                         'address': formatted_address,  # KEEP the full formatted address from JavaScript
                         'street_address': txn.get('address', ''),
                         'building_code': txn.get('typeCode', ''),
-                        'g_area': txn.get('gArea'),
-                        'g_unit_price': txn.get('gUnitPrice'),
+                        'g_area': g_area,  # Keep original gross area
+                        'g_unit_price': g_unit_price,  # Keep original gross unit price
                         'completion_year': completion_year,
-                        'age': age,
+                        'age': age,  # Age calculated with current year
                         'estate_type': txn.get('estateType', ''),
                         'transaction_url': txn.get('detailUrl', ''),
                         'transaction_id': txn.get('id', ''),
@@ -358,14 +420,130 @@ def scrape_transaction_data(
             logger.error(f"Error extracting __NUXT__ data: {e}")
             return []
     
+    def extract_combined_data(driver):
+        """
+        Extract transaction data from BOTH JavaScript __NUXT__ and HTML table.
+        - JavaScript provides: metadata (building codes, dates, etc.)
+        - HTML table provides: VISIBLE area, price, ft_price (always shown on list page)
+        - Uses HTML as FALLBACK for missing JavaScript data
+        Returns merged data with all available fields.
+        """
+        try:
+            # Extract from JavaScript (most complete for metadata)
+            js_data = extract_nuxt_transactions(driver)
+            
+            # Extract from HTML table (has visible area/price that might be missing from JS)
+            try:
+                html_data = extract_table_data(driver)
+            except Exception as e:
+                logger.warning(f"HTML table extraction failed: {e}")
+                html_data = []
+            
+            if not js_data and not html_data:
+                logger.debug("No data from either source")
+                return []
+            
+            # If we have both sources, merge them
+            if js_data and html_data:
+                # Helper function to parse HTML values to numeric
+                def parse_html_area(area_text):
+                    """Parse area from HTML like '401呎' to 401.0"""
+                    if not area_text or area_text == '--':
+                        return None
+                    import re
+                    area_clean = re.sub(r'[^\d,.]', '', str(area_text))
+                    area_clean = area_clean.replace(',', '')
+                    return float(area_clean) if area_clean else None
+                
+                def parse_html_price(price_text):
+                    """Parse price from HTML like '$545.5萬' to 5455000.0"""
+                    if not price_text or price_text == '--':
+                        return None
+                    import re
+                    price_str = str(price_text).replace('$', '').replace(',', '')
+                    # Handle millions (萬 = 10,000)
+                    if '萬' in price_str:
+                        number = re.findall(r'[\d.]+', price_str)
+                        if number:
+                            return float(number[0]) * 10000
+                    # Handle billions (億)
+                    elif '億' in price_str:
+                        number = re.findall(r'[\d.]+', price_str)
+                        if number:
+                            return float(number[0]) * 100000000
+                    # Regular number
+                    else:
+                        number = re.findall(r'[\d.]+', price_str)
+                        if number:
+                            return float(number[0])
+                    return None
+                
+                def parse_html_ft_price(ft_price_text):
+                    """Parse ft_price from HTML like '@$13,603' to 13603.0"""
+                    if not ft_price_text or ft_price_text == '--':
+                        return None
+                    import re
+                    price_clean = str(ft_price_text).replace('@', '').replace('$', '').replace(',', '')
+                    numbers = re.findall(r'[\d.]+', price_clean)
+                    return float(numbers[0]) if numbers else None
+                
+                # Merge by position/index
+                merged_data = []
+                area_fallback_count = 0
+                
+                for i, js_rec in enumerate(js_data):
+                    # Use HTML data at same index if available
+                    if i < len(html_data):
+                        html_rec = html_data[i]
+                        
+                        # Parse HTML values and use as FALLBACK when JS is missing
+                        if js_rec.get('area') is None and html_rec.get('area'):
+                            parsed_area = parse_html_area(html_rec.get('area'))
+                            if parsed_area:
+                                js_rec['area'] = parsed_area
+                                area_fallback_count += 1
+                                logger.info(f"   ✓ Used HTML area fallback for record #{i+1}: {html_rec.get('area')} → {parsed_area} ({js_rec.get('Name', 'unknown')})")
+                        
+                        if js_rec.get('price') is None and html_rec.get('price'):
+                            parsed_price = parse_html_price(html_rec.get('price'))
+                            if parsed_price:
+                                js_rec['price'] = parsed_price
+                                logger.debug(f"Used HTML price fallback: {parsed_price}")
+                        
+                        if js_rec.get('ft_price') is None and html_rec.get('ft_price'):
+                            parsed_ft_price = parse_html_ft_price(html_rec.get('ft_price'))
+                            if parsed_ft_price:
+                                js_rec['ft_price'] = parsed_ft_price
+                                logger.debug(f"Used HTML ft_price fallback: {parsed_ft_price}")
+                    
+                    merged_data.append(js_rec)
+                
+                #logger.info(f"   ✅ Merged {len(merged_data)} records from JS and HTML table")
+                if area_fallback_count > 0:
+                    logger.info(f"   📊 Used HTML fallback for {area_fallback_count} area values")
+                return merged_data
+            
+            # If only one source has data, use it
+            elif js_data:
+                logger.debug("Using JavaScript data only (no HTML data)")
+                return js_data
+            else:
+                logger.debug("Using HTML data only (no JavaScript data)")
+                return html_data
+            
+        except Exception as e:
+            logger.error(f"Error in extract_combined_data: {e}")
+            return []
+    
     def extract_table_data(driver):
-        """DEPRECATED - kept for fallback only. Use extract_nuxt_transactions instead."""
+        """Extract visible data from HTML table on the transaction list page."""
         table_data = []
         try:
             enhanced_scroll_down(driver)
 
             # Find all transaction rows (desktop table format)
             rows = driver.find_elements(By.CSS_SELECTOR, "tr.cv-structured-list-item")
+            logger.debug(f"   Found {len(rows)} table rows for HTML extraction")
             
             for row in rows:
                 try:
@@ -420,8 +598,12 @@ def scrape_transaction_data(
                         elif price_text.startswith("$") and len(price_text) < 10 and any(char.isdigit() for char in price_text):
                             transaction_type = "RENT"
 
-                        # Extract area from the SIXTH cell
+                        # Extract area from the SIXTH cell (面積實)
                         area_text = cells[5].text.strip()
+                        
+                        # Debug: log if area is found
+                        if area_text and area_text != '--':
+                            logger.debug(f"   HTML area extracted: {area_text}")
 
                         # Initialize optional fields
                         ft_price_text = ""
@@ -703,8 +885,8 @@ def scrape_transaction_data(
             max_pages = params['global'].get('max_pages_per_area', 50)
             
             while not date_reached and page <= max_pages:
-                # Use NEW JavaScript extraction method
-                page_data = extract_nuxt_transactions(driver)
+                # Extract from BOTH JavaScript and HTML table (HTML as fallback for missing area/price)
+                page_data = extract_combined_data(driver)
                             
                 for record in page_data:
                     # Check control date
@@ -951,7 +1133,10 @@ def process_transaction_data(
     logger.info(f"  - Initial records: {initial_count:,}")
     logger.info(f"  - Valid records: {final_count:,}")
     logger.info(f"  - Removed invalid records: {removed_count:,}")
-    logger.info(f"  - Success rate: {(final_count/initial_count)*100:.1f}%")
+    if initial_count > 0:
+        logger.info(f"  - Success rate: {(final_count/initial_count)*100:.1f}%")
+    else:
+        logger.info(f"  - Success rate: N/A (no initial records)")
     
     # Additional data cleaning (minimal - JavaScript data is already clean)
     if len(processed_df) > 0:
@@ -2061,144 +2246,27 @@ def enrich_estate_data(
                             transactions_copy.at[idx, 'estate_region'] = estate_info.get('Region', '')
                             transactions_copy.at[idx, 'estate_district'] = estate_info.get('District', '')
                             transactions_copy.at[idx, 'estate_subdistrict'] = estate_info.get('Subdistrict', '')
-                            transactions_copy.at[idx, 'estate_blocks'] = estate_info.get('Blocks', '')
-                            transactions_copy.at[idx, 'estate_units'] = estate_info.get('Units', '')
+                            transactions_copy.at[idx, 'estate_blocks'] = str(estate_info.get('Blocks', ''))
+                            transactions_copy.at[idx, 'estate_units'] = str(estate_info.get('Units', ''))
+                            
+                            # Add additional building info from estate details
+                            transactions_copy.at[idx, 'estate_full_address'] = estate_info.get('estate_detailed_address', '')
+                            transactions_copy.at[idx, 'developer'] = estate_info.get('developer', '')
+                            transactions_copy.at[idx, 'estate_chinese_name'] = estate_info.get('chinese_name', '')
+                            
+                            # Add additional building info from estate details
+                            if 'estate_detailed_address' in estate_info:
+                                transactions_copy.at[idx, 'estate_full_address'] = estate_info.get('estate_detailed_address', '')
+                            if 'developer' in estate_info:
+                                transactions_copy.at[idx, 'developer'] = estate_info.get('developer', '')
+                            if 'chinese_name' in estate_info:
+                                transactions_copy.at[idx, 'estate_chinese_name'] = estate_info.get('chinese_name', '')
                     
                     logger.info(f"\n   📊 Enrichment Statistics:")
                     logger.info(f"      Matched via building code: {matched_by_code:,} ({matched_by_code/len(transactions_copy)*100:.1f}%)")
                     logger.info(f"      Matched via name: {matched_by_name:,} ({matched_by_name/len(transactions_copy)*100:.1f}%)")
                     logger.info(f"      No match (already complete): {no_match:,} ({no_match/len(transactions_copy)*100:.1f}%)")
-                    
-                    for idx, row in tqdm(transactions_copy.iterrows(), total=len(transactions_copy), desc="Mapping transactions"):
-                        estate_name = row.get('estate_name', '')
-                        
-                        # Skip if no estate name
-                        if pd.isna(estate_name) or estate_name == '':
-                            unmatched += 1
-                            continue
-                        
-                        # Check if this estate name is in the duplicate list
-                        if estate_name in duplicate_estate_names and estate_name in same_name_codes:
-                            # This is a duplicate - need to check transaction HTML to find correct estate
-                            possible_codes = same_name_codes[estate_name]
-                            possible_estates = same_name_estates[estate_name]
-                            
-                            if not possible_codes:
-                                unmatched += 1
-                                continue
-                            
-                            # Get transaction URL
-                            transaction_url = row.get('transaction_url', '')
-                            
-                            if not transaction_url:
-                                # No URL available - cannot determine which estate
-                                unmatched += 1
-                                if unmatched <= 5:
-                                    logger.debug(f"   No transaction URL for duplicate estate: {estate_name}")
-                                continue
-                            
-                            # Initialize driver if needed
-                            if driver is None:
-                                try:
-                                    driver = initialize_driver(params)
-                                    logger.info("   🌐 Driver initialized for HTML-based duplicate matching")
-                                except Exception as e:
-                                    logger.warning(f"   Could not initialize driver: {e}")
-                                    unmatched += 1
-                                    continue
-                            
-                            # Visit transaction URL and check HTML for estate codes
-                            matched_code = None
-                            try:
-                                driver.get(transaction_url)
-                                time.sleep(1.5)  # Wait for page load
-                                
-                                # Get page HTML
-                                page_html = driver.page_source.lower()
-                                
-                                # Check which estate code from same_name list appears in HTML
-                                for code in possible_codes:
-                                    if code and code.lower() in page_html:
-                                        matched_code = code
-                                        logger.debug(f"   ✓ Found estate code {code} in transaction HTML for {estate_name}")
-                                        break
-                                
-                            except Exception as e:
-                                logger.debug(f"   Error checking transaction HTML: {e}")
-                            
-                            if matched_code:
-                                # Find the estate info for this code
-                                matching_estate = possible_estates[possible_estates['estate_code'] == matched_code]
-                                if len(matching_estate) > 0:
-                                    estate_info = matching_estate.iloc[0]
-                                    transactions_copy.at[idx, 'region'] = estate_info.get('Region')
-                                    transactions_copy.at[idx, 'district'] = estate_info.get('District')
-                                    transactions_copy.at[idx, 'subdistrict'] = estate_info.get('Subdistrict')
-                                    transactions_copy.at[idx, 'code'] = estate_info.get('Code')
-                                    transactions_copy.at[idx, 'developer'] = estate_info.get('Developer')
-                                    transactions_copy.at[idx, 'estate_code'] = matched_code
-                                    matched_via_html += 1
-                                else:
-                                    unmatched += 1
-                            else:
-                                # Could not find estate code in HTML
-                                unmatched += 1
-                                if unmatched <= 5:
-                                    logger.debug(f"   Could not find any estate code in HTML for {estate_name}")
-                            
-                            continue
-                        else:
-                            # Not a duplicate - use simple name matching
-                            estate_matches = estate_details_copy[estate_details_copy['Scraped Estate Name'] == estate_name]
-                            
-                            if len(estate_matches) == 1:
-                                # Unique match found
-                                estate_info = estate_matches.iloc[0]
-                                transactions_copy.at[idx, 'region'] = estate_info.get('Region')
-                                transactions_copy.at[idx, 'district'] = estate_info.get('District')
-                                transactions_copy.at[idx, 'subdistrict'] = estate_info.get('Subdistrict')
-                                transactions_copy.at[idx, 'code'] = estate_info.get('Code')
-                                transactions_copy.at[idx, 'developer'] = estate_info.get('Developer')
-                                transactions_copy.at[idx, 'estate_code'] = estate_info.get('estate_code', '')
-                                matched_via_simple += 1
-                            elif len(estate_matches) > 1:
-                                # Multiple matches but not in duplicate list (shouldn't happen)
-                                # Take first match
-                                estate_info = estate_matches.iloc[0]
-                                transactions_copy.at[idx, 'region'] = estate_info.get('Region')
-                                transactions_copy.at[idx, 'district'] = estate_info.get('District')
-                                transactions_copy.at[idx, 'subdistrict'] = estate_info.get('Subdistrict')
-                                transactions_copy.at[idx, 'code'] = estate_info.get('Code')
-                                transactions_copy.at[idx, 'developer'] = estate_info.get('Developer')
-                                transactions_copy.at[idx, 'estate_code'] = estate_info.get('estate_code', '')
-                                matched_via_simple += 1
-                            else:
-                                # No match found - leave empty
-                                unmatched += 1
-                    
-                    # Close driver if we opened it
-                    if driver:
-                        try:
-                            driver.quit()
-                            logger.info("   Driver closed")
-                        except:
-                            pass
-                    
-                    # Report matching statistics
-                    logger.info(f"\n   📊 Mapping Statistics:")
-                    logger.info(f"      Matched via simple mapping: {matched_via_simple:,}")
-                    logger.info(f"      Matched via HTML checking: {matched_via_html:,}")
-                    logger.info(f"      Unmatched (to handle later): {unmatched:,}")
-                    
-                    # Count final results
-                    records_with_location = transactions_copy['region'].notna().sum()
-                    records_with_developer = transactions_copy['developer'].notna().sum()
-                    records_with_estate_code = transactions_copy['estate_code'].notna().sum()
-                    
-                    logger.info(f"\n   ✅ Final Results:")
-                    logger.info(f"      Records with location data: {records_with_location:,}")
-                    logger.info(f"      Records with developer: {records_with_developer:,}")
-                    logger.info(f"      Records with estate code: {records_with_estate_code:,}")
+                    logger.info("✅ Estate enrichment complete using building_code and name matching")
                     
                 except Exception as e:
                     logger.warning(f"⚠️ Could not add location and developer data: {e}")
@@ -2221,24 +2289,36 @@ def enrich_estate_data(
         transactions_copy['source'] = 'centaline_res'
         transactions_copy['property_type'] = 'residential'
 
-    # Combine with existing data
+    # Combine with existing data but remove duplicates
+    # This allows incremental updates without duplication
     try:
         if not existing_enriched.empty:
-            # Ensure existing data has developer column if it doesn't exist
-            if 'developer' not in existing_enriched.columns and 'developer' in transactions_copy.columns:
-                existing_enriched['developer'] = None
-                logger.info("✅ Added developer column to existing data")
+            logger.info(f"📊 Found {len(existing_enriched)} existing records")
             
-            # Use pandas concat to handle different column sets
-            final_df = pd.concat([existing_enriched, transactions_copy], ignore_index=True, sort=False)
-            logger.info(f"📊 Combined {len(existing_enriched)} existing + {len(transactions_copy)} new = {len(final_df)} total records")
+            # Combine existing and new data
+            combined = pd.concat([existing_enriched, transactions_copy], ignore_index=True, sort=False)
+            logger.info(f"📊 Combined to {len(combined)} total records (before dedup)")
+            
+            # Remove duplicates based on transaction_id (keep most recent = last occurrence)
+            if 'transaction_id' in combined.columns:
+                before_dedup = len(combined)
+                final_df = combined.drop_duplicates(subset=['transaction_id'], keep='last')
+                after_dedup = len(final_df)
+                
+                if before_dedup != after_dedup:
+                    logger.info(f"🗑️  Removed {before_dedup - after_dedup:,} duplicate transactions")
+                logger.info(f"✅ Final clean dataset: {len(final_df):,} unique transactions")
+            else:
+                logger.warning("⚠️  No transaction_id column - cannot deduplicate")
+                final_df = combined
         else:
             final_df = transactions_copy
-            logger.info(f"📊 Created new dataset with {len(final_df)} records")
+            logger.info(f"📊 Using new transaction data: {len(final_df)} records (no existing data)")
             
     except Exception as e:
         logger.error(f"⚠️ Error in combining data: {str(e)}")
         final_df = transactions_copy
+        logger.info(f"📊 Falling back to new data only: {len(final_df)} records")
 
     # Fix all data types for parquet compatibility
     try:

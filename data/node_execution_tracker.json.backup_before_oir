@@ -1,0 +1,117 @@
+{
+  "estate_listing_scraper": {
+    "last_run": "2026-01-22T10:46:17.887734",
+    "node_type": "estate",
+    "execution_count": 2,
+    "metadata": {
+      "estates_processed": 18432,
+      "districts_processed": 174,
+      "execution_time": "2026-01-22T10:46:17.887727"
+    }
+  },
+  "transaction_data_scraper": {
+    "last_run": "2026-01-22T18:19:16.932306",
+    "node_type": "transaction",
+    "execution_count": 12,
+    "metadata": {
+      "records_processed": 256245,
+      "areas_processed": 174,
+      "failed_areas": 0,
+      "execution_time": "2026-01-22T18:19:16.932285"
+    }
+  },
+  "estate_detail_scraper": {
+    "last_run": "2026-01-13T09:13:24.891849",
+    "node_type": "estate",
+    "execution_count": 1,
+    "metadata": {
+      "estates_processed": 31797,
+      "new_details_scraped": 18262,
+      "execution_time": "2026-01-13T09:13:24.891818"
+    }
+  },
+  "ml_ici_scrape_trans": {
+    "last_run": "2026-01-22T18:24:34.229006",
+    "node_type": "transaction",
+    "execution_count": 19,
+    "metadata": {
+      "records_processed": 323380,
+      "month_ranges_processed": 313,
+      "execution_time": "2026-01-22T18:24:34.228991"
+    }
+  },
+  "scrape_building_listings": {
+    "last_run": "2026-01-13T09:58:12.108804",
+    "node_type": "estate",
+    "execution_count": 1,
+    "metadata": {
+      "buildings_processed": 1592,
+      "districts_processed": 53,
+      "execution_time": "2026-01-13T09:58:12.108791"
+    }
+  },
+  "scrape_midland_buildings": {
+    "last_run": "2026-01-13T09:58:20.941541",
+    "node_type": "building",
+    "execution_count": 1,
+    "metadata": {
+      "buildings_processed": 1800,
+      "districts_processed": 16,
+      "property_types_processed": 3,
+      "execution_time": "2026-01-13T09:58:20.941529"
+    }
+  },
+  "scrape_transaction": {
+    "last_run": "2026-01-22T18:28:31.309974",
+    "node_type": "transaction",
+    "execution_count": 19,
+    "metadata": {
+      "records_processed": 376100,
+      "areas_processed": 53,
+      "execution_time": "2026-01-22T18:28:31.309968"
+    }
+  },
+  "load_and_clean_district_data": {
+    "last_run": "2026-01-13T11:56:16.482549",
+    "node_type": "estate",
+    "execution_count": 1,
+    "metadata": {
+      "districts_processed": 130,
+      "execution_time": "2026-01-13T11:56:16.482546"
+    }
+  },
+  "scrape_building_details": {
+    "last_run": "2026-01-13T11:56:19.312857",
+    "node_type": "estate",
+    "execution_count": 1,
+    "metadata": {
+      "buildings_processed": 1585,
+      "new_details_scraped": 1,
+      "total_requests": 9,
+      "successful_requests": 1,
+      "error_requests": 8,
+      "timeouts_encountered": 0,
+      "execution_time": "2026-01-13T11:56:19.312850"
+    }
+  },
+  "process_estate_data": {
+    "last_run": "2026-01-13T11:57:09.592016",
+    "node_type": "estate",
+    "execution_count": 1,
+    "metadata": {
+      "estates_processed": 17934,
+      "districts_processed": 130,
+      "execution_time": "2026-01-13T11:57:09.592006"
+    }
+  },
+  "fetch_midland_transactions": {
+    "last_run": "2026-01-22T18:43:52.254564",
+    "node_type": "transaction",
+    "execution_count": 11,
+    "metadata": {
+      "records_processed": 339196,
+      "districts_processed": 130,
+      "execution_time": "2026-01-22T18:43:52.254558"
+    }
+  }
+}

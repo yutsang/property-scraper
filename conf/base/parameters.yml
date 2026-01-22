@@ -4,10 +4,10 @@ webscraper:
     use_edge: False  # True = Edge, False = Chrome
     headless: True
     user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
-    min_delay: 0.5
-    max_delay: 2.0
+    min_delay: 0.3  # Reduced from 0.5 for faster scraping
+    max_delay: 1.0  # Reduced from 2.0 for faster scraping
     max_retries: 3
-    max_threads: 5  # Number of parallel threads for scraping
+    max_threads: 20  # Increased from 5 to 20 for much faster scraping
     page_load_timeout: 30
     start_date: "2000-01-01"
     end_date: "2025-06-17"

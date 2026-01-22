@@ -176,13 +176,32 @@ class NodeExecutionTracker:
             return True
     
     def _parse_date_string(self, date_str):
-        """Parse date string using multiple formats."""
+        """Parse date string using multiple formats including ISO 8601."""
         if not date_str or pd.isna(date_str):
             return None
-        
+
         date_str = str(date_str).strip()
-        date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y%m%d', '%d-%m-%Y']
         
+        # Try pandas first (handles ISO 8601 and many other formats)
+        try:
+            parsed = pd.to_datetime(date_str, errors='coerce')
+            if pd.notna(parsed):
+                return parsed.date()
+        except:
+            pass
+        
+        # Fallback to manual parsing for specific formats
+        date_formats = [
+            '%Y-%m-%dT%H:%M:%S.%fZ',  # ISO 8601 with milliseconds and Z
+            '%Y-%m-%dT%H:%M:%SZ',      # ISO 8601 without milliseconds
+            '%Y-%m-%dT%H:%M:%S',       # ISO 8601 without timezone
+            '%Y-%m-%d',
+            '%d/%m/%Y',
+            '%m/%d/%Y',
+            '%Y%m%d',
+            '%d-%m-%Y'
+        ]
+
         for fmt in date_formats:
             try:
                 return datetime.strptime(date_str, fmt).date()

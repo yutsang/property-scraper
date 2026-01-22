@@ -320,9 +320,13 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         return {'Tower': tower, 'Floor': floor, 'Flat': flat}
     
     if 'address' in df.columns:
-        address_components = df['address'].apply(parse_address_components).apply(pd.Series)
-        df = pd.concat([df, address_components], axis=1)
-        logger.info(f"   ✅ Parsed address components for {len(df)} records")
+        # Only parse address if Tower/Floor/Flat columns don't already exist
+        if not all(col in df.columns for col in ['Tower', 'Floor', 'Flat']):
+            address_components = df['address'].apply(parse_address_components).apply(pd.Series)
+            df = pd.concat([df, address_components], axis=1)
+            logger.info(f"   ✅ Parsed address components for {len(df)} records")
+        else:
+            logger.info(f"   ℹ️ Tower/Floor/Flat columns already exist, skipping address parsing")
     
     # ============ TYPE CLASSIFICATION ============
     logger.info("🚗 Step 8/9: Creating Type column and parsing carpark details...")
@@ -515,20 +519,25 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
             'estate_name', 'Name', 'title_lg', 'building_name',  # Name-related columns
             'date', 'price', 'area', 'ft_price', 'age', 'year',  # Numeric/date columns
             'Tower', 'Floor', 'Flat',  # Address components
+            'g_area', 'g_unit_price', 'building_code',  # Additional JavaScript fields
         ]
         
         for col in df.columns:
-            if col in preserve_columns:
-                # For important columns, just clean up obvious null indicators but preserve data type
-                # Replace string representations of null with actual NaN
-                if df[col].dtype == 'object':
-                    df[col] = df[col].replace(['', ' ', '--', 'NULL', 'null', 'N/A'], None)
-                # Don't convert to string, keep as-is (dates stay dates, numbers stay numbers, strings stay strings)
-            else:
-                # For other columns, apply the full string conversion (backward compatibility)
-                df[col] = df[col].astype(str)
-                df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], 'None')
-                df[col] = df[col].fillna('None')
+            try:
+                if col in preserve_columns:
+                    # For important columns, just clean up obvious null indicators but preserve data type
+                    # Replace string representations of null with actual NaN
+                    if pd.api.types.is_object_dtype(df[col]):
+                        df[col] = df[col].replace(['', ' ', '--', 'NULL', 'null', 'N/A'], None)
+                    # Don't convert to string, keep as-is (dates stay dates, numbers stay numbers, strings stay strings)
+                else:
+                    # For other columns, apply the full string conversion (backward compatibility)
+                    df[col] = df[col].astype(str)
+                    df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], 'None')
+                    df[col] = df[col].fillna('None')
+            except Exception as e:
+                logger.warning(f"Error processing column '{col}': {e}")
+                continue
         return df
     
     df = fill_none_values(df)
@@ -1751,9 +1760,11 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'Floor',                   # Floor number
          'Flat',                    # Flat/unit number
          'transaction_type',        # Type of transaction
-         'area',                    # Property area
-         'price',                   # Transaction price
-         'ft_price',                # Price per square foot
+         'area',                    # Net area (from JavaScript nArea)
+         'price',                   # Transaction price (from JavaScript)
+         'ft_price',                # Net price per sqft (from JavaScript nUnitPrice)
+         'g_area',                  # Gross area (from JavaScript gArea)
+         'g_unit_price',            # Gross price per sqft (from JavaScript gUnitPrice)
          'year',                    # Completion year
          'age',                     # Building age
          'developer',               # Developer
@@ -1763,6 +1774,7 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'changes',                 # Price changes
          'property_type',           # Property type (not 'Type')
          'code',                    # Area code
+         'building_code',           # Building code from JavaScript
     ]
     
     # Use the selected columns defined above

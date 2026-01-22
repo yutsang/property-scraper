@@ -29,7 +29,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="transaction_data_scraper"
         ),
         node(
-            func=process_transaction_data, # Not in Use
+            func=process_transaction_data,
             inputs=["raw_transaction_data", "params:webscraper"],
             outputs="processed_transactions",
             name="transaction_processor"
