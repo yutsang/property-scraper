@@ -7,7 +7,7 @@ webscraper:
     min_delay: 0.3  # Reduced from 0.5 for faster scraping
     max_delay: 1.0  # Reduced from 2.0 for faster scraping
     max_retries: 3
-    max_threads: 20  # Increased from 5 to 20 for much faster scraping
+    max_threads: 5  # FIXED: Reduced from 20 to 5 to prevent ChromeDriver crashes
     page_load_timeout: 30
     start_date: "2000-01-01"
     end_date: "2025-06-17"
@@ -19,10 +19,10 @@ webscraper:
     
   # Node execution tracking configuration
   node_tracking:
-    transaction_skip_days: 6  # Skip transaction nodes if run within 1 day
-    estate_skip_days: 28       # Skip estate nodes if run within 7 days
-    building_skip_days: 28     # Skip building nodes if run within 7 days
-    default_skip_days: 0      # Default nodes always run (0 = no skip)
+    transaction_skip_days: 0   # Transaction nodes ALWAYS run (incremental mode)
+    estate_skip_days: 28       # Skip estate nodes if run within 28 days
+    building_skip_days: 28     # Skip building nodes if run within 28 days
+    default_skip_days: 0       # Default nodes always run (0 = no skip)
   
   centaline_res:
     max_pages_per_area: 999
@@ -39,10 +39,17 @@ webscraper:
       User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
       Accept: "application/json"
     join:
+      # REVERTED TO FUZZY-ONLY (Hybrid join had data loss bug)
+      use_fuzzy_matching: true           # Use fuzzy matching (SAFE - no data loss)
+      fuzzy_threshold: 85.0              # Increased from 80 to 85 for better quality
+      # Fuzzy matching configuration
+      transaction_name_col: "propertyNameEn"
+      building_name_col: "building_name"
+      # Exact matching config (for future when hybrid is fixed)
       left_on: "propertyId"
       right_on: "property_id"
       type: "left"
-      cast_join_keys: True
+      cast_join_keys: true
       validate: "one_to_many"
     cookies: {"gr_user_id": "24005ea2-e47e-4e55-baed-171d8f324a03"}
   
@@ -57,13 +64,28 @@ webscraper:
     save_incremental: True
     incremental_save_frequency: 5
     max_page_size: 20000
+    transaction_page_size: 100
     resume_from_existing: True
     max_retries: 3
     request_delay: 0.5
     midland_ici_building_listings: 'data/01_raw/midland_ici_buildings.parquet'
     midland_ici_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
     buildings_url: "https://service.midlandici.com/building/graphql"
-    transaction_url: "https://www.midlandici.com.hk/ics/property/transaction/json"
+    transaction_url: "https://data.midlandici.com.hk/search/v1/transaction"
+    transaction_landing_url: "https://www.midlandici.com.hk/zh-hk/listing/transaction/ics"
+    transaction_api_params:
+      currency: "HKD"
+      lang: "zh-hk"
+      sort: "txDate-desc"
+      unit: "feet"
+    transaction_headers_main:
+      User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    transaction_headers_api:
+      User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+      Accept: "application/json, text/plain, */*"
+      Accept-Language: "zh-HK,zh;q=0.9,en;q=0.8"
+      Referer: "https://www.midlandici.com.hk/zh-hk/listing/transaction/ics"
     headers:
       Content-Type: "application/json"
       Accept: "*/*"
@@ -71,7 +93,7 @@ webscraper:
       Referer: "https://www.midlandici.com.hk/"
       User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
     join:
-      join_left_on: pis_bldg_id
+      join_left_on: building_id
       join_right_on: id
       join_type: left
       cast_join_keys: True

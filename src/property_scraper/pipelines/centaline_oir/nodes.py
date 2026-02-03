@@ -625,6 +625,7 @@ def fuzzy_match_properties(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Perform fuzzy matching between transaction data and building details based on property names.
+    Enhanced with exact match check FIRST to avoid wrong fuzzy matches.
     
     Args:
         transaction_data: DataFrame with transaction records
@@ -646,19 +647,41 @@ def fuzzy_match_properties(
     trans_names = transaction_data[transaction_name_col].dropna().unique()
     building_names = building_details[building_name_col].dropna().unique()
     
+    # Create a set for fast exact lookup
+    building_names_set = set(str(name).strip().lower() for name in building_names)
+    
     logger.info(f"Fuzzy matching {len(trans_names)} unique transaction properties with {len(building_names)} building details")
+    logger.info(f"Will check exact matches first to avoid wrong fuzzy matches")
     
     # Create mapping dictionary
     name_mapping = {}
     match_scores = {}
+    exact_matches = 0
+    fuzzy_matches = 0
+    no_matches = 0
     
-    # Progress bar for fuzzy matching
-    with tqdm(trans_names, desc="Fuzzy matching properties") as pbar:
+    # Progress bar for matching
+    with tqdm(trans_names, desc="Smart matching (exact + fuzzy)") as pbar:
         for trans_name in pbar:
-            if pd.isna(trans_name) or trans_name.strip() == "":
+            if pd.isna(trans_name) or str(trans_name).strip() == "":
                 continue
-                
-            # Find best match using fuzzy string matching
+            
+            trans_name_clean = str(trans_name).strip()
+            trans_name_lower = trans_name_clean.lower()
+            
+            # STEP 1: Check for EXACT match first (case-insensitive)
+            if trans_name_lower in building_names_set:
+                # Find the original cased version
+                for building_name in building_names:
+                    if str(building_name).strip().lower() == trans_name_lower:
+                        name_mapping[trans_name] = building_name
+                        match_scores[trans_name] = 100.0
+                        exact_matches += 1
+                        pbar.set_postfix_str(f"Exact match")
+                        break
+                continue
+            
+            # STEP 2: Try fuzzy matching only if no exact match
             match_result = process.extractOne(
                 trans_name,
                 building_names,
@@ -667,11 +690,58 @@ def fuzzy_match_properties(
             
             if match_result and match_result[1] >= threshold:
                 building_name, score, _ = match_result
-                name_mapping[trans_name] = building_name
-                match_scores[trans_name] = score
-                pbar.set_postfix_str(f"Found: {score:.1f}% match")
+                
+                # STEP 3: Validate fuzzy match is reasonable
+                # Check if transaction name and building name share significant words
+                trans_words = set(trans_name_clean.lower().split())
+                building_words = set(str(building_name).lower().split())
+                
+                # Remove common words that don't distinguish buildings
+                common_words = {
+                    'building', 'centre', 'center', 'tower', 'house', 'mansion',
+                    'industrial', 'commercial', 'block', 'phase', 'street', 'road',
+                    'bldg', 'bldg.', 'ind.', 'comm.', 'the', 'and', 'de', 'des', 'voeux'
+                }
+                trans_words_sig = trans_words - common_words
+                building_words_sig = building_words - common_words
+                
+                # STRICT VALIDATION:
+                # 1. Must share significant words
+                shared_words = trans_words_sig & building_words_sig
+                
+                # 2. Check for conflicting words (e.g., "yuen" vs "factory")
+                conflicting_pairs = [
+                    ({'yuen', 'garden'}, {'factory', 'industrial'}),
+                    ({'factory'}, {'yuen', 'garden', 'court'}),
+                    ({'mansion'}, {'factory', 'industrial'}),
+                ]
+                
+                has_conflict = False
+                for group_a, group_b in conflicting_pairs:
+                    if (trans_words_sig & group_a) and (building_words_sig & group_b):
+                        has_conflict = True
+                        break
+                    if (trans_words_sig & group_b) and (building_words_sig & group_a):
+                        has_conflict = True
+                        break
+                
+                # Accept match if: (shares words AND no conflict) OR very high score (98%+)
+                if has_conflict:
+                    no_matches += 1
+                    pbar.set_postfix_str(f"Rejected: {score:.1f}% (conflicting type)")
+                elif len(shared_words) >= 2 or score >= 98.0:  # Need 2+ shared words or very high score
+                    name_mapping[trans_name] = building_name
+                    match_scores[trans_name] = score
+                    fuzzy_matches += 1
+                    pbar.set_postfix_str(f"Fuzzy: {score:.1f}%")
+                else:
+                    no_matches += 1
+                    pbar.set_postfix_str(f"Rejected: {score:.1f}% (insufficient match)")
             else:
+                no_matches += 1
                 pbar.set_postfix_str(f"No match (best: {match_result[1]:.1f}%)" if match_result else "No match")
+    
+    logger.info(f"Matching complete: {exact_matches} exact, {fuzzy_matches} fuzzy, {no_matches} no match")
     
     # Apply mapping to transaction data
     transaction_matched = transaction_data.copy()
@@ -1192,129 +1262,274 @@ def scrape_transaction(
     return final_df
     
 
-def join_transaction_with_building_details( # <- not yet add incremental 
+def join_transaction_with_building_details(
     transaction_data: pd.DataFrame,
     building_details: pd.DataFrame,
     params: Dict[str, Any]
 ) -> pd.DataFrame:
-    """Enhanced join function with fuzzy matching fallback"""
+    """Hybrid join function: Exact ID matching first, fuzzy matching fallback with validation"""
     
     # Initialize logging
     logger = logging.getLogger(__name__)
     
     join_params = params.get("join", {})
     
-    # Get join configuration with defaults
-    use_fuzzy_matching = join_params.get("use_fuzzy_matching", True)
-    fuzzy_threshold = join_params.get("fuzzy_threshold", 80.0)
+    # Get join configuration with NEW DEFAULTS
+    use_exact_id_first = join_params.get("use_exact_id_first", True)  # NEW: Default to exact ID first
+    fallback_to_fuzzy = join_params.get("fallback_to_fuzzy", True)  # NEW: Fallback to fuzzy
+    fuzzy_threshold = join_params.get("fuzzy_threshold", 85.0)  # CHANGED: Increased to 85%
+    validate_fuzzy_substring = join_params.get("validate_fuzzy_substring", True)  # NEW: Validate fuzzy matches
     transaction_name_col = join_params.get("transaction_name_col", "propertyNameEn")
     building_name_col = join_params.get("building_name_col", "building_name")
+    left_key = join_params.get("left_on", "propertyId")
+    right_key = join_params.get("right_on", "property_id")
+    cast_keys = join_params.get("cast_join_keys", True)
     
-    # Debug logging
     logger.info(f"Joining transaction data ({len(transaction_data)} rows) with building details ({len(building_details)} rows)")
+    logger.info(f"Strategy: Exact ID matching first={use_exact_id_first}, Fuzzy fallback={fallback_to_fuzzy}, Threshold={fuzzy_threshold}%")
     
-    # Check if name columns exist for fuzzy matching
+    # Validate required columns exist
     if transaction_name_col not in transaction_data.columns:
-        logger.error(f"Transaction name column '{transaction_name_col}' not found. Available columns: {list(transaction_data.columns)}")
+        logger.error(f"Transaction name column '{transaction_name_col}' not found")
         raise KeyError(f"Column '{transaction_name_col}' not found in transaction data")
     
     if building_name_col not in building_details.columns:
-        logger.error(f"Building name column '{building_name_col}' not found. Available columns: {list(building_details.columns)}")
+        logger.error(f"Building name column '{building_name_col}' not found")
         raise KeyError(f"Column '{building_name_col}' not found in building details")
-
-    # Use fuzzy matching approach
-    if use_fuzzy_matching:
-        logger.info(f"Using fuzzy matching: transaction[{transaction_name_col}] -> building[{building_name_col}]")
-        logger.info(f"Fuzzy matching threshold: {fuzzy_threshold}%")
+    
+    # Make copies to avoid modifying originals
+    trans_copy = transaction_data.copy()
+    buildings_copy = building_details.copy()
+    
+    # ==================== STEP 1: EXACT ID MATCHING ====================
+    exact_matched = pd.DataFrame()
+    unmatched_trans = trans_copy.copy()
+    
+    if use_exact_id_first:
+        logger.info(f"Step 1: Attempting exact ID matching on '{left_key}' == '{right_key}'")
+        
+        # Check if join keys exist
+        if left_key not in trans_copy.columns:
+            logger.warning(f"Join key '{left_key}' not found in transaction data - skipping exact matching")
+        elif right_key not in buildings_copy.columns:
+            logger.warning(f"Join key '{right_key}' not found in building details - skipping exact matching")
+        else:
+            # Cast keys if needed
+            if cast_keys:
+                trans_copy[left_key] = trans_copy[left_key].astype(str)
+                buildings_copy[right_key] = buildings_copy[right_key].astype(str)
+            
+            # Filter transactions with non-null propertyId
+            trans_with_id = trans_copy[trans_copy[left_key].notna() & (trans_copy[left_key] != 'nan')].copy()
+            
+            if len(trans_with_id) > 0:
+                # Perform exact join
+                exact_matched = trans_with_id.merge(
+                    buildings_copy,
+                    left_on=left_key,
+                    right_on=right_key,
+                    how='inner',
+                    suffixes=('', '_building')
+                )
+                exact_matched['_match_method'] = 'exact_id'
+                exact_matched['_match_score'] = 100.0
+                
+                # Identify unmatched transactions (for fuzzy fallback)
+                matched_indices = exact_matched.index
+                unmatched_trans = trans_copy[~trans_copy.index.isin(matched_indices)].copy()
+                
+                logger.info(f"  ✓ Exact ID matched: {len(exact_matched):,} transactions ({len(exact_matched)/len(trans_copy)*100:.2f}%)")
+                logger.info(f"  ⚠ Unmatched (for fuzzy): {len(unmatched_trans):,} transactions ({len(unmatched_trans)/len(trans_copy)*100:.2f}%)")
+            else:
+                logger.info(f"  ⚠ No transactions have valid {left_key} - skipping exact matching")
+    
+    # ==================== STEP 2: FUZZY MATCHING FALLBACK ====================
+    fuzzy_matched = pd.DataFrame()
+    final_unmatched = unmatched_trans.copy()
+    
+    if fallback_to_fuzzy and len(unmatched_trans) > 0:
+        logger.info(f"Step 2: Attempting fuzzy matching for {len(unmatched_trans):,} unmatched transactions")
+        logger.info(f"  Fuzzy threshold: {fuzzy_threshold}%")
+        logger.info(f"  Substring validation: {validate_fuzzy_substring}")
         
         try:
-            merged_df, match_stats_df = fuzzy_match_properties(
-                transaction_data,
-                building_details,
+            # Check if rapidfuzz is available
+            if not RAPIDFUZZ_AVAILABLE:
+                raise ImportError("rapidfuzz library is required for fuzzy matching")
+            
+            # Perform fuzzy matching on unmatched transactions
+            fuzzy_result, match_stats_df = fuzzy_match_properties(
+                unmatched_trans,
+                buildings_copy,
                 transaction_name_col,
                 building_name_col,
                 fuzzy_threshold
             )
             
-            # Save match statistics for analysis
+            # Filter to only successful matches
+            fuzzy_matched = fuzzy_result[fuzzy_result['_merge_status'] == 'matched'].copy()
+            
+            # ==================== STEP 3: VALIDATE FUZZY MATCHES ====================
+            if validate_fuzzy_substring and len(fuzzy_matched) > 0:
+                logger.info(f"Step 3: Validating {len(fuzzy_matched):,} fuzzy matches with substring check")
+                
+                def validate_match(row):
+                    """Check if transaction name is substring of building name or vice versa"""
+                    trans_name = str(row.get(transaction_name_col, '')).lower().strip()
+                    building_name = str(row.get(building_name_col, '')).lower().strip()
+                    
+                    # Skip if either is empty
+                    if not trans_name or not building_name:
+                        return False
+                    
+                    # Check if one is contained in the other
+                    is_substring = (trans_name in building_name) or (building_name in trans_name)
+                    return is_substring
+                
+                # Apply validation
+                fuzzy_matched['_substring_valid'] = fuzzy_matched.apply(validate_match, axis=1)
+                
+                # Separate validated and rejected matches
+                validated_matches = fuzzy_matched[fuzzy_matched['_substring_valid']].copy()
+                rejected_matches = fuzzy_matched[~fuzzy_matched['_substring_valid']].copy()
+                
+                logger.info(f"  ✓ Validated fuzzy matches: {len(validated_matches):,}")
+                logger.info(f"  ✗ Rejected fuzzy matches: {len(rejected_matches):,}")
+                
+                # Log rejected matches for review
+                if len(rejected_matches) > 0:
+                    logger.warning("Sample rejected fuzzy matches:")
+                    for _, row in rejected_matches.head(10).iterrows():
+                        logger.warning(f"  '{row.get(transaction_name_col)}' -> '{row.get(building_name_col)}' (score: {row.get('match_score', 0):.1f}%)")
+                
+                # Use only validated matches
+                fuzzy_matched = validated_matches.copy()
+                fuzzy_matched['_match_method'] = 'fuzzy_validated'
+                
+                # Add rejected matches back to unmatched
+                final_unmatched = pd.concat([
+                    unmatched_trans[~unmatched_trans.index.isin(fuzzy_matched.index)],
+                    rejected_matches[[col for col in rejected_matches.columns if col in unmatched_trans.columns]]
+                ], ignore_index=True)
+            else:
+                fuzzy_matched['_match_method'] = 'fuzzy'
+                final_unmatched = unmatched_trans[~unmatched_trans.index.isin(fuzzy_matched.index)].copy()
+            
+            # Save fuzzy match statistics
             if not match_stats_df.empty:
                 match_stats_file = params.get('match_stats_file', 'data/08_reporting/fuzzy_match_stats.csv')
                 os.makedirs(os.path.dirname(match_stats_file), exist_ok=True)
                 match_stats_df.to_csv(match_stats_file, index=False)
-                logger.info(f"Match statistics saved to: {match_stats_file}")
-                
-                # Show sample matches for verification
-                logger.info("Sample fuzzy matches:")
-                for _, row in match_stats_df.head(10).iterrows():
-                    logger.info(f"  '{row['transaction_name']}' -> '{row['matched_building_name']}' ({row['match_score']:.1f}%)")
+                logger.info(f"  Match statistics saved to: {match_stats_file}")
             
-            return merged_df
+            logger.info(f"  ✓ Fuzzy matched: {len(fuzzy_matched):,} transactions ({len(fuzzy_matched)/len(unmatched_trans)*100:.2f}% of unmatched)")
             
         except ImportError:
-            logger.error("rapidfuzz library not found. Please install: pip install rapidfuzz")
-            raise ImportError("rapidfuzz library is required for fuzzy matching. Install with: pip install rapidfuzz")
+            logger.error("rapidfuzz library not found. Install with: pip install rapidfuzz")
+            logger.warning("Skipping fuzzy matching - using exact matches only")
         except Exception as e:
             logger.error(f"Fuzzy matching failed: {e}")
-            raise
+            logger.warning("Skipping fuzzy matching - using exact matches only")
     
+    # ==================== STEP 4: COMBINE RESULTS ====================
+    logger.info("Step 4: Combining all results")
+    
+    # Ensure exact_matched has fuzzy match columns (for consistency)
+    if len(exact_matched) > 0:
+        if 'matched_building_name' not in exact_matched.columns:
+            exact_matched['matched_building_name'] = pd.NA
+        if 'match_score' not in exact_matched.columns:
+            exact_matched['match_score'] = 100.0  # Exact matches are 100%
+    
+    # Ensure fuzzy_matched has match columns (should already exist from fuzzy function)
+    if len(fuzzy_matched) > 0:
+        # Rename columns from fuzzy matching if needed
+        if 'matched_building_name' not in fuzzy_matched.columns and building_name_col in fuzzy_matched.columns:
+            fuzzy_matched['matched_building_name'] = fuzzy_matched[building_name_col]
+    
+    # Combine exact and fuzzy matches
+    all_matched = pd.DataFrame()
+    
+    if len(exact_matched) > 0 and len(fuzzy_matched) > 0:
+        # Get union of all columns
+        all_cols = list(set(exact_matched.columns) | set(fuzzy_matched.columns))
+        
+        # Add missing columns to each dataframe
+        for col in all_cols:
+            if col not in exact_matched.columns:
+                exact_matched[col] = pd.NA
+            if col not in fuzzy_matched.columns:
+                fuzzy_matched[col] = pd.NA
+        
+        # Now concat with all columns aligned
+        all_matched = pd.concat([
+            exact_matched[all_cols],
+            fuzzy_matched[all_cols]
+        ], ignore_index=True)
+    elif len(exact_matched) > 0:
+        all_matched = exact_matched.copy()
+    elif len(fuzzy_matched) > 0:
+        all_matched = fuzzy_matched.copy()
+    
+    # Add unmatched transactions
+    if len(final_unmatched) > 0:
+        # IMPORTANT: Preserve original transaction columns!
+        # Start with original unmatched transactions to keep ALL transaction data
+        final_unmatched_clean = trans_copy[trans_copy.index.isin(final_unmatched.index)].copy()
+        
+        # Add match metadata columns
+        final_unmatched_clean['_match_method'] = 'unmatched'
+        final_unmatched_clean['_match_score'] = 0.0
+        final_unmatched_clean['matched_building_name'] = pd.NA
+        final_unmatched_clean['match_score'] = 0.0
+        
+        # Align columns with matched data
+        if len(all_matched) > 0:
+            # Get building columns (columns in matched but not in transactions)
+            transaction_cols = set(trans_copy.columns)
+            building_cols = set(all_matched.columns) - transaction_cols
+            
+            # Add building columns to unmatched (with NA)
+            for col in building_cols:
+                if col not in final_unmatched_clean.columns:
+                    final_unmatched_clean[col] = pd.NA
+            
+            # Add match metadata columns to matched if missing
+            for col in ['_match_method', '_match_score', 'matched_building_name', 'match_score']:
+                if col not in all_matched.columns:
+                    all_matched[col] = pd.NA if col in ['matched_building_name'] else 0.0
+            
+            # Get final column list (union but preserve order)
+            all_cols = list(all_matched.columns) + [c for c in final_unmatched_clean.columns if c not in all_matched.columns]
+            
+            # Ensure both have all columns
+            for col in all_cols:
+                if col not in all_matched.columns:
+                    all_matched[col] = pd.NA
+                if col not in final_unmatched_clean.columns:
+                    final_unmatched_clean[col] = pd.NA
+            
+            # Combine with all columns
+            result_df = pd.concat([
+                all_matched[all_cols],
+                final_unmatched_clean[all_cols]
+            ], ignore_index=True)
+        else:
+            result_df = final_unmatched_clean.copy()
     else:
-        # Fallback to exact matching (original logic)
-        left_key = join_params.get("left_on", "propertyId")
-        right_key = join_params.get("right_on", "property_id")
-        join_type = join_params.get("type", "left")
-        cast_keys = join_params.get("cast_join_keys", True)
-
-        logger.info(f"Using exact matching: transaction[{left_key}] -> building[{right_key}]")
-        
-        # Check if join keys exist
-        if left_key not in transaction_data.columns:
-            logger.error(f"Join key '{left_key}' not found in transaction data. Available columns: {list(transaction_data.columns)}")
-            raise KeyError(f"Column '{left_key}' not found in transaction data")
-        
-        if right_key not in building_details.columns:
-            logger.error(f"Join key '{right_key}' not found in building details. Available columns: {list(building_details.columns)}")
-            raise KeyError(f"Column '{right_key}' not found in building details")
-
-        # Type conversion if enabled
-        if cast_keys:
-            transaction_data = transaction_data.copy()
-            building_details = building_details.copy()
-            transaction_data[left_key] = transaction_data[left_key].astype(str)
-            building_details[right_key] = building_details[right_key].astype(str)
-        
-        # Check for null values in join keys
-        left_nulls = transaction_data[left_key].isnull().sum()
-        right_nulls = building_details[right_key].isnull().sum()
-        
-        if left_nulls > 0:
-            logger.warning(f"Found {left_nulls} null values in transaction join key '{left_key}'")
-        if right_nulls > 0:
-            logger.warning(f"Found {right_nulls} null values in building details join key '{right_key}'")
-        
-        # Perform the join
-        merged_df = transaction_data.merge(
-            building_details,
-            left_on=left_key,
-            right_on=right_key,
-            how=join_type,
-            indicator=True
-        )
-        
-        # Add merge status column
-        merged_df["_merge_status"] = merged_df["_merge"].map({
-            "left_only": "transaction_only",
-            "right_only": "detail_only", 
-            "both": "matched"
-        })
-        merged_df = merged_df.drop(columns=["_merge"])
-        
-        # Log join statistics
-        merge_stats = merged_df["_merge_status"].value_counts()
-        logger.info(f"Join completed. Result: {len(merged_df)} rows")
-        for status, count in merge_stats.items():
-            logger.info(f"  {status}: {count} rows")
-        
-        return merged_df
+        result_df = all_matched.copy()
+    
+    # ==================== FINAL STATISTICS ====================
+    logger.info("="*80)
+    logger.info("JOIN SUMMARY:")
+    logger.info(f"  Total transactions: {len(trans_copy):,}")
+    logger.info(f"  Exact ID matched: {len(exact_matched):,} ({len(exact_matched)/len(trans_copy)*100:.2f}%)")
+    logger.info(f"  Fuzzy matched: {len(fuzzy_matched):,} ({len(fuzzy_matched)/len(trans_copy)*100:.2f}%)")
+    logger.info(f"  Unmatched: {len(final_unmatched):,} ({len(final_unmatched)/len(trans_copy)*100:.2f}%)")
+    logger.info(f"  Total result rows: {len(result_df):,}")
+    logger.info("="*80)
+    
+    return result_df
 
 ############################### Final Database Cleansing ###############################
 

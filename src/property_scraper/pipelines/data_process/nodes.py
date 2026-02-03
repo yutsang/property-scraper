@@ -1803,47 +1803,60 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("📋 Selecting columns for Centaline Office/Industrial/Retail...")
     
-    # Current available columns (commented for reference)
-    # Uncomment and reorder the columns you want to keep
-    selected_columns = [
+    # Log available columns for debugging
+    logger.info(f"  Available columns in input: {len(df.columns)}")
+    
+    # Core columns to select (filter to only those that exist)
+    desired_columns = [
         'transactionDate',  # Will be renamed to 'date'
-        'zoneEn',  # zoneEn
-        'districtNameEn',  # districtNameEn
-        'propertyUsageDisplayName',  # propertyUsageDisplayName
-        'grade',  # grade
-        'propertyNameEn',  # propertyNameEn
-        'propertyNameCn',  # propertyNameCn
-        'floor',  # floor
-        'unit',  # unit
-        'transactionType',  # transactionType
-        'transactionArea',  # transactionArea
-        'price',  # price
-        'avgPrice',  # avgPrice
-        'full_address',  # full_address
-        'completion_year',  # completion_year
-        'age',  # age
-        'source_url',  # source_url
-        'management_company',  # management_company
-        'developers',  # developers
-        'carpark',  # carpark
-        'matched_building_name',  # matched_building_name
-        'match_score',  # match_score
-        'sourceDisplayName',  # sourceDisplayName
-        'Datasource',  # Datasource
-        'id'  # id
+        'zoneEn',
+        'districtNameEn',
+        'propertyUsageDisplayName',
+        'grade',
+        'propertyNameEn',
+        'propertyNameCn',
+        'floor',
+        'unit',
+        'transactionType',
+        'transactionArea',
+        'price',
+        'avgPrice',
+        'full_address',
+        'completion_year',
+        'age',
+        'source_url',
+        'management_company',
+        'developers',
+        'carpark',
+        'sourceDisplayName',
+        'Datasource',
+        'id',
+        # Optional columns from hybrid matching
+        'matched_building_name',
+        'match_score',
+        '_match_method',
+        '_match_score',
     ]
     
-    # Use the selected columns defined above
-    # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
+    # Filter to only columns that actually exist in the dataframe
+    available_cols = df.columns.tolist()
+    selected_columns = [col for col in desired_columns if col in available_cols]
     
-    # Filter dataframe to selected columns
-    result_df = df[selected_columns]
+    # Log which columns are included/missing
+    missing_cols = [col for col in desired_columns if col not in available_cols]
+    if missing_cols:
+        logger.info(f"  ⚠ Columns not found (will be skipped): {missing_cols}")
+    
+    logger.info(f"  ✓ Selected {len(selected_columns)} columns (out of {len(desired_columns)} desired)")
+    
+    # Select available columns
+    result_df = df[selected_columns].copy()
 
     # Rename transactionDate to date
     if 'transactionDate' in result_df.columns:
         result_df = result_df.rename(columns={'transactionDate': 'date'})
 
-    logger.info(f"✅ Selected {len(selected_columns)} columns for Centaline OIR")
+    logger.info(f"✅ Column selection completed")
     logger.info(f"📊 Final shape: {result_df.shape}")
 
     return result_df
@@ -1967,6 +1980,13 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
     # Use the selected columns defined above
     # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
     
+    # Ensure any missing columns exist to keep schema stable
+    missing_columns = [col for col in selected_columns if col not in df.columns]
+    if missing_columns:
+        for col in missing_columns:
+            df[col] = 'None'
+        logger.warning(f"Missing columns filled with 'None': {missing_columns}")
+
     # Filter dataframe to selected columns
     result_df = df[selected_columns]
 

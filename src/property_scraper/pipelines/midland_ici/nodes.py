@@ -7,7 +7,7 @@ import time
 import logging
 import os
 from typing import Dict, List, Optional, Union, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Import node tracking utilities
 from ...utils.node_tracker import should_run_node, record_node_execution
@@ -552,8 +552,6 @@ def process_buildings(
 
 import requests
 import time
-import random
-from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from tqdm import tqdm
 import json
@@ -582,8 +580,15 @@ def sanitize_parquet_columns(df: pd.DataFrame) -> pd.DataFrame:
 def ml_ici_scrape_trans(
     params: Dict[str, Any]) -> pd.DataFrame:
     """
-    Scrape all transaction data from Midland ICI website and return as pandas DataFrame.
-    Includes node execution tracking to avoid re-running on the same day.
+    Scrape transaction data from Midland ICI using NEW API endpoint.
+    
+    NEW API ENDPOINT (as of Jan 2026):
+    - URL: https://data.midlandici.com.hk/search/v1/transaction
+    - Requires session cookies from main landing page
+    - Returns current data (2026-01-30)
+    - Different structure: List with type/count/results
+    
+    Includes node execution tracking and incremental updates.
     """
     
     # Initialize logging first
@@ -604,73 +609,170 @@ def ml_ici_scrape_trans(
                 return pd.DataFrame()
         return pd.DataFrame()
     all_transactions = []
-    
-    # Generate month ranges
-    month_ranges = []
-    start_date = params['global']['start_date']
-    current = datetime.now()
-    
-    # Convert string dates to datetime objects
-    if isinstance(start_date, str):
-        start_date = datetime.fromisoformat(start_date)
+
+    def map_ics_type(value: str) -> str:
+        if not value:
+            return None
+        mapping = {
+            "COMMERCIAL": "commercial",
+            "INDUSTRIAL": "industrial",
+            "RETAIL": "retail",
+        }
+        return mapping.get(str(value).upper(), str(value).lower())
+
+    def normalize_transaction(record: Dict[str, Any]) -> Dict[str, Any]:
+        area = record.get("area") or {}
+        district = record.get("district") or {}
+        streets = record.get("streets") or {}
+        building = record.get("building") or {}
         
-    while current >= start_date:
-        month_end = current
-        month_start = current.replace(day=1)
-        month_ranges.append((month_start.strftime("%Y-%m-%d"), month_end.strftime("%Y-%m-%d")))
-        current = month_start - relativedelta(days=1)
-    
-    # Scrape data for each month range
-    with tqdm(month_ranges, desc="Processing Trans", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as month_pbar:
-        for date_min, date_max in month_pbar:
-            month_data = []
-            cursor = 1
-            
-            while True:
+        # Normalize date format to match old data (yyyy-mm-dd hh:mm:ss)
+        tx_date_raw = record.get("txDate")
+        tx_date_normalized = tx_date_raw
+        if tx_date_raw and len(str(tx_date_raw)) == 10:  # Date only format 'yyyy-mm-dd'
+            tx_date_normalized = f"{tx_date_raw} 00:00:00"  # Add timestamp to match old format
+
+        return {
+            "tx_date": tx_date_normalized,  # Standardized format
+            "tx_type": record.get("txType"),
+            "area": area.get("value"),
+            "flat": str(record.get("flat")) if record.get("flat") else None,  # Ensure string
+            "floor": str(record.get("floor")) if record.get("floor") else None,  # Ensure string
+            "ft_rent": record.get("ftRent"),
+            "ft_sell": record.get("ftPrice"),
+            "rent": record.get("rent"),
+            "sell": record.get("price"),
+            "price": record.get("price"),
+            "price_per_feet": record.get("ftPrice") or record.get("ftRent"),
+            "ics_type": map_ics_type(record.get("sbuOwner")),
+            "sbuOwner": record.get("sbuOwner"),
+            "upload_source": record.get("uploadSource"),
+            "dist_code": district.get("distCode"),
+            "dist_name_en": district.get("name"),
+            "street_name_zh": streets.get("name"),
+            "street_name_en": streets.get("name"),
+            "streetno": str(streets.get("streetno")) if streets.get("streetno") else None,
+            "building_id": str(building.get("id")) if building.get("id") else None,  # Ensure string
+            "eng_name": building.get("name"),
+            "chi_name": building.get("name"),
+            "URL": record.get("propertyListUrl"),
+            "Name": record.get("name"),
+        }
+
+    mici_params = params.get("midland_ici", {})
+    api_url = mici_params["transaction_url"]
+    landing_url = mici_params.get(
+        "transaction_landing_url",
+        "https://www.midlandici.com.hk/zh-hk/listing/transaction/ics",
+    )
+    headers_main = mici_params.get("transaction_headers_main", mici_params.get("headers", {}))
+    headers_api = mici_params.get("transaction_headers_api", mici_params.get("headers", {}))
+    api_params = dict(mici_params.get("transaction_api_params", {}))
+    page_size = int(mici_params.get("transaction_page_size", 100))
+    api_params["limit"] = page_size
+    api_params.setdefault("page", 1)
+
+    # Convert string dates to datetime objects (prefer incremental start date)
+    start_date = params["global"]["start_date"]
+    date_columns = ["date", "transaction_date", "tx_date", "Date", "transactionDate"]
+    if os.path.exists(output_file):
+        try:
+            existing_df = pd.read_parquet(output_file)
+            for col in date_columns:
+                if col in existing_df.columns:
+                    parsed = pd.to_datetime(existing_df[col], errors="coerce")
+                    if parsed.notna().any():
+                        start_date = parsed.max().date() + timedelta(days=1)
+                        logger.info(f"Incremental fetch start date set to {start_date}")
+                        break
+        except Exception as exc:
+            logger.warning(f"Failed to derive incremental start date: {exc}")
+
+    if isinstance(start_date, str):
+        start_date = datetime.fromisoformat(start_date).date()
+    elif isinstance(start_date, datetime):
+        start_date = start_date.date()
+
+    session = requests.Session()
+    max_retries = int(mici_params.get("max_retries", 3))
+    request_delay = float(mici_params.get("request_delay", 0.5))
+    total_count = None
+    pages_processed = 0
+
+    # Step 1: Load landing page to get cookies
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = session.get(landing_url, headers=headers_main, timeout=15)
+            response.raise_for_status()
+            break
+        except requests.exceptions.RequestException as exc:
+            logger.warning(f"Landing page attempt {attempt} failed: {exc}")
+            if attempt == max_retries:
+                raise
+            time.sleep(2 + attempt)
+
+    # Step 2: Page through API results
+    with tqdm(desc="Processing Trans", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as page_pbar:
+        while True:
+            api_params["page"] = pages_processed + 1
+            data = None
+            for attempt in range(1, max_retries + 1):
                 try:
-                    response = requests.get(
-                        params['midland_ici']['transaction_url'],
-                        headers=params['midland_ici']['headers'],
-                        params={
-                            "ics_type": "",
-                            "date_min": date_min,
-                            "date_max": date_max,
-                            "lang": "english",
-                            "page_size": params['midland_ici']['max_page_size'],
-                            "cursor": cursor,
-                            "order": "tx_date-desc"
-                        }
-                    )
+                    response = session.get(api_url, headers=headers_api, params=api_params, timeout=15)
                     response.raise_for_status()
                     data = response.json()
-
-                    if data is None:
-                        logger.warning(f"Received None response from API for cursor {cursor}")
+                    break
+                except (requests.exceptions.RequestException, json.JSONDecodeError) as exc:
+                    logger.warning(f"API request failed on page {api_params['page']} (attempt {attempt}): {exc}")
+                    if attempt == max_retries:
                         break
+                    time.sleep(2 + attempt)
 
-                    if not data.get('transactions'):
-                        break
+            if data is None:
+                logger.error(f"Exceeded retries for page {api_params['page']}")
+                break
 
-                    # Update transaction tracking
-                    month_data.extend(data['transactions'])
-                    current_total = len(all_transactions) + len(month_data)
-                    month_pbar.set_postfix_str(f"Trans: {current_total}")
+            if not isinstance(data, list) or not data:
+                logger.warning(f"Unexpected API response format on page {api_params['page']}")
+                break
 
-                    # Pagination control
-                    if (len(month_data) >= data.get('count', 0) or 
-                        len(data['transactions']) < params['midland_ici']['max_page_size']):
-                        break
+            item = data[0] or {}
+            total_count = total_count or item.get("count", 0)
+            results = item.get("results") or []
 
-                    cursor += 1
-                    time.sleep(random.uniform(0.5, 1.5))
+            if not results:
+                break
 
-                except (requests.exceptions.RequestException, json.JSONDecodeError) as e:
-                    print(f"Error: {e}. Retrying...")
-                    time.sleep(5)
-                    continue
+            page_records = []
+            oldest_in_page = None
+            for record in results:
+                tx_date = record.get("txDate")
+                try:
+                    tx_date_obj = datetime.fromisoformat(tx_date).date() if tx_date else None
+                except ValueError:
+                    tx_date_obj = None
 
-            all_transactions.extend(month_data)
-            
+                if tx_date_obj:
+                    oldest_in_page = tx_date_obj if not oldest_in_page else min(oldest_in_page, tx_date_obj)
+                    if tx_date_obj < start_date:
+                        continue
+
+                page_records.append(normalize_transaction(record))
+
+            if page_records:
+                all_transactions.extend(page_records)
+            pages_processed += 1
+            page_pbar.update(1)
+            page_pbar.set_postfix_str(f"Trans: {len(all_transactions):,}/{total_count or 0:,}")
+
+            if total_count and len(all_transactions) >= total_count:
+                break
+
+            if oldest_in_page and oldest_in_page < start_date:
+                break
+
+            time.sleep(request_delay)
+
     trans_df = pd.DataFrame(all_transactions)
         
     # Add sanitization step
@@ -682,14 +784,59 @@ def ml_ici_scrape_trans(
         if isinstance(x, str) else x
     )
     
-    # Save the transaction data to file
+    # MERGE with existing data (don't overwrite!)
     if not trans_df.empty:
         try:
-            # Get the output file path from catalog
             output_file = "data/01_raw/midland_ici_trans.parquet"
             os.makedirs(os.path.dirname(output_file), exist_ok=True)
+            
+            # Load existing data if available
+            if os.path.exists(output_file):
+                try:
+                    existing_df = pd.read_parquet(output_file, engine='pyarrow')
+                    logger.info(f"Loading {len(existing_df):,} existing transactions for merge")
+                    
+                    # Align columns
+                    all_cols = sorted(set(existing_df.columns) | set(trans_df.columns))
+                    for col in all_cols:
+                        if col not in existing_df.columns:
+                            existing_df[col] = pd.NA
+                        if col not in trans_df.columns:
+                            trans_df[col] = pd.NA
+                    
+                    existing_df = existing_df[all_cols]
+                    trans_df = trans_df[all_cols]
+                    
+                    # Fix data types before concatenation
+                    for col in all_cols:
+                        # Ensure string columns stay as strings
+                        if col in ['building_id', 'dist_code', 'floor', 'flat', 'streetno']:
+                            existing_df[col] = existing_df[col].astype(str).replace('nan', pd.NA).replace('None', pd.NA)
+                            trans_df[col] = trans_df[col].astype(str).replace('nan', pd.NA).replace('None', pd.NA)
+                    
+                    # Concatenate
+                    combined_df = pd.concat([existing_df, trans_df], ignore_index=True)
+                    logger.info(f"Combined: {len(combined_df):,} ({len(existing_df):,} existing + {len(trans_df):,} new)")
+                    
+                    # Deduplicate
+                    dedup_cols = ['tx_date', 'building_id', 'floor', 'flat']
+                    existing_dedup_cols = [col for col in dedup_cols if col in combined_df.columns]
+                    
+                    if existing_dedup_cols:
+                        before_dedup = len(combined_df)
+                        combined_df = combined_df.drop_duplicates(subset=existing_dedup_cols, keep='last')
+                        logger.info(f"Deduplication: {before_dedup:,} -> {len(combined_df):,} (removed {before_dedup - len(combined_df):,} duplicates)")
+                    
+                    trans_df = combined_df
+                    
+                except Exception as e:
+                    logger.warning(f"Failed to load existing data for merge: {e}")
+                    logger.info("Saving new data only")
+            
+            # Save merged/new data
             trans_df.to_parquet(output_file, engine='pyarrow', index=False)
-            logger.info(f"Saved {len(trans_df)} transactions to {output_file}")
+            logger.info(f"Saved {len(trans_df):,} total transactions to {output_file}")
+            
         except Exception as e:
             logger.error(f"Failed to save transactions to {output_file}: {str(e)}")
     
@@ -699,7 +846,7 @@ def ml_ici_scrape_trans(
         node_type="transaction",
         metadata={
             "records_processed": len(trans_df),
-            "month_ranges_processed": len(month_ranges),
+            "pages_processed": pages_processed,
             "execution_time": datetime.now().isoformat()
         }
     )

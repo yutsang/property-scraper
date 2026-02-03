@@ -118,9 +118,13 @@ class NodeExecutionTracker:
     def _should_run_transaction_node(self, node_name: str, data_file_path: str, tracking_params: Optional[Dict[str, Any]] = None) -> bool:
         """
         Check if transaction node should run by comparing max date in dataset with current date.
+        
+        Logic:
+        - If max_date >= today: SKIP (dataset is up to date, no new data available)
+        - If max_date < today: RUN (scrape from max_date+1 to today)
         """
         if not os.path.exists(data_file_path):
-            logger.info(f"Node '{node_name}' - no existing data file found - will execute")
+            logger.info(f"Node '{node_name}' - no existing data file found - will execute (initial scrape)")
             return True
         
         try:
@@ -134,7 +138,7 @@ class NodeExecutionTracker:
                 return True
             
             if df.empty:
-                logger.info(f"Node '{node_name}' - empty dataset found - will execute")
+                logger.info(f"Node '{node_name}' - empty dataset found - will execute (initial scrape)")
                 return True
             
             # Find date column
@@ -150,63 +154,113 @@ class NodeExecutionTracker:
                 logger.warning(f"Node '{node_name}' - no date column found in {data_file_path}, will execute")
                 return True
             
-            # Parse dates and find max
+            # Parse dates and find max with validation
             df_temp = df.copy()
             df_temp['parsed_date'] = df_temp[date_col].apply(self._parse_date_string)
+            df_temp['parse_success'] = df_temp['parsed_date'].notna()
+            
             valid_dates = df_temp['parsed_date'].dropna()
             
             if valid_dates.empty:
                 logger.info(f"Node '{node_name}' - no valid dates found - will execute")
                 return True
             
+            # Calculate max date and validation metrics
             max_date = valid_dates.max()
+            min_date = valid_dates.min()
             current_date = datetime.now().date()
             
-            # Check if we need to scrape (max date is not today)
+            # VALIDATION: Check for data quality issues
+            parse_rate = (df_temp['parse_success'].sum() / len(df_temp)) * 100
+            future_dates = (valid_dates > current_date).sum()
+            very_old = (valid_dates < datetime(1990, 1, 1).date()).sum()
+            
+            logger.info(f"  Data quality: {parse_rate:.2f}% parsed successfully ({df_temp['parse_success'].sum():,}/{len(df_temp):,})")
+            logger.info(f"  Date range: {min_date} to {max_date}")
+            
+            if future_dates > 0:
+                logger.warning(f"  ⚠️ Found {future_dates} future dates - data may have issues!")
+            if very_old > 0:
+                logger.warning(f"  ⚠️ Found {very_old} very old dates (before 1990) - check data quality!")
+            if parse_rate < 99.0:
+                logger.warning(f"  ⚠️ Parse rate below 99% - some dates may be malformed!")
+            
+            # Check if we need to scrape (max date is before today)
             if max_date >= current_date:
-                logger.info(f"Node '{node_name}' - dataset is up to date (max date: {max_date}) - skipping")
+                logger.info(f"Node '{node_name}' - dataset is up to date (max date: {max_date}, current: {current_date}) - skipping")
+                logger.info(f"  No new data available - scraper would fetch from {max_date + timedelta(days=1)} onwards")
                 return False
             else:
                 days_behind = (current_date - max_date).days
-                logger.info(f"Node '{node_name}' - dataset is {days_behind} days behind (max date: {max_date}) - will execute")
+                logger.info(f"Node '{node_name}' - dataset is {days_behind} days behind (max date: {max_date}, current: {current_date}) - will execute")
+                logger.info(f"  Scraper will fetch data from {max_date + timedelta(days=1)} to {current_date}")
                 return True
                 
         except Exception as e:
             logger.warning(f"Error checking max date for node '{node_name}': {e}")
+            logger.info(f"Will execute node for safety")
             return True
     
     def _parse_date_string(self, date_str):
-        """Parse date string using multiple formats including ISO 8601."""
+        """
+        Parse date string using format detection.
+        Handles both ISO format (yyyy-mm-dd) and Hong Kong format (dd/mm/yyyy).
+        """
         if not date_str or pd.isna(date_str):
             return None
 
         date_str = str(date_str).strip()
         
-        # Try pandas first (handles ISO 8601 and many other formats)
-        try:
-            parsed = pd.to_datetime(date_str, errors='coerce')
-            if pd.notna(parsed):
-                return parsed.date()
-        except:
-            pass
+        # Quick format detection
+        is_iso_format = (
+            'T' in date_str or  # ISO timestamp with time
+            (len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-')  # yyyy-mm-dd
+        )
+        is_slash_format = '/' in date_str  # dd/mm/yyyy or mm/dd/yyyy
         
-        # Fallback to manual parsing for specific formats
-        date_formats = [
-            '%Y-%m-%dT%H:%M:%S.%fZ',  # ISO 8601 with milliseconds and Z
-            '%Y-%m-%dT%H:%M:%SZ',      # ISO 8601 without milliseconds
-            '%Y-%m-%dT%H:%M:%S',       # ISO 8601 without timezone
-            '%Y-%m-%d',
-            '%d/%m/%Y',
-            '%m/%d/%Y',
-            '%Y%m%d',
-            '%d-%m-%Y'
-        ]
-
+        # Try explicit format parsing first (faster and cleaner)
+        date_formats = []
+        
+        if is_iso_format:
+            # ISO formats - try without dayfirst
+            date_formats = [
+                '%Y-%m-%dT%H:%M:%S.%fZ',  # ISO with milliseconds and Z
+                '%Y-%m-%dT%H:%M:%S.%f',   # ISO with milliseconds
+                '%Y-%m-%dT%H:%M:%SZ',     # ISO without milliseconds
+                '%Y-%m-%dT%H:%M:%S',      # ISO without timezone
+                '%Y-%m-%d',               # Simple yyyy-mm-dd
+            ]
+        elif is_slash_format:
+            # Slash formats - try dd/mm/yyyy first (Hong Kong standard)
+            date_formats = [
+                '%d/%m/%Y',   # dd/mm/yyyy (Hong Kong)
+                '%m/%d/%Y',   # mm/dd/yyyy (US)
+            ]
+        else:
+            # Other formats
+            date_formats = [
+                '%Y%m%d',     # yyyymmdd
+                '%d-%m-%Y',   # dd-mm-yyyy
+                '%Y-%m-%d',   # yyyy-mm-dd
+            ]
+        
+        # Try each format
         for fmt in date_formats:
             try:
                 return datetime.strptime(date_str, fmt).date()
             except (ValueError, TypeError):
                 continue
+        
+        # Fallback to pandas auto-detection (only if explicit formats failed)
+        try:
+            # Use dayfirst only for slash formats that aren't ISO
+            use_dayfirst = is_slash_format and not is_iso_format
+            parsed = pd.to_datetime(date_str, errors='coerce', dayfirst=use_dayfirst)
+            if pd.notna(parsed):
+                return parsed.date()
+        except:
+            pass
+        
         return None
     
     def record_node_execution(self, node_name: str, node_type: str = "default", 
