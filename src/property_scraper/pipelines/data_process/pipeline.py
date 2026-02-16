@@ -78,13 +78,15 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="midland_ici",
                 name="select_midland_ici_columns",
             ),
-            # Step 5: Combine all processed data
+            # Step 5: Combine all processed data and split by residential/commercial
             node(
                 func=merge_and_excel,
                 inputs=["centaline_res", "centaline_oir", "midland_res", "midland_ici"],
                 outputs={
-                'excel_2020_2022': 'output_excel_2020_2022',
-                'excel_2023_current': 'output_excel_2023_current'
+                    'residential_2020_2023': 'output_residential_2020_2023',
+                    'commercial_2020_2023': 'output_commercial_2020_2023',
+                    'residential_2024_current': 'output_residential_2024_current',
+                    'commercial_2024_current': 'output_commercial_2024_current'
                 },
                 name="merge_and_to_excel"
             )

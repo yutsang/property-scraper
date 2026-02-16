@@ -654,4 +654,267 @@ def handle_missing_values(df: pd.DataFrame, strategy: str = 'drop_empty',
             df = df.drop(columns=cols_to_drop)
             logger.info(f"Dropped {len(cols_to_drop)} columns with >{threshold*100}% missing values")
     
+    return df
+
+
+# ============ COMMON DATA PROCESSING UTILITIES ============
+
+def fill_none_values(df: pd.DataFrame, preserve_columns: Optional[List[str]] = None) -> pd.DataFrame:
+    """
+    Fill empty cells and standardize None values across DataFrame.
+    Preserve data types for important columns.
+    
+    Args:
+        df: Input DataFrame
+        preserve_columns: List of columns to preserve data types (dates, numbers, etc.)
+        
+    Returns:
+        DataFrame with standardized None values
+    """
+    df = df.copy()
+    
+    # Default columns to preserve if not specified
+    if preserve_columns is None:
+        preserve_columns = [
+            'estate_name', 'Name', 'title_lg', 'building_name',
+            'date', 'price', 'area', 'ft_price', 'age', 'year',
+            'Tower', 'Floor', 'Flat', 'g_area', 'g_unit_price', 'building_code',
+        ]
+    
+    for col in df.columns:
+        try:
+            if col in preserve_columns:
+                # For important columns, just clean up obvious null indicators
+                if pd.api.types.is_object_dtype(df[col]):
+                    df[col] = df[col].replace(['', ' ', '--', 'NULL', 'null', 'N/A'], None)
+            else:
+                # For other columns, convert to string
+                df[col] = df[col].astype(str)
+                df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], 'None')
+                df[col] = df[col].fillna('None')
+        except Exception as e:
+            logger.warning(f"Error processing column '{col}': {e}")
+            continue
+    
+    return df
+
+
+def convert_transaction_type(trans_type: str, mapping: Optional[Dict[str, str]] = None) -> str:
+    """
+    Convert transaction type codes to readable labels.
+    
+    Args:
+        trans_type: Transaction type code
+        mapping: Custom mapping dictionary (default: {'R': 'RENT', 'S': 'SALE', 'L': 'RENT'})
+        
+    Returns:
+        Readable transaction type label
+    """
+    if pd.isna(trans_type) or trans_type == '':
+        return ''
+    
+    if mapping is None:
+        mapping = {'R': 'RENT', 'S': 'SALE', 'L': 'RENT'}
+    
+    trans_type_str = str(trans_type).upper().strip()
+    return mapping.get(trans_type_str, trans_type_str)
+
+
+def calculate_building_age(completion_date: Union[str, datetime, date], 
+                           current_year: Optional[int] = None) -> Optional[float]:
+    """
+    Calculate building age from completion date.
+    
+    Args:
+        completion_date: Completion date as string, datetime, or date
+        current_year: Current year (default: current year from system)
+        
+    Returns:
+        Building age in years or None if calculation fails
+    """
+    try:
+        if pd.isna(completion_date) or completion_date == 'None':
+            return None
+        
+        if current_year is None:
+            current_year = datetime.now().year
+        
+        # Convert to datetime if string
+        if isinstance(completion_date, str):
+            completion_dt = pd.to_datetime(completion_date, errors='coerce')
+        elif isinstance(completion_date, (datetime, date)):
+            completion_dt = pd.Timestamp(completion_date)
+        else:
+            return None
+        
+        if pd.isna(completion_dt):
+            return None
+        
+        # Calculate age
+        age = (pd.Timestamp.now() - completion_dt).days / 365.25
+        return round(age, 1)
+        
+    except Exception as e:
+        logger.debug(f"Error calculating age for '{completion_date}': {e}")
+        return None
+
+
+def standardize_date_to_format(date_value: Union[str, datetime, date], 
+                               output_format: str = '%Y-%m-%d') -> Optional[str]:
+    """
+    Standardize date to specified format.
+    
+    Args:
+        date_value: Date as string, datetime, or date object
+        output_format: Desired output format (default: '%Y-%m-%d')
+        
+    Returns:
+        Formatted date string or None if conversion fails
+    """
+    try:
+        if pd.isna(date_value) or date_value == '' or date_value == 'None':
+            return None
+        
+        # Convert to datetime
+        if isinstance(date_value, str):
+            dt = pd.to_datetime(date_value, errors='coerce')
+        elif isinstance(date_value, (datetime, date)):
+            dt = pd.Timestamp(date_value)
+        else:
+            return None
+        
+        if pd.isna(dt):
+            return None
+        
+        # Remove timezone if present
+        if dt.tz is not None:
+            dt = dt.tz_localize(None)
+        
+        return dt.strftime(output_format)
+        
+    except Exception as e:
+        logger.debug(f"Error formatting date '{date_value}': {e}")
+        return None
+
+
+def merge_price_columns(df: pd.DataFrame, 
+                       price_col: str, 
+                       rental_col: str, 
+                       transaction_type_col: Optional[str] = None) -> pd.DataFrame:
+    """
+    Merge price and rental columns into a single price column.
+    
+    Args:
+        df: Input DataFrame
+        price_col: Name of the price column
+        rental_col: Name of the rental column
+        transaction_type_col: Optional transaction type column for better merging
+        
+    Returns:
+        DataFrame with merged price column
+    """
+    df = df.copy()
+    
+    def merge_price_rental(row):
+        """Merge price and rental, taking whichever is non-zero"""
+        try:
+            price_val = row[price_col] if pd.notna(row[price_col]) and row[price_col] != 0 else 0
+            rental_val = row[rental_col] if pd.notna(row[rental_col]) and row[rental_col] != 0 else 0
+            
+            # If transaction type is available, use it to determine which value to use
+            if transaction_type_col and transaction_type_col in row:
+                trans_type = str(row[transaction_type_col]).upper()
+                if 'SALE' in trans_type and price_val != 0:
+                    return price_val
+                elif 'RENT' in trans_type and rental_val != 0:
+                    return rental_val
+            
+            # Otherwise, return non-zero value (prioritizing price)
+            if price_val != 0:
+                return price_val
+            elif rental_val != 0:
+                return rental_val
+            else:
+                return 0
+        except Exception as e:
+            logger.warning(f"Error processing price/rental: {e}")
+            return 0
+    
+    if price_col in df.columns and rental_col in df.columns:
+        df[price_col] = df.apply(merge_price_rental, axis=1)
+        logger.info(f"Merged {price_col} and {rental_col} columns")
+    
+    return df
+
+
+def clean_grade_column(grade_value: str) -> str:
+    """
+    Clean grade column by removing 'Grade' suffix.
+    
+    Args:
+        grade_value: Grade value string
+        
+    Returns:
+        Cleaned grade value
+    """
+    if pd.isna(grade_value) or not grade_value:
+        return 'None'
+    
+    grade_str = str(grade_value).strip()
+    if grade_str.lower().endswith(' grade'):
+        return grade_str[:-6].strip()
+    elif grade_str.lower().endswith('grade'):
+        return grade_str[:-5].strip()
+    else:
+        return grade_str
+
+
+def extract_address_from_url(url: str) -> Optional[str]:
+    """
+    Extract address information from Midland transaction URL.
+    
+    Args:
+        url: Transaction URL
+        
+    Returns:
+        Extracted address or None
+    """
+    if pd.isna(url) or not url:
+        return None
+    
+    try:
+        # URL format: https://www.midland.com.hk/en/transaction/Hong-Kong-Island-Mid-Levels-West-Euston-Court-I20240802455
+        url_parts = str(url).split('/transaction/')
+        if len(url_parts) > 1:
+            location_part = url_parts[1]
+            # Remove the identifier at the end (e.g., I20240802455)
+            address_parts = location_part.split('-')
+            if len(address_parts) > 3:
+                # Reconstruct address from parts
+                address = ' '.join(address_parts[:-1])  # Exclude the last identifier
+                return address.replace('-', ' ').strip()
+        return None
+    except Exception as e:
+        logger.debug(f"Error extracting address from URL '{url}': {e}")
+        return None
+
+
+def drop_unwanted_columns(df: pd.DataFrame, columns_to_drop: List[str]) -> pd.DataFrame:
+    """
+    Drop unwanted columns from DataFrame.
+    
+    Args:
+        df: Input DataFrame
+        columns_to_drop: List of column names to drop
+        
+    Returns:
+        DataFrame with columns dropped
+    """
+    df = df.copy()
+    existing_columns_to_drop = [col for col in columns_to_drop if col in df.columns]
+    
+    if existing_columns_to_drop:
+        df = df.drop(columns=existing_columns_to_drop)
+        logger.info(f"Dropped {len(existing_columns_to_drop)} unwanted columns")
+    
     return df 

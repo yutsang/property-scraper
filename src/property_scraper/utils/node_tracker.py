@@ -45,75 +45,27 @@ class NodeExecutionTracker:
     
     def should_run_node(self, node_name: str, node_type: str = "default", tracking_params: Optional[Dict[str, Any]] = None, data_file_path: Optional[str] = None) -> bool:
         """
-        Determine if a node should be run based on max date in dataset vs current date.
+        Determine if a node should be run based on data freshness (max date in dataset).
+        
+        NOTE: This method now ALWAYS returns True for non-transaction nodes.
+        Only transaction nodes perform date-based checks using actual data.
         
         Args:
             node_name: Name of the node
             node_type: Type of node ('transaction', 'estate', 'building', 'default')
-            tracking_params: Optional parameters for configuration
-            data_file_path: Path to the data file to check max date
+            tracking_params: Optional parameters for configuration (unused)
+            data_file_path: Path to the data file to check max date (transaction nodes only)
             
         Returns:
-            bool: True if node should be run, False otherwise
+            bool: True if node should be run (always True except for up-to-date transaction nodes)
         """
-        # For transaction nodes, check max date in dataset
+        # For transaction nodes, check max date in dataset vs current date
         if node_type == "transaction" and data_file_path:
             return self._should_run_transaction_node(node_name, data_file_path, tracking_params)
         
-        # For other nodes, check if run recently (simplified)
-        if node_name not in self.execution_data:
-            logger.info(f"Node '{node_name}' has never been run - will execute")
-            return True
-        
-        last_run = self.execution_data[node_name].get('last_run')
-        if not last_run:
-            logger.info(f"Node '{node_name}' has no last run record - will execute")
-            return True
-        
-        try:
-            last_run_date = datetime.fromisoformat(last_run)
-            current_date = datetime.now()
-            days_since_last_run = (current_date - last_run_date).days
-            
-            # Get skip days from parameters or use defaults
-            if tracking_params:
-                estate_skip = tracking_params.get('estate_skip_days', 7)
-                building_skip = tracking_params.get('building_skip_days', 7)
-                default_skip = tracking_params.get('default_skip_days', 1)
-            else:
-                estate_skip = 7
-                building_skip = 7
-                default_skip = 1
-            
-            # Apply different rules based on node type
-            if node_type == "estate":
-                if days_since_last_run < estate_skip:
-                    logger.info(f"Node '{node_name}' (estate) last run {days_since_last_run} days ago (<{estate_skip}) - skipping")
-                    return False
-                else:
-                    logger.info(f"Node '{node_name}' (estate) last run {days_since_last_run} days ago (≥{estate_skip}) - will execute")
-                    return True
-            
-            elif node_type == "building":
-                if days_since_last_run < building_skip:
-                    logger.info(f"Node '{node_name}' (building) last run {days_since_last_run} days ago (<{building_skip}) - skipping")
-                    return False
-                else:
-                    logger.info(f"Node '{node_name}' (building) last run {days_since_last_run} days ago (≥{building_skip}) - will execute")
-                    return True
-            
-            else:
-                # For other nodes: check default skip days
-                if days_since_last_run < default_skip:
-                    logger.info(f"Node '{node_name}' (default) last run {days_since_last_run} days ago (<{default_skip}) - skipping")
-                    return False
-                else:
-                    logger.info(f"Node '{node_name}' (default) last run {days_since_last_run} days ago (≥{default_skip}) - will execute")
-                    return True
-                
-        except Exception as e:
-            logger.warning(f"Error parsing last run date for node '{node_name}': {e}")
-            return True
+        # For all other nodes (estate, building, default): ALWAYS RUN
+        # No more "skip based on days since last run" logic
+        return True
     
     def _should_run_transaction_node(self, node_name: str, data_file_path: str, tracking_params: Optional[Dict[str, Any]] = None) -> bool:
         """
@@ -124,7 +76,7 @@ class NodeExecutionTracker:
         - If max_date < today: RUN (scrape from max_date+1 to today)
         """
         if not os.path.exists(data_file_path):
-            logger.info(f"Node '{node_name}' - no existing data file found - will execute (initial scrape)")
+            logger.info(f"📊 Node '{node_name}': No existing data file - initial scrape required")
             return True
         
         try:
@@ -134,11 +86,11 @@ class NodeExecutionTracker:
             elif data_file_path.endswith('.csv'):
                 df = pd.read_csv(data_file_path)
             else:
-                logger.warning(f"Unsupported file format for {data_file_path}, will execute node")
+                logger.warning(f"⚠️  Node '{node_name}': Unsupported file format - will execute")
                 return True
             
             if df.empty:
-                logger.info(f"Node '{node_name}' - empty dataset found - will execute (initial scrape)")
+                logger.info(f"📊 Node '{node_name}': Empty dataset - initial scrape required")
                 return True
             
             # Find date column
@@ -151,54 +103,34 @@ class NodeExecutionTracker:
                     break
             
             if not date_col:
-                logger.warning(f"Node '{node_name}' - no date column found in {data_file_path}, will execute")
+                logger.warning(f"⚠️  Node '{node_name}': No date column found - will execute")
                 return True
             
-            # Parse dates and find max with validation
+            # Parse dates and find max
             df_temp = df.copy()
             df_temp['parsed_date'] = df_temp[date_col].apply(self._parse_date_string)
-            df_temp['parse_success'] = df_temp['parsed_date'].notna()
-            
             valid_dates = df_temp['parsed_date'].dropna()
             
             if valid_dates.empty:
-                logger.info(f"Node '{node_name}' - no valid dates found - will execute")
+                logger.info(f"📊 Node '{node_name}': No valid dates found - will execute")
                 return True
             
-            # Calculate max date and validation metrics
+            # Calculate max date
             max_date = valid_dates.max()
-            min_date = valid_dates.min()
             current_date = datetime.now().date()
             
-            # VALIDATION: Check for data quality issues
-            parse_rate = (df_temp['parse_success'].sum() / len(df_temp)) * 100
-            future_dates = (valid_dates > current_date).sum()
-            very_old = (valid_dates < datetime(1990, 1, 1).date()).sum()
-            
-            logger.info(f"  Data quality: {parse_rate:.2f}% parsed successfully ({df_temp['parse_success'].sum():,}/{len(df_temp):,})")
-            logger.info(f"  Date range: {min_date} to {max_date}")
-            
-            if future_dates > 0:
-                logger.warning(f"  ⚠️ Found {future_dates} future dates - data may have issues!")
-            if very_old > 0:
-                logger.warning(f"  ⚠️ Found {very_old} very old dates (before 1990) - check data quality!")
-            if parse_rate < 99.0:
-                logger.warning(f"  ⚠️ Parse rate below 99% - some dates may be malformed!")
-            
-            # Check if we need to scrape (max date is before today)
+            # Check if we need to scrape
             if max_date >= current_date:
-                logger.info(f"Node '{node_name}' - dataset is up to date (max date: {max_date}, current: {current_date}) - skipping")
-                logger.info(f"  No new data available - scraper would fetch from {max_date + timedelta(days=1)} onwards")
+                logger.info(f"✅ Node '{node_name}': Data up-to-date (max: {max_date}) - skipping")
                 return False
             else:
                 days_behind = (current_date - max_date).days
-                logger.info(f"Node '{node_name}' - dataset is {days_behind} days behind (max date: {max_date}, current: {current_date}) - will execute")
-                logger.info(f"  Scraper will fetch data from {max_date + timedelta(days=1)} to {current_date}")
+                logger.info(f"📊 Node '{node_name}': Data {days_behind} days behind (max: {max_date}) - will scrape")
                 return True
                 
         except Exception as e:
-            logger.warning(f"Error checking max date for node '{node_name}': {e}")
-            logger.info(f"Will execute node for safety")
+            logger.warning(f"⚠️  Error checking data for '{node_name}': {e}")
+            logger.info(f"📊 Will execute node for safety")
             return True
     
     def _parse_date_string(self, date_str):

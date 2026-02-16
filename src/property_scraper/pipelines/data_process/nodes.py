@@ -1586,151 +1586,119 @@ def merge_and_excel(
     
     """
     Process four input DataFrames, standardize date columns, and split into 
-    two Excel files based on year ranges with four tabs each.
+    four Excel files:
+    - RE_residential_2020-2023
+    - RE_commercial_2020-2023
+    - RE_residential_2024-{current_year}
+    - RE_commercial_2024-{current_year}
     
     Args:
-        input_df1-4: Input DataFrames from parquet files
+        cr: Centaline Residential DataFrame
+        co: Centaline OIR (commercial) DataFrame
+        mr: Midland Residential DataFrame
+        mi: Midland ICI (commercial) DataFrame
         
     Returns:
-        Dictionary with two keys for the Excel outputs, each containing
-        a dictionary of tab names to DataFrames
+        Dictionary with four keys for the Excel outputs
     """
     
-    # Define date column mapping for each input
-    date_column_mapping = {
-        'df_cr': 'date',
-        'df_co': 'date',          # Centaline OIR now uses 'date' column
-        'df_mr': 'date',          # Midland Res now uses 'date' column
-        'df_mi': 'date'           # Midland ICI now uses 'date' column
-    }
+    current_year = datetime.now().year
     
-    # Define tab names with sanitization
-    tab_names = {
-        'df_cr': sanitize_worksheet_name('Centaline_Residential'),
-        'df_co': sanitize_worksheet_name('Centaline_OIR'), 
-        'df_mr': sanitize_worksheet_name('Midland_Residential'),
-        'df_mi': sanitize_worksheet_name('Midland_ICI')
-    }
-    
-    # Standardize date columns and add source identifier
-    def standardize_dataframe(df, source_key):
+    # Standardize date columns
+    def standardize_dataframe(df, date_col='date'):
         df_copy = df.copy()
-        date_col = date_column_mapping[source_key]
-        
-        # Handle string dates with error handling for invalid values (create canonical datetime column)
-        # Use specific format to avoid warnings and ensure consistent parsing
         df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], format='%Y-%m-%d', errors='coerce')
         
-        # Remove timezone info if present to avoid Excel compatibility issues
         if df_copy['standard_date'].dt.tz is not None:
             df_copy['standard_date'] = df_copy['standard_date'].dt.tz_localize(None)
         
-        # Also surface a unified 'date' column as datetime for Excel filtering
         df_copy['date'] = df_copy['standard_date']
-        
         return df_copy
     
     # Process each dataframe
-    df_cr_processed = standardize_dataframe(cr, 'df_cr')
-    df_co_processed = standardize_dataframe(co, 'df_co')
-    df_mr_processed = standardize_dataframe(mr, 'df_mr')
-    df_mi_processed = standardize_dataframe(mi, 'df_mi')
+    df_cr_processed = standardize_dataframe(cr)
+    df_co_processed = standardize_dataframe(co)
+    df_mr_processed = standardize_dataframe(mr)
+    df_mi_processed = standardize_dataframe(mi)
     
-    # Split each dataframe by date ranges
-    def split_by_date_range(df, tab_name):
-        # Debug date ranges
+    # Split by date ranges: 2020-2023 and 2024-current
+    def split_by_date_range(df, name):
         valid_dates = df[df['standard_date'].notna()]
         if not valid_dates.empty:
             min_year = valid_dates['standard_date'].dt.year.min()
             max_year = valid_dates['standard_date'].dt.year.max()
-            logger.info(f"{tab_name}: Date range {min_year}-{max_year}, Total records: {len(df)}")
-            
-            # Show year distribution
-            year_counts = valid_dates['standard_date'].dt.year.value_counts().sort_index()
-            logger.info(f"{tab_name}: Year distribution: {year_counts.head(10).to_dict()}")
-        else:
-            logger.warning(f"{tab_name}: No valid dates found!")
+            logger.info(f"{name}: Date range {min_year}-{max_year}, Total records: {len(df)}")
         
-        df_2020_2022 = df[
+        df_2020_2023 = df[
             (df['standard_date'].dt.year >= 2020) & 
-            (df['standard_date'].dt.year <= 2022)
+            (df['standard_date'].dt.year <= 2023)
         ].copy()
         
-        df_2023_current = df[
-            df['standard_date'].dt.year >= 2023
+        df_2024_current = df[
+            df['standard_date'].dt.year >= 2024
         ].copy()
         
-        logger.info(f"{tab_name}: 2020-2022: {len(df_2020_2022)} records, 2023+: {len(df_2023_current)} records")
+        logger.info(f"{name}: 2020-2023: {len(df_2020_2023)} records, 2024-{current_year}: {len(df_2024_current)} records")
         
-        return df_2020_2022, df_2023_current
+        return df_2020_2023, df_2024_current
     
-    # Create dictionaries for Excel outputs
-    excel_2020_2022 = {}
-    excel_2023_current = {}
-    
-    # Prepare dataframe for Excel: ensure single 'date' column as datetime and sort desc
-    def prepare_for_excel(df: pd.DataFrame, source_key: str) -> pd.DataFrame:
+    # Prepare dataframe for Excel
+    def prepare_for_excel(df: pd.DataFrame) -> pd.DataFrame:
         df_out = df.copy()
-        # Ensure unified 'date' column exists and is datetime
-        df_out['date'] = pd.to_datetime(df_out.get('date', df_out['standard_date']), errors='coerce')
+        df_out['date'] = pd.to_datetime(df_out['standard_date'], errors='coerce')
         
-        # Remove timezone info if present to avoid Excel compatibility issues
         if df_out['date'].dt.tz is not None:
             df_out['date'] = df_out['date'].dt.tz_localize(None)
         
-        # Drop source-specific date columns to avoid confusion
-        original_date_cols = {
-            'df_cr': ['standard_date'],
-            'df_co': ['transactionDate', 'standard_date'],
-            'df_mr': ['tx_date', 'standard_date'],
-            'df_mi': ['tx_date', 'standard_date'],
-        }
-        for col in original_date_cols.get(source_key, []):
-            if col in df_out.columns:
-                df_out = df_out.drop(columns=[col])
+        # Drop standard_date column
+        if 'standard_date' in df_out.columns:
+            df_out = df_out.drop(columns=['standard_date'])
+        
         # Sort descending by date
         if 'date' in df_out.columns:
             df_out = df_out.sort_values(by='date', ascending=False, kind='mergesort').reset_index(drop=True)
         return df_out
-
-    # Process each dataframe and assign to appropriate tabs
-    for df_processed, source_key in [
-        (df_cr_processed, 'df_cr'),
-        (df_co_processed, 'df_co'), 
-        (df_mr_processed, 'df_mr'),
-        (df_mi_processed, 'df_mi')
-    ]:
-        tab_name = tab_names[source_key]
-        df_early, df_recent = split_by_date_range(df_processed, tab_name)
-        
-        # Excel row limit is ~1,048,576. Sample large datasets to fit within limits
-        max_rows_per_sheet = 1000000  # Leave some buffer
-        
-        # Handle early period data
-        if len(df_early) > max_rows_per_sheet:
-            df_early_sampled = df_early.sample(n=max_rows_per_sheet, random_state=42)
-            logger.warning(f"Sampled {tab_name} 2020-2022 from {len(df_early)} to {max_rows_per_sheet} rows")
-        else:
-            df_early_sampled = df_early
-            
-        # Handle recent period data  
-        if len(df_recent) > max_rows_per_sheet:
-            df_recent_sampled = df_recent.sample(n=max_rows_per_sheet, random_state=42)
-            logger.warning(f"Sampled {tab_name} 2023-current from {len(df_recent)} to {max_rows_per_sheet} rows")
-        else:
-            df_recent_sampled = df_recent
-        
-        # Prepare for Excel: ensure datetime 'date' column and sort desc
-        if not df_early_sampled.empty:
-            df_early_prepped = prepare_for_excel(df_early_sampled, source_key)
-            excel_2020_2022[tab_name] = sanitize_dataframe_content(df_early_prepped)
-        if not df_recent_sampled.empty:
-            df_recent_prepped = prepare_for_excel(df_recent_sampled, source_key)
-            excel_2023_current[tab_name] = sanitize_dataframe_content(df_recent_prepped)
+    
+    # Split residential data (Centaline + Midland)
+    cr_2020_2023, cr_2024_current = split_by_date_range(df_cr_processed, "Centaline_Residential")
+    mr_2020_2023, mr_2024_current = split_by_date_range(df_mr_processed, "Midland_Residential")
+    
+    # Split commercial data (Centaline OIR + Midland ICI)
+    co_2020_2023, co_2024_current = split_by_date_range(df_co_processed, "Centaline_OIR")
+    mi_2020_2023, mi_2024_current = split_by_date_range(df_mi_processed, "Midland_ICI")
+    
+    # Combine residential and commercial separately
+    residential_2020_2023 = {
+        sanitize_worksheet_name('Centaline_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2020_2023)) if not cr_2020_2023.empty else None,
+        sanitize_worksheet_name('Midland_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2020_2023)) if not mr_2020_2023.empty else None
+    }
+    
+    residential_2024_current = {
+        sanitize_worksheet_name('Centaline_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2024_current)) if not cr_2024_current.empty else None,
+        sanitize_worksheet_name('Midland_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2024_current)) if not mr_2024_current.empty else None
+    }
+    
+    commercial_2020_2023 = {
+        sanitize_worksheet_name('Centaline_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2020_2023)) if not co_2020_2023.empty else None,
+        sanitize_worksheet_name('Midland_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2020_2023)) if not mi_2020_2023.empty else None
+    }
+    
+    commercial_2024_current = {
+        sanitize_worksheet_name('Centaline_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2024_current)) if not co_2024_current.empty else None,
+        sanitize_worksheet_name('Midland_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2024_current)) if not mi_2024_current.empty else None
+    }
+    
+    # Remove None entries
+    residential_2020_2023 = {k: v for k, v in residential_2020_2023.items() if v is not None}
+    residential_2024_current = {k: v for k, v in residential_2024_current.items() if v is not None}
+    commercial_2020_2023 = {k: v for k, v in commercial_2020_2023.items() if v is not None}
+    commercial_2024_current = {k: v for k, v in commercial_2024_current.items() if v is not None}
     
     return {
-        'excel_2020_2022': excel_2020_2022,
-        'excel_2023_current': excel_2023_current
+        'residential_2020_2023': residential_2020_2023,
+        'commercial_2020_2023': commercial_2020_2023,
+        'residential_2024_current': residential_2024_current,
+        'commercial_2024_current': commercial_2024_current
     }
 
 ############################## COLUMN SELECTION FUNCTIONS ##############################

@@ -172,15 +172,27 @@ centaline_oir:
 ##################################################################
 
 # Data Catalog for Final Outputs
-output_excel_2020_2022:
+output_residential_2020_2023:
   type: pandas.ExcelDataset
-  filepath: data/03_primary/Combined_Dateset_2020_2022.xlsx
+  filepath: data/03_primary/RE_residential_2020-2023.xlsx
   save_args:
     index: false
 
-output_excel_2023_current:
+output_commercial_2020_2023:
   type: pandas.ExcelDataset
-  filepath: data/03_primary/Combined_Dateset_2023_2025.xlsx
+  filepath: data/03_primary/RE_commercial_2020-2023.xlsx
+  save_args:
+    index: false
+
+output_residential_2024_current:
+  type: pandas.ExcelDataset
+  filepath: data/03_primary/RE_residential_2024-2026.xlsx
+  save_args:
+    index: false
+
+output_commercial_2024_current:
+  type: pandas.ExcelDataset
+  filepath: data/03_primary/RE_commercial_2024-2026.xlsx
   save_args:
     index: false
 

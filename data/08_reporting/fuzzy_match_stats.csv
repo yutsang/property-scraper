@@ -1,174 +1,25 @@
 transaction_name,matched_building_name,match_score
-Sing Win Factory Building,Win Sun Factory Building,93.87755102040816
-Elite Centre,Elite Industrial Centre,100.0
-Capital Trade Centre,Capital Centre,100.0
-Treasure Centre,New Treasure Centre,100.0
-King Yip Factory Building,Kai Yip Factory Building,93.87755102040816
-Tsun Win Factory Building,Win Sun Factory Building,93.87755102040816
-King Palace Plaza,King Palace Plaza (TW),100.0
-East Sun Industrial Centre Shing Yip Street,Yip Shing Industrial Centre,100.0
-Wing Hing Industrial Building (KT),Wing Hing Industrial Building,100.0
-Gee Luen Factory Building,Luen Fat Loong Factory Building,91.30434782608695
-Chuan Yuan Factory Building,Chuan Kei Factory Building,91.66666666666667
-Yip Win Factory Building,Hi Yip Factory Building,93.61702127659575
-Union Hing Yip Factory Building,Hi Yip Factory Building,93.02325581395348
-Tung Lee Industrial Building,Tung Lee Building,100.0
-Ocean Industrial Building,Ocean Building,100.0
-Mow Hing Factory Building,Fook Hing Factory Building,91.30434782608695
-How Ming Factory Building,Hop Ming Factory Building,96.0
-King Palace Plaza ,King Palace Plaza (TW),100.0
-Hung Fuk Factory Building,Hung Cheong Factory Building,91.30434782608695
-Elite Centre ,Elite Industrial Centre,100.0
-King Palace Plaza (KT),King Palace Plaza (TW),95.45454545454545
-Union Building,Union Industrial Building (WCH),100.0
-Fung Yip Industrial Building,Yip Fung Industrial Building,100.0
-Wing Wah Industrial Building (KT),Wah Wing Industrial Building,100.0
-Storefriendly Tower (Peninsula East),Storefriendly Tower (Peninsula West),94.44444444444444
-Century Centre,Win Century Centre,100.0
-On Cheong Factory Building,Cheong Fat Factory Building,93.87755102040816
-Wing Cheung Industrial Building (KT),Cheung Wing Industrial Building,100.0
-Well Town Industrial Building,Well Industrial Building,100.0
-Hing Yip Centre (KT),Hing Yip Centre (TW),95.0
-Seapower Industrial Centre,Seapower Centre,100.0
-Siu Fu Factory Building Wai Yip Street,Hi Yip Factory Building,93.02325581395348
-Fu Hop Factory Building,Hop Ming Factory Building,93.02325581395348
-Kai Centre,Sun Hung Kai Centre,100.0
-Yeung Yiu Chung (No. 5) Industrial Bldg.,Yeung Yiu Chung (No. 7) Industrial Bldg.,97.5
-Tung Ming Building,Tung Ming Industrial Building,100.0
-Yip Fat Factory Building (Block 1),Hi Yip Factory Building,93.02325581395348
-Wing Tai Factory Building,Ka Wing Factory Building,93.87755102040816
-Yip Fat Factory Building Block 1,Hi Yip Factory Building,93.02325581395348
-Kwok Kee Group Centre,Tak Kee Group Centre,88.88888888888889
-Kwok Kee Group Centre ,Tak Kee Group Centre,88.88888888888889
-Cheung Hing Industrial Bldg,Cheung Hing Industrial Building (WD),89.79591836734694
-"Kiu Sun Factory Building (Redevelop to ""The VISION"")",Win Sun Factory Building,90.9090909090909
-Wing Hing Lee Industrial Building (Demolished),Wing Hing Industrial Building,100.0
-Wang Cheung Industrial Building (KT),Wang Cheung Industrial Building (TM),97.22222222222223
-Yip Fat Factory Building (Block 2),Hi Yip Factory Building,93.02325581395348
-Viet Luen Factory Building,Luen Fat Loong Factory Building,89.36170212765957
-Yue Xiu Industrial Building,Yue Xiu Building,100.0
-Yip Fat Factory Building Block 2,Hi Yip Factory Building,93.02325581395348
-Grandeur Factory Building (Demolished),Luen Fat Factory Building 1 (Demolished),86.56716417910448
-Hing Yip Factory Building,Hi Yip Factory Building,95.83333333333333
-South China Factory Building,China Building,100.0
-Tek Kong Factory Building,Cheung Kong Factory Building,91.30434782608695
-Richmond Commercial Building,Richmond Commercial Building,100.0
-Prosperity Centre,Prosperity Centre,100.0
-Argyle Centre Phase I,Argyle Centre Phase I,100.0
-Hollywood Plaza,Hollywood Plaza,100.0
-Witty Commercial Building,Witty Commercial Building,100.0
-"Office Tower One, Grand Plaza","Office Tower One, Grand Plaza",100.0
-Nathan Centre,Nathan Centre,100.0
-Chung Kiu Commercial Building,Chung Kiu Commercial Building,100.0
-Mongkok Harbour Centre,Harbour Centre,100.0
-Gala Place,Gala Place,100.0
-Sino Centre Nathan Road,Sino Centre,100.0
-Hua Chiao Commercial Centre,Hua Chiao Commercial Centre,100.0
-Silvercorp International Tower,Silvercorp International Tower,100.0
-655 Nathan Road,655 Nathan Road,100.0
-Golden Era Plaza,Golden Era Plaza,100.0
-Sino Centre,Sino Centre,100.0
-Wealth Commercial Centre,Wealth Commercial Centre,100.0
-Langham Place,Langham Place,100.0
-Dundas Square,Dundas Square,100.0
-Omega Plaza,Omega Plaza,100.0
-Win Century Centre,Win Century Centre,100.0
-Ginza Plaza,Ginza Plaza,100.0
-Golden Eva Plaza Sai Yee Street,Golden Era Plaza,85.71428571428571
-Righteous Centre Nathan Road,Nathan Centre,100.0
-"Office Tower Two, Grand Plaza","Office Tower Two, Grand Plaza",100.0
-Wai Fung Plaza,Wai Fung Plaza,100.0
-Ginza Plaza Sai Yeung Choi Street South,Ginza Plaza,100.0
-Fee Tat Commercial Centre Nathan Road,Nathan Centre,100.0
-Bank Centre Nathan Road,Nathan Centre,100.0
-38 Plaza,38 Plaza,100.0
-Righteous Centre,Righteous Centre,100.0
-Dundas Square Dundas Street,Dundas Square,100.0
-King Wah Centre Nathan Road,Nathan Centre,100.0
-Chow Tai Fook Commercial Centre,Chow Tai Fook Commercial Centre,100.0
-Hua Chiao Commercial Centre Nathan Road,Nathan Centre,100.0
-Pioneer Centre Nathan Road,Nathan Centre,100.0
-Argyle Centre Nathan Road,Nathan Centre,100.0
-Witty Commercial Building Tung Choi Street,Witty Commercial Building,100.0
-Langham Place Argyle Street,Langham Place,100.0
-Prosperity Centre Canton Road,Prosperity Centre,100.0
-Nathan Centre Nathan Road,Nathan Centre,100.0
-Richmond Commercial Building Argyle Street,Richmond Commercial Building,100.0
-Kowloon Building Nathan Road,Kowloon Building,100.0
-Sun Hing Building,Sun Hing Industrial Building (WCH),100.0
-Union Park Centre Nathan Road,Nathan Centre,100.0
-Man Shing Building,Man Shing Industrial Building,100.0
-Belgian Bank Building Nathan Road,Belgian Bank Building,100.0
-Omega Plaza Dundas Street,Omega Plaza,100.0
-Gala Place Dundas Street,Gala Place,100.0
-Hollywood Plaza ,Hollywood Plaza,100.0
-Argyle Centre Phase I ,Argyle Centre Phase I,100.0
-Argyle Centre,Argyle Centre Phase I,100.0
-Richmond Commercial Building ,Richmond Commercial Building,100.0
-Chung Kiu Commercial Building ,Chung Kiu Commercial Building,100.0
-Golden Era Plaza ,Golden Era Plaza,100.0
-Witty Commercial Building ,Witty Commercial Building,100.0
-Righteous Centre ,Righteous Centre,100.0
-Wealth Commercial Centre ,Wealth Commercial Centre,100.0
-Dundas Square ,Dundas Square,100.0
-"Office Tower One, Grand Plaza ","Office Tower One, Grand Plaza",100.0
-655 Nathan Road ,655 Nathan Road,100.0
-Ginza Plaza ,Ginza Plaza,100.0
-Golden Eva Plaza,Golden Era Plaza,93.75
-Mongkok Harbour Centre ,Harbour Centre,100.0
-"Office Tower Two, Grand Plaza ","Office Tower Two, Grand Plaza",100.0
-Nathan Centre ,Nathan Centre,100.0
-Prosperity Centre ,Prosperity Centre,100.0
-Yuen Fat Building,Yuen Fat Industrial Building,100.0
-China Paint Building,China Paint Building,100.0
-Sino Centre ,Sino Centre,100.0
-Hua Chiao Commercial Centre ,Hua Chiao Commercial Centre,100.0
-Chow Tai Fook Commercial Centre ,Chow Tai Fook Commercial Centre,100.0
-Langham Place ,Langham Place,100.0
-Silvercorp International Tower ,Silvercorp International Tower,100.0
-Oriental House,Pearl Oriental House,100.0
-Gala Place ,Gala Place,100.0
-38 Plaza ,38 Plaza,100.0
-Pioneer Centre,Pioneer Centre,100.0
-Win Century Centre ,Win Century Centre,100.0
-Pioneer Centre Shopping Mall,Pioneer Centre,100.0
-Omega Plaza ,Omega Plaza,100.0
-Silvercord,Silvercord Tower 1,100.0
-Grand Tower,"Office Tower One, Grand Plaza",100.0
-Excelsior Building,Excelsior Industrial Building,100.0
-Wai Fung Plaza ,Wai Fung Plaza,100.0
-Sun Hing Building ,Sun Hing Industrial Building (WCH),100.0
-Oriental House ,Pearl Oriental House,100.0
-Prince Edward The Lamma City,Prince Edward The Lamma City,100.0
 Sunbeam Plaza,Sunbeam Plaza,100.0
-Summit Insurance Building,Summit Insurance Building,100.0
-Grand Century Place II,Grand Century Place II,100.0
-Grand Century Place I,Grand Century Place I,100.0
-Central Commercial Tower,Central Tower,100.0
-Belgian Bank Building,Belgian Bank Building,100.0
-China Paint Building Canton Road,China Building,100.0
-Henley Industrial Centre Bute Street,Henley Industrial Centre,100.0
+Pioneer Centre,Pioneer Centre,100.0
 Henley Industrial Centre,Henley Industrial Centre,100.0
-Golden Plaza - Prince Edward Nathan Road,Golden Era Plaza,85.71428571428571
-Fuk Chiu Factory Building,Fuk Chiu Factory Building,100.0
-Arran Tower,Arran Tower,100.0
-Kwok Hong Building Podium Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-Carprio Mansion Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-I Do Centre Nathan Road,Nathan Centre,100.0
-100 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Grand Century Place I,Grand Century Place I,100.0
+Union Park Centre Nathan Road,Nathan Centre,100.0
+Central Commercial Tower,Central Tower,100.0
+Prince Edward The Lamma City,Prince Edward The Lamma City,100.0
 Tai Wah House Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-Shing Hing Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-Famous Horse Centre,Famous Horse Centre,100.0
-Wai Hing Building,Wai Hing Factory Building,100.0
-Fuk On Factory Building,Fuk Chiu Factory Building,93.02325581395348
-57-61 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 142 Lai Chi Kok Road,822 Lai Chi Kok Road,90.0
-Yau Fung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-Po Fung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-139-141 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Carprio Mansion Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Summit Insurance Building,Summit Insurance Building,100.0
+Belgian Bank Building,Belgian Bank Building,100.0
+Grand Century Place II,Grand Century Place II,100.0
+Famous Horse Centre,Famous Horse Centre,100.0
 "Kowloon Investment Co. Ltd., Fty Bldg","Kowloon Investment Co. Ltd., Fty Bldg (No.18 Bute Street)",100.0
-188-190 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Fuk Chiu Factory Building,Fuk Chiu Factory Building,100.0
+Fuk On Factory Building,Fuk Chiu Factory Building,93.02325581395348
+China Paint Building,China Paint Building,100.0
 134 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Yip Kwong Industrial Building (MK),Yip Kwong Industrial Building (TKT),95.65217391304348
+Arran Tower,Arran Tower,100.0
 137 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Grand Century Place I ,Grand Century Place I,100.0
 Grand Century Place II ,Grand Century Place II,100.0
@@ -182,10 +33,17 @@ Central Commercial Tower ,Central Tower,100.0
 Kam Ming Court,Ka Ming Court,96.29629629629629
 The Lamma City,Prince Edward The Lamma City,100.0
 Golden Plaza - Prince Edward,Golden Era Plaza,85.71428571428571
+Pioneer Centre Shopping Mall,Pioneer Centre,100.0
 Wing Fat Building,Wing Fat Industrial Building,100.0
 The Edward ,Prince Edward The Lamma City,100.0
+Po Fung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Kwok Hong Building Podium Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Kam Ming Court Playing Field Road,Ka Ming Court,86.95652173913044
+Yau Fung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+I Do Centre Nathan Road,Nathan Centre,100.0
+Henley Industrial Centre Bute Street,Henley Industrial Centre,100.0
 Wai Yuen Bidg Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Hong Cheong Building Tai Nan Street,Hong Tai Building,100.0
 1-5 Cheung Sha Wan Road,790-796 Cheung Sha Wan Road,90.47619047619048
 109 Cheung Sha Wan Road,909 Cheung Sha Wan Road,95.65217391304348
 Po Hing House Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
@@ -212,6 +70,7 @@ Luen Keung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Nam Wan Building Cheung Sha Wan Road,909 Cheung Sha Wan Road,90.47619047619048
 Metro Sham Shui Cheung Sha Wan Road,909 Cheung Sha Wan Road,90.47619047619048
 178-184 Cheung Sha Wan Road,909 Cheung Sha Wan Road,90.47619047619048
+Hing Yip Building,Union Hing Yip Factory Building,100.0
 29 Cheung Sha Wan Road,909 Cheung Sha Wan Road,93.33333333333333
 168-170 Cheung Sha Wan Road,909 Cheung Sha Wan Road,90.47619047619048
 52-54 Cheung Sha Wan Road,909 Cheung Sha Wan Road,90.47619047619048
@@ -253,6 +112,8 @@ Wen Pang Bldg Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Golden Building,Golden Harvest Building,100.0
 Dragon Centre,Golden Dragon Centre,100.0
 Diamond Building,Hong Kong Diamond Exchange Building,100.0
+Cheong Wah Building ,Cheong Wah Factory Building,100.0
+Hing Yip Building ,Union Hing Yip Factory Building,100.0
 321 Lai Chi Kok Road,822 Lai Chi Kok Road,90.0
 King Fai Court Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 212 Cheung Sha Wan Road,790-796 Cheung Sha Wan Road,90.47619047619048
@@ -276,7 +137,7 @@ Acro Industrial Building,Acro Industrial Building,100.0
 On Lok Factory Building Ha Heung Road,On Lok Factory Building,100.0
 K.K. Industrial Building,K.K. Industrial Building,100.0
 Shun Luen Factory Building,Shun Luen Factory Building,100.0
-Cheong Wah Factory Building,Wah Ha Factory Building,93.02325581395348
+Cheong Wah Factory Building,Cheong Wah Factory Building,100.0
 Wearbest Building Phase II,Wearbest Building Phase II,100.0
 On Lok Factory Building,On Lok Factory Building,100.0
 30 Sheung Heung Road,31 Sheung Heung Road,95.0
@@ -296,6 +157,7 @@ Ting Sun Plaza,Ting Sun Plaza,100.0
 Newport Centre Phase I,Newport Centre Phase I,100.0
 3 Yuk Yat Street,3 Yuk Yat Street,100.0
 19 Yuk Yat Street,3 Yuk Yat Street,93.33333333333333
+Seapower Industrial Centre,Seapower Industrial Centre,100.0
 31 Sheung Heung Road Sheung Heung Road,31 Sheung Heung Road,100.0
 Acro Industrial Building Yuk Yat Street,Acro Industrial Building,100.0
 Shun Wai Industrial Building Yuk Yat Street,Shun Wai Industrial Building,100.0
@@ -304,6 +166,7 @@ Merit Industrial Centre,Merit Industrial Centre A,100.0
 3 Yuk Yat Street ,3 Yuk Yat Street,100.0
 Lucky Building,Lucky Building (TKW),100.0
 31 Sheung Heung Road,31 Sheung Heung Road,100.0
+Lee Wing Building,Wing Lee Industrial Building,100.0
 Chung Wah Industrial Building,Cheung Wah Industrial Building,98.30508474576271
 92 Sung Wong Toi Road,92 Sung Wong Toi Road,100.0
 Tung Nam Factory Building Ma Tau Kok Road,Tung Nam Factory Building,100.0
@@ -319,8 +182,14 @@ Wofoo Commercial Building,Wofoo Building,100.0
 Bangkok Bank Building,Bangkok Bank Building,100.0
 Commerce Tower,Kowloon Commerce Centre Tower A,100.0
 Ginza Square Nathan Road,Ginza Square,100.0
+Kowloon Building Nathan Road,Kowloon Building,100.0
+Gala Place,Gala Place,100.0
+On Yip Building,On Yip Factory Building,100.0
 Wofoo Commercial Building Nathan Road,Wofoo Building,100.0
 Kelly Commercial Centre Nathan Road,Nathan Centre,100.0
+On Lee Building,Lee On Industrial Building,100.0
+On Yip Building ,On Yip Factory Building,100.0
+On Lee Building ,Lee On Industrial Building,100.0
 Tai Shing Commercial (Yaumati) Building ,Tai Shing Commercial (Yaumati) Building,100.0
 Wofoo Commercial Building ,Wofoo Building,100.0
 Kowloon Building ,Kowloon Building,100.0
@@ -330,6 +199,7 @@ Commerce Tower ,Kowloon Commerce Centre Tower A,100.0
 Winner Building,Winner Building (HH),100.0
 Winfield Building,Winfield Industrial Building,100.0
 Bangkok Bank Building ,Bangkok Bank Building,100.0
+Wing Tai Building,Wing Tai Factory Building,100.0
 Lai Chi Kok Bay Garden Lai King Hill Road,822 Lai Chi Kok Road,88.88888888888889
 World Trade Square,World Trade Square,100.0
 Poly Centre,Poly Centre,100.0
@@ -348,7 +218,7 @@ Kawada Plaza,Kawada Plaza,100.0
 Dormind Industrial Building,Dormind Industrial Building,100.0
 Wo Fung Industrial Building,Wo Fung Industrial Building,100.0
 On Hang Industrial Centre,On Hang Industrial Centre,100.0
-Hong Leong Plaza Phase 2,Hong Leong Plaza Phase 1,95.83333333333333
+Hong Leong Plaza Phase 2,Hong Leong Plaza Phase 2,100.0
 On Wui Centre,On Wui Centre,100.0
 On Hing Industrial Centre,On Hing Industrial Centre,100.0
 Chiaphua Industrial Building,Chiaphua Industrial Building,100.0
@@ -558,6 +428,7 @@ Yuet Kwong Industrial Building,Yuet Kwong Industrial Building,100.0
 Tsuen Hing Factory Building,Tsuen Hing Factory Building,100.0
 Cheong Tai Industrial Building,Cheong Tai Industrial Building,100.0
 Wang Cheong Enterprises Centre,Wang Cheong Enterprises Centre,100.0
+Metropolitan Ind. & Warehouse Bldg. No.2,Metropolitan Ind. & Warehouse Bldg. No.2,100.0
 155 Castle Peak Road,483D-483E Castle Peak Road,88.88888888888889
 Tung Cheong Factory Building,Tung Cheong Factory Building,100.0
 Gunzetal Limited,Gunzetal Limited,100.0
@@ -603,6 +474,7 @@ Chinachem Tsuen Wan Plaza ,Two Chinachem Plaza,88.23529411764706
 Chung On Building,Chung On Industrial Building,100.0
 Storefriendly Tower (Metropolis West),Storefriendly Tower (Metropolis West),100.0
 Tak Tai Building,Tai Tak Industrial Building,100.0
+Cheong On Building,On Cheong Factory Building,100.0
 Hing Fung Printing & Dyeing Factory Ltd.,Hing Fung Printing & Dyeing Factory Ltd.,100.0
 Lung Wah Building,Wah Lung Industrial Building,100.0
 The Octagon ,The Octagon,100.0
@@ -633,7 +505,7 @@ Technology Plaza Sha Tsui Road,Technology Plaza (NP),86.48648648648648
 Kai Chi Building Lo Tak Court,Lo Tak Court,100.0
 112 Castle Peak Road,483D-483E Castle Peak Road,88.88888888888889
 Energy Industrial Centre,Energy Industrial Centre,100.0
-Fu Wah Industrial Building,Fou Wah Industrial Building,98.11320754716981
+Fu Wah Industrial Building,Fu Wah Industrial Building,100.0
 157 Castle Peak Road,483D-483E Castle Peak Road,88.88888888888889
 Forda Industrial Building,Forda Industrial Building,100.0
 Wang Yip Centre,Wang Yip Centre,100.0
@@ -675,10 +547,12 @@ Tung Cheong Building,Tung Cheong Factory Building,100.0
 Yuen Long Trade Centre ,Yuen Long Trading Centre,91.30434782608695
 Cheong Fat Building,Cheong Fat Factory Building,100.0
 Golden Town Industrial Building,Golden Town Industrial Building,100.0
+New City,New City Centre,100.0
 Prosperous Building,Prosperous Building,100.0
 Hang Cheong Building,Hang Cheong Factory Building,100.0
 Shun Fat Building,Shun Fat Industrial Building,100.0
 Golden Plaza,Chinachem Golden Plaza,100.0
+Jumbo Building,Jumbo Industrial Building,100.0
 Wing Hing Building,Wing Hing Industrial Building (CSW),100.0
 Hing Loong Building,Sze Hing Loong Industrial Building,100.0
 Lai Tak Group Building,Lai Tak Group Building,100.0
@@ -795,6 +669,7 @@ Tai Tak Industrial Building,Tai Tak Industrial Building,100.0
 Yip Fung Industrial Building B,Yip Fung Industrial Building B,100.0
 Chinabest International Centre,Chinabest International Centre,100.0
 Man Shing Industrial Building,Man Shing Industrial Building,100.0
+Mercantile Ind. & Warehouse Building,Mercantile Ind. & Warehouse Building,100.0
 Kam Shing Industrial Building,Kam Shing Industrial Building,100.0
 Kam Bun Industrial Building,Kam Bun Industrial Building,100.0
 Wah Sing Industrial Building,Wah Sing Industrial Building,100.0
@@ -907,7 +782,10 @@ Landmark North Lung Sum Avenue,Landmark North,100.0
 20 San Hong Street,20 Wing Hong Street,87.5
 Landmark North ,Landmark North,100.0
 Advanced Technology Centre,Advanced Technology Centre,100.0
+Ming Tak Shopping Centre Pui Shing Lane,Ming Tak Centre,100.0
+Ming Tak Shopping Centre,Ming Tak Centre,100.0
 China Paint Industrial Building Block 2,China Building,100.0
+Shing Chuen Industrial Building,Shing Chuen Industrial Building,100.0
 Transport City Building,Transport City Building,100.0
 Transport City Building Shing Wan Road,Transport City Building,100.0
 Sunking Factory Building,Sunking Factory Building,100.0
@@ -915,6 +793,7 @@ Kinglet Industrial Building,Kinglet Industrial Building,100.0
 On Ho Industrial Building,On Ho Industrial Building,100.0
 San Miguel Industrial Building,San Miguel Industrial Building,100.0
 Tai Ping Industrial Centre Block 2,Tai Ping Industrial Centre Block 2,100.0
+Hong Lok Building Tai Wing Lane,Hong Tai Building,100.0
 Tai Ping Industrial Centre Block 4,Tai Ping Industrial Centre Block 4,100.0
 Tai Ping Industrial Centre Block 1,Tai Ping Industrial Centre Block 1,100.0
 Tai Ping Industrial Centre Block 3,Tai Ping Industrial Centre Block 3,100.0
@@ -923,8 +802,11 @@ Dragon Court Tai Ming Lane,Ka Ming Court,86.95652173913044
 Gold Reserved Court Tai Ming Lane,Ka Ming Court,86.95652173913044
 Tai Ping Industrial Park Ting Kok Road,Tai Ping Industrial Park,100.0
 Po Yan Building Wai Yan Street,Po Wai Building,100.0
+Tai Po Plaza,Sui Tai Wai Kee Plaza,85.71428571428571
 Central Plaza,Central Plaza,100.0
 Wing Cheung Building,Wing Cheung Industrial Building (KC),100.0
+Fuk Cheong Building,Fuk Cheong Factory Building,100.0
+Sun Hing Building,Sun Hing Industrial Building (WCH),100.0
 Wah On Building,On Wah Industrial Building,100.0
 Po Shing Building,Po Shing Industrial Building,100.0
 Wing Shing Building,Wing Shing Industrial Building (SPK),100.0
@@ -954,7 +836,9 @@ Parklane Centre,Parklane Centre,100.0
 Delya Industrial Centre Block C,Delya Industrial Centre Block C,100.0
 Luen Cheong Can Centre,Luen Cheong Can Centre,100.0
 Hang Wai Industrial Centre Block A,Hang Wai Industrial Centre Block A,100.0
+Delya Industrial Centre Block A,Delya Industrial Centre Block A,100.0
 Koon Wah Mirror Fty (6th) Ind. Bldg. 1,Koon Wah Mirror Fty (6th) Ind. Bldg. 2,97.36842105263158
+Mai Kei Industrial Building,Mai Kei Industrial Building,100.0
 Win Sun Factory Building,Win Sun Factory Building,100.0
 Hang Wai Industrial Centre Block B,Hang Wai Industrial Centre Block B,100.0
 Delya Industrial Centre Block B,Delya Industrial Centre Block B,100.0
@@ -1005,14 +889,17 @@ Chaos Industrial Building,Chaos Industrial Building,100.0
 YKK Building Phase III,YKK Building Phase III,100.0
 Bhotai Industrial Building,Bhotai Industrial Building,100.0
 Wellpoint Industrial Building,Wellpoint Industrial Building,100.0
+Mai Kei Building,Mai Kei Industrial Building,100.0
 Tuen Mun Central Square ,Tuen Mun Central Square,100.0
 Tuen Mun Centre,Tuen Mun Industrial Centre E,100.0
 Success Industrial Building,Success Industrial Building (SPK),100.0
 Tin's Centre Industrial Block 1,Tin's Centre Block 1,100.0
 YKK Building III,YKK Building Phase III,100.0
 Gemmy Development Industrial Building,Gemmy Development Industrial Building,100.0
+Man Shing Building,Man Shing Industrial Building,100.0
 Fu Hang Building,Fu Hang Industrial Building,100.0
 Yick Fung Group Building,Yick Fung Group Building,100.0
+Ho King Building,Ho King Factory Building,100.0
 Cheung Lung Building,Cheung Lung Industrial Building,100.0
 Shan Ling Industrial Building,Shan Ling Industrial Building,100.0
 East Asia Industrial Building,CRL East Asia Industrial Building,100.0
@@ -1032,6 +919,10 @@ Maxgrand Plaza,Maxgrand Plaza,100.0
 Silvercord Tower 2,Silvercord Tower 2,100.0
 China HK City Tower 1,China HK City Tower 1,100.0
 The Gateway Tower 6,The Gateway Tower 6,100.0
+Mai Gar Industrial Building,Mai Gar Industrial Building,100.0
+Goodway Centre,Goodway Centre,100.0
+Chung Kiu Commercial Building,Chung Kiu Commercial Building,100.0
+38 Plaza,38 Plaza,100.0
 "Lippo Centre, Tower 1","Lippo Centre, Tower 1",100.0
 Admiralty Centre Tower 2,Admiralty Centre Tower 2,100.0
 Yiko Industrial Building,Yiko Industrial Building,100.0
@@ -1090,3 +981,48 @@ China HK City Tower 6,China HK City Tower 6,100.0
 Peninsula Square,Peninsula Square,100.0
 Focal Industrial Centre B,Focal Industrial Centre B,100.0
 Kaiser Estate Phase I,Kaiser Estate Phase I,100.0
+Millennium City 1 Tower 1,Millennium City 1 Tower 1,100.0
+King Palace Plaza,King Palace Plaza,100.0
+Sing Win Factory Building,Sing Win Factory Building,100.0
+Hoi Luen Industrial Centre Block A,Hoi Luen Industrial Centre Block A,100.0
+Houtex Industrial Building,Houtex Industrial Building,100.0
+TG Place,TG Place,100.0
+Camelpaint Buildings Block I,Camelpaint Buildings Block I,100.0
+48 Hung To Road,28 Hung To Road,93.33333333333333
+Camelpaint Buildings Block II,Camelpaint Buildings Block II,100.0
+Richmond Commercial Building,Richmond Commercial Building,100.0
+Hollywood Plaza,Hollywood Plaza,100.0
+Chinachem Leighton Plaza,Chinachem Leighton Plaza,100.0
+Citicorp Centre,Citicorp Centre,100.0
+Chung Wai Commercial Building,Chung Wai Commercial Building,100.0
+Cheung Kong Center II,Cheung Kong Center,100.0
+China Insurance Group Building,China Insurance Group Building,100.0
+South China Building,China Building,100.0
+Henley Building,Henley Building,100.0
+Cheong Lee Building,Cheong Lee Building,100.0
+"Shun Tak Centre, West Tower","Shun Tak Centre, West Tower",100.0
+Li Po Chun Chambers,Li Po Chun Chambers,100.0
+Kingley Industrial Building 2,Kingley Industrial Building 2,100.0
+Kingley Industrial Building 1,Kingley Industrial Building 1,100.0
+South Island Place,South Island Place,100.0
+Laford Centre,Laford Centre,100.0
+Vita Green Tower,Vita Green Tower,100.0
+Comweb Plaza,Comweb Plaza,100.0
+HK Industrial Centre Block C,HK Industrial Centre Block C,100.0
+Ocean Building,Ocean Building,100.0
+Billion Centre - Tower B,Billion Centre - Tower B,100.0
+Kowloon Bay Industrial Centre,Kowloon Bay Industrial Centre,100.0
+Nan Fung Commercial Centre,Nan Fung Commercial Centre,100.0
+YHC Tower,YHC Tower,100.0
+Wong King Industrial Building,Wong King Industrial Building,100.0
+Galaxy Factory Building,Galaxy Factory Building,100.0
+Lee Chung Industrial Building,Lee Chung Industrial Building,100.0
+The Gateway Tower 2,The Gateway Tower 2,100.0
+Harbour Crystal Centre,Harbour Crystal Centre,100.0
+World Finance Centre (North Tower),World Finance Centre (North Tower),100.0
+Harbour Centre Tower 2,Harbour Centre Tower 2,100.0
+Chung Mei Centre,Chung Mei Centre,100.0
+Joint Venture Factory Building,Joint Venture Factory Building,100.0
+East Sun Industrial Centre,East Sun Industrial Centre,100.0
+Kwun Kee Tailor Industrial Centre,Kwun Kee Tailor Industrial Centre,100.0
+Pioneer Centre Nathan Road,Nathan Centre,100.0
