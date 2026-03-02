@@ -1,43 +1,21 @@
 transaction_name,matched_building_name,match_score
-Sunbeam Plaza,Sunbeam Plaza,100.0
-Pioneer Centre,Pioneer Centre,100.0
-Henley Industrial Centre,Henley Industrial Centre,100.0
-Grand Century Place I,Grand Century Place I,100.0
-Union Park Centre Nathan Road,Nathan Centre,100.0
-Central Commercial Tower,Central Tower,100.0
-Prince Edward The Lamma City,Prince Edward The Lamma City,100.0
-Tai Wah House Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-142 Lai Chi Kok Road,822 Lai Chi Kok Road,90.0
-Carprio Mansion Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-Summit Insurance Building,Summit Insurance Building,100.0
-Belgian Bank Building,Belgian Bank Building,100.0
-Grand Century Place II,Grand Century Place II,100.0
-Famous Horse Centre,Famous Horse Centre,100.0
-"Kowloon Investment Co. Ltd., Fty Bldg","Kowloon Investment Co. Ltd., Fty Bldg (No.18 Bute Street)",100.0
-Fuk Chiu Factory Building,Fuk Chiu Factory Building,100.0
-Fuk On Factory Building,Fuk Chiu Factory Building,93.02325581395348
-China Paint Building,China Paint Building,100.0
-134 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
-Yip Kwong Industrial Building (MK),Yip Kwong Industrial Building (TKT),95.65217391304348
-Arran Tower,Arran Tower,100.0
-137 Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Central Commercial Tower ,Central Tower,100.0
+Belgian Bank Building ,Belgian Bank Building,100.0
+Pioneer Centre ,Pioneer Centre,100.0
+Summit Insurance Building ,Summit Insurance Building,100.0
+Prince Edward The Lamma City ,Prince Edward The Lamma City,100.0
 Grand Century Place I ,Grand Century Place I,100.0
 Grand Century Place II ,Grand Century Place II,100.0
-Belgian Bank Building ,Belgian Bank Building,100.0
-King Wong Building,Wong King Industrial Building,100.0
-Prince Edward The Lamma City ,Prince Edward The Lamma City,100.0
-Summit Insurance Building ,Summit Insurance Building,100.0
-Fuk On Industrial Building,Fuk On Industrial Building,100.0
-Pioneer Centre ,Pioneer Centre,100.0
-Central Commercial Tower ,Central Tower,100.0
-Kam Ming Court,Ka Ming Court,96.29629629629629
-The Lamma City,Prince Edward The Lamma City,100.0
-Golden Plaza - Prince Edward,Golden Era Plaza,85.71428571428571
-Pioneer Centre Shopping Mall,Pioneer Centre,100.0
-Wing Fat Building,Wing Fat Industrial Building,100.0
 The Edward ,Prince Edward The Lamma City,100.0
+"Kowloon Investment Co. Ltd., Fty Bldg","Kowloon Investment Co. Ltd., Fty Bldg (No.18 Bute Street)",100.0
+Henley Industrial Centre,Henley Industrial Centre,100.0
+Sunbeam Plaza,Sunbeam Plaza,100.0
+Fuk Chiu Factory Building,Fuk Chiu Factory Building,100.0
+China Paint Building,China Paint Building,100.0
+Fuk On Industrial Building,Fuk On Industrial Building,100.0
 Po Fung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Kwok Hong Building Podium Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
+Carprio Mansion Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 Kam Ming Court Playing Field Road,Ka Ming Court,86.95652173913044
 Yau Fung Building Lai Chi Kok Road,822 Lai Chi Kok Road,88.88888888888889
 I Do Centre Nathan Road,Nathan Centre,100.0
@@ -907,47 +885,123 @@ East Asia Industrial Building,CRL East Asia Industrial Building,100.0
 Roytery Industrial Building,Roytery Industrial Building,100.0
 YKK Building I & II,HK Spinners Industrial Building I & II,88.23529411764706
 Nan Fung Industry Tin Hau Road,3 Tin Hau Road,92.3076923076923
-"Lippo Centre, Tower 2","Lippo Centre, Tower 2",100.0
-Cheung Yick Industrial Building,Cheung Yick Industrial Building,100.0
-Decca Industrial Centre,Decca Industrial Centre,100.0
-Trend Centre,Trend Centre,100.0
-Entertainment Building,Entertainment Building,100.0
-One Island South,One Island South,100.0
-Mega Cube,Mega Cube,100.0
-Telford House,Telford House,100.0
-Maxgrand Plaza,Maxgrand Plaza,100.0
-Silvercord Tower 2,Silvercord Tower 2,100.0
-China HK City Tower 1,China HK City Tower 1,100.0
-The Gateway Tower 6,The Gateway Tower 6,100.0
-Mai Gar Industrial Building,Mai Gar Industrial Building,100.0
-Goodway Centre,Goodway Centre,100.0
-Chung Kiu Commercial Building,Chung Kiu Commercial Building,100.0
-38 Plaza,38 Plaza,100.0
-"Lippo Centre, Tower 1","Lippo Centre, Tower 1",100.0
+One Peking,One Peking,100.0
 Admiralty Centre Tower 2,Admiralty Centre Tower 2,100.0
+"Shun Tak Centre, China Merchants Tower","Shun Tak Centre, China Merchants Tower",100.0
+Kinetic Industrial Centre,Kinetic Industrial Centre,100.0
+Goodway Centre,Goodway Centre,100.0
+Bank of America Tower,Bank of America Tower,100.0
+New Trend Centre,New Trend Centre,100.0
+Far East Finance Centre,Far East Finance Centre,100.0
+"Lippo Centre, Tower 2","Lippo Centre, Tower 2",100.0
+"Lippo Centre, Tower 1","Lippo Centre, Tower 1",100.0
+Two Pacific Place,Two Pacific Place,100.0
+Chinachem Leighton Plaza,Chinachem Leighton Plaza,100.0
+Fortune Factory Building A,Fortune Factory Building A,100.0
+Kantone Centre,Kantone Centre,100.0
+Trend Centre,Trend Centre,100.0
+Decca Industrial Centre,Decca Industrial Centre,100.0
+Cornell Centre,Cornell Centre,100.0
+Cheung Yick Industrial Building,Cheung Yick Industrial Building,100.0
+Cheung Tat Centre,Cheung Tat Centre,100.0
 Yiko Industrial Building,Yiko Industrial Building,100.0
+Kailey Industrial Centre B,Kailey Industrial Centre B,100.0
 Fortune Factory Building B,Fortune Factory Building B,100.0
+Man Foong Industrial Building,Man Foong Industrial Building,100.0
+Citicorp Centre,Citicorp Centre,100.0
+Kwong Ga Factory Building,Kwong Ga Factory Building,100.0
 Hong Kong Plaza,Hong Kong Plaza,100.0
+Causeway Bay Plaza 1,Causeway Bay Plaza 1,100.0
+Prosperous Commercial Building,Prosperous Commercial Building,100.0
+Lee Garden One,Lee Garden One,100.0
+Cofco Tower,Cofco Tower,100.0
+WINDSOR HOUSE - CHUBB TOWER,WINDSOR HOUSE - CHUBB TOWER,100.0
+22 Yee Wo Street,68 Yee Wo Street,89.65517241379311
+Causeway Bay Plaza 2 Lockhart Road,Causeway Bay Plaza 2,100.0
+World Trade Centre,World Trade Centre,100.0
+Chung Wai Commercial Building,Chung Wai Commercial Building,100.0
 United Success Commercial Centre,United Centre,100.0
 Siu On Plaza,Siu On Plaza,100.0
-Causeway Bay Plaza 2 Lockhart Road,Causeway Bay Plaza 2,100.0
 Hang Lung Centre,Hang Lung Centre,100.0
 East Point Centre,East Point Centre,100.0
+Universal Trade Centre,Universal Trade Centre,100.0
+Man Yee Building,Man Yee Building,100.0
+Crawford House,Crawford House,100.0
+New World Tower I,New World Tower I,100.0
+1 Lyndhurst Tower,1 Lyndhurst Tower,100.0
 The Center,The Center,100.0
+Duke Wellington House Wellington Street,Duke Wellington House,100.0
+Two Chinachem Central,Two Chinachem Central,100.0
+Oriental Crystal Commercial Building,Oriental Crystal Commercial Building,100.0
+Universal Trade Centre Caine Road,Universal Trade Centre,100.0
+On Building,Chung On Industrial Building,100.0
+The Galleria Queen's Road Central,8 Queen's Road Central,95.23809523809524
+Cheung Kong Center II,Cheung Kong Center,100.0
+China Insurance Group Building,China Insurance Group Building,100.0
+Jardine House,Jardine House,100.0
+South China Building,China Building,100.0
+Henley Building,Henley Building,100.0
+Entertainment Building,Entertainment Building,100.0
 AIA Central,AIA Central,100.0
-Bank of America Tower,Bank of America Tower,100.0
 World-Wide House,World-Wide House,100.0
 Hip Shing Hong Centre,Hip Shing Hong Centre,100.0
+AIA Tower,AIA Tower,100.0
 Island Place Tower,Island Place Tower,100.0
+Cheong Lee Building,Cheong Lee Building,100.0
+Wayson Commercial Building,Wayson Commercial Building,100.0
+Wing On Centre,Wing On Centre,100.0
+"Shun Tak Centre, West Tower","Shun Tak Centre, West Tower",100.0
+Tung Hip Commercial Building,Tung Hip Commercial Building,100.0
+Nam Wo Hong Building Wing Lok Street,Nam Wo Hong Building,100.0
+Cosco Tower,Cosco Tower,100.0
 "Tern Centre, Tower 2","Lippo Centre, Tower 2",85.71428571428571
 308 Central Des Voeux,308 Central Des Voeux,100.0
 128 Connaught Road Central,128 Connaught Road Central,100.0
-"Shun Tak Centre, China Merchants Tower","Shun Tak Centre, China Merchants Tower",100.0
+Li Po Chun Chambers,Li Po Chun Chambers,100.0
+W50,W50,100.0
+Southmark Tower B,Southmark Tower B,100.0
+Harbour Industrial Centre,Harbour Industrial Centre,100.0
 Derrick Industrial Building,Derrick Industrial Building,100.0
+Genesis,Genesis,100.0
+Kingley Industrial Building 2,Kingley Industrial Building 2,100.0
+Kingley Industrial Building 1,Kingley Industrial Building 1,100.0
+South Island Place,South Island Place,100.0
+One Island South,One Island South,100.0
+Wu Chung House,Wu Chung House,100.0
+Cnt Tower,Cnt Tower,100.0
+Hopewell Centre,Hopewell Centre,100.0
+Tai Tung Building,Tai Tung Building,100.0
+Officeplus @Wan Chai,Officeplus @Wan Chai,100.0
+Dah Sing Financial Centre,Dah Sing Financial Centre,100.0
+Capital Centre,Capital Centre,100.0
+Office Tower - Convention Plaza,Office Tower - Convention Plaza,100.0
+China Resources Building,China Resources Building,100.0
 Yue Xiu Building,Yue Xiu Building,100.0
 Times Tower,Times Tower,100.0
 Great Eagle Centre,Great Eagle Centre,100.0
+Alexandra Industrial Building,Alexandra Industrial Building,100.0
+New Timely Factory Building,New Timely Factory Building,100.0
+Fast Industrial Building,Fast Industrial Building,100.0
+Kimberland Centre,Kimberland Centre,100.0
+International Industrial Building (CSW),International Industrial Building (CSW),100.0
+Yick Tai Industrial Building,Yick Tai Industrial Building,100.0
+Long To Building,Long To Building,100.0
+CEO Tower,CEO Tower,100.0
+Clifford Centre,Clifford Centre,100.0
+Hop Hing Industrial Building,Hop Hing Industrial Building,100.0
+Sterling Centre,Sterling Centre,100.0
+The Globe,The Globe,100.0
+Por Mee Factory Building,Por Mee Factory Building,100.0
+Billion Plaza II,Billion Plaza II,100.0
+HK Industrial Centre Block A,HK Industrial Centre Block A,100.0
+Elite Industrial Centre,Elite Industrial Centre,100.0
+Orient International Tower,Orient International Tower,100.0
+Laford Centre,Laford Centre,100.0
 Dr. Kong Centre,Dr. Kong Centre,100.0
+Ford Glory Plaza,Ford Glory Plaza,100.0
+Vita Green Tower,Vita Green Tower,100.0
+Comweb Plaza,Comweb Plaza,100.0
+Prowell Asia Centre,Prowell Asia Centre,100.0
 Cheung Lung Industrial Building,Cheung Lung Industrial Building,100.0
 Global Gateway Tower,Global Gateway Tower,100.0
 Trendy Centre,Trendy Centre,100.0
@@ -956,73 +1010,140 @@ Peninsula Tower,Peninsula Tower,100.0
 HK Industrial Centre Block B,HK Industrial Centre Block B,100.0
 Easy Tower,Easy Tower,100.0
 Billion Plaza,Billion Plaza,100.0
+HK Industrial Centre Block C,HK Industrial Centre Block C,100.0
 Goodluck Industrial Centre,Goodluck Industrial Centre,100.0
-Enterprise Square Two,Enterprise Square Two,100.0
-Metro Centre II,Metro Centre II,100.0
-Metro Centre,Metro Centre,100.0
-Skyline Tower (Kowloon Bay),Skyline Tower (Kowloon Bay),100.0
-Kinetic Industrial Centre,Kinetic Industrial Centre,100.0
+Boss Commercial Centre,Boss Commercial Centre,100.0
+Champion Building,Champion Building,100.0
+Ocean Building,Ocean Building,100.0
 Enterprise Square Tower 1,Enterprise Square Tower 1,100.0
-New Trend Centre,New Trend Centre,100.0
-New Tech Plaza,New Tech Plaza,100.0
+Telford House,Telford House,100.0
+Metro Centre II,Metro Centre II,100.0
+International Plaza,International Plaza,100.0
+Fook Hong Industrial Building,Fook Hong Industrial Building,100.0
+Enterprise Square Two,Enterprise Square Two,100.0
+Metro Centre,Metro Centre,100.0
+Nan Fung Commercial Centre,Nan Fung Commercial Centre,100.0
+Billion Centre - Tower B,Billion Centre - Tower B,100.0
+Po Lung Centre,Po Lung Centre,100.0
+Kader Building,Kader Building,100.0
+Hong Leong Industrial Complex,Hong Leong Industrial Complex,100.0
+YHC Tower,YHC Tower,100.0
+Kowloon Bay Industrial Centre,Kowloon Bay Industrial Centre,100.0
+Mega Cube,Mega Cube,100.0
+Kingsford Industrial Centre (KB),Kingsford Industrial Centre (KB),100.0
+Sino Industrial Plaza,Sino Industrial Plaza,100.0
+Skyline Tower (Kowloon Bay),Skyline Tower (Kowloon Bay),100.0
+Tonic Industrial Centre Block A,Tonic Industrial Centre Block A,100.0
+Stelux House,Stelux House,100.0
+Midas Plaza,Midas Plaza,100.0
+Chiap King Industrial Building,Chiap King Industrial Building,100.0
+Tai King Industrial Building,Tai King Industrial Building,100.0
 Lead On Industrial Building,Lead On Industrial Building,100.0
-Horizon East,Horizon East,100.0
+Chung Hing Industrial Mansions,Chung Hing Industrial Mansions,100.0
+Tontex Industrial Building,Tontex Industrial Building,100.0
+Wing Hin Factory Building,Wing Hin Factory Building,100.0
+Prince Industrial Building,Prince Industrial Building,100.0
+Galaxy Factory Building,Galaxy Factory Building,100.0
+Yip Fung Industrial Building,Yip Fung Industrial Building,100.0
+Shing King Industrial Building (SPK),Shing King Industrial Building (SPK),100.0
+Perfect Industrial Building,Perfect Industrial Building,100.0
+Lee Chung Industrial Building,Lee Chung Industrial Building,100.0
+Wong King Industrial Building,Wong King Industrial Building,100.0
+Maxgrand Plaza,Maxgrand Plaza,100.0
 Lee Ka Industrial Building,Lee Ka Industrial Building,100.0
+Horizon East,Horizon East,100.0
+New Tech Plaza,New Tech Plaza,100.0
 Startex Industrial Building,Startex Industrial Building,100.0
 One Portside,One Portside,100.0
-Houston Centre Mody Road,Houston Centre,100.0
-Star House,Star House,100.0
-One Peking,One Peking,100.0
-New East Ocean Centre,New East Ocean Centre,100.0
+Van Fat Factory Building,Van Fat Factory Building,100.0
+KHORA,KHORA,100.0
+Silicon Tower,Silicon Tower,100.0
+The Gateway Tower 1,The Gateway Tower 1,100.0
+Peninsula Centre Mody Road,Peninsula Centre,100.0
 Peninsula Centre,Peninsula Centre,100.0
+New East Ocean Centre,New East Ocean Centre,100.0
+Lippo Sun Plaza,Lippo Sun Plaza,100.0
+New Mandarin Plaza Tower B,New Mandarin Plaza Tower B,100.0
+Wharf T & T Centre,Wharf T & T Centre,100.0
+Silvercord Tower 1,Silvercord Tower 1,100.0
+Star House,Star House,100.0
+Silvercord Tower 2,Silvercord Tower 2,100.0
+Harbour Crystal Centre,Harbour Crystal Centre,100.0
+China HK City Tower 3,China HK City Tower 3,100.0
+China HK City Tower 1,China HK City Tower 1,100.0
+The Gateway Tower 2,The Gateway Tower 2,100.0
+Mirror Tower,Mirror Tower,100.0
+Chinachem Golden Plaza,Chinachem Golden Plaza,100.0
+World Finance Centre (North Tower),World Finance Centre (North Tower),100.0
+The Gateway Tower 6,The Gateway Tower 6,100.0
+Houston Centre Mody Road,Houston Centre,100.0
 Wing On Plaza,Wing On Plaza,100.0
 Mira Place Tower A,Mira Place Tower A,100.0
 China HK City Tower 6,China HK City Tower 6,100.0
-Peninsula Square,Peninsula Square,100.0
 Focal Industrial Centre B,Focal Industrial Centre B,100.0
-Kaiser Estate Phase I,Kaiser Estate Phase I,100.0
-Millennium City 1 Tower 1,Millennium City 1 Tower 1,100.0
-King Palace Plaza,King Palace Plaza,100.0
-Sing Win Factory Building,Sing Win Factory Building,100.0
-Hoi Luen Industrial Centre Block A,Hoi Luen Industrial Centre Block A,100.0
-Houtex Industrial Building,Houtex Industrial Building,100.0
-TG Place,TG Place,100.0
-Camelpaint Buildings Block I,Camelpaint Buildings Block I,100.0
-48 Hung To Road,28 Hung To Road,93.33333333333333
-Camelpaint Buildings Block II,Camelpaint Buildings Block II,100.0
-Richmond Commercial Building,Richmond Commercial Building,100.0
-Hollywood Plaza,Hollywood Plaza,100.0
-Chinachem Leighton Plaza,Chinachem Leighton Plaza,100.0
-Citicorp Centre,Citicorp Centre,100.0
-Chung Wai Commercial Building,Chung Wai Commercial Building,100.0
-Cheung Kong Center II,Cheung Kong Center,100.0
-China Insurance Group Building,China Insurance Group Building,100.0
-South China Building,China Building,100.0
-Henley Building,Henley Building,100.0
-Cheong Lee Building,Cheong Lee Building,100.0
-"Shun Tak Centre, West Tower","Shun Tak Centre, West Tower",100.0
-Li Po Chun Chambers,Li Po Chun Chambers,100.0
-Kingley Industrial Building 2,Kingley Industrial Building 2,100.0
-Kingley Industrial Building 1,Kingley Industrial Building 1,100.0
-South Island Place,South Island Place,100.0
-Laford Centre,Laford Centre,100.0
-Vita Green Tower,Vita Green Tower,100.0
-Comweb Plaza,Comweb Plaza,100.0
-HK Industrial Centre Block C,HK Industrial Centre Block C,100.0
-Ocean Building,Ocean Building,100.0
-Billion Centre - Tower B,Billion Centre - Tower B,100.0
-Kowloon Bay Industrial Centre,Kowloon Bay Industrial Centre,100.0
-Nan Fung Commercial Centre,Nan Fung Commercial Centre,100.0
-YHC Tower,YHC Tower,100.0
-Wong King Industrial Building,Wong King Industrial Building,100.0
-Galaxy Factory Building,Galaxy Factory Building,100.0
-Lee Chung Industrial Building,Lee Chung Industrial Building,100.0
-The Gateway Tower 2,The Gateway Tower 2,100.0
-Harbour Crystal Centre,Harbour Crystal Centre,100.0
-World Finance Centre (North Tower),World Finance Centre (North Tower),100.0
+Summit Building,Summit Building,100.0
+Fu Hang Industrial Building,Fu Hang Industrial Building,100.0
+Metropolis Tower,Metropolis Tower,100.0
 Harbour Centre Tower 2,Harbour Centre Tower 2,100.0
+Kaiser Estate Phase I,Kaiser Estate Phase I,100.0
+Peninsula Square,Peninsula Square,100.0
+Kwun Tong View,Kwun Tong View,100.0
+Shing Yip Industrial Building,Shing Yip Industrial Building,100.0
+Contempo Place,Contempo Place,100.0
+Kwong Sang Hong Centre,Kwong Sang Hong Centre,100.0
+Mai Tak Industrial Building,Mai Tak Industrial Building,100.0
+Camelpaint Buildings Block III,Camelpaint Buildings Block III,100.0
+Wah Shing Centre (KT),Wah Shing Centre (KT),100.0
+Century Centre (KT),Century Centre (KT),100.0
+Kwong Sang Hong Centre Hoi Bun Road,Kwong Sang Hong Centre,100.0
+Westley Square,Westley Square,100.0
+Mai Hing Industrial Building Block A,Mai Hing Industrial Building Block A,100.0
+Howard Factory Building,Howard Factory Building,100.0
+How Ming Factory Building,How Ming Factory Building,100.0
+Hoi Luen Industrial Centre Block A,Hoi Luen Industrial Centre Block A,100.0
+Fung Yip Industrial Building,Fung Yip Industrial Building,100.0
+Prosperity Center,Prosperity Center,100.0
+Kwun Tong Industrial Centre Block 1,Kwun Tong Industrial Centre Block 1,100.0
+King Palace Plaza,King Palace Plaza,100.0
+Sunray Industrial Centre,Sunray Industrial Centre,100.0
+King Win Factory Building,King Win Factory Building,100.0
+EGL Tower,EGL Tower,100.0
+The Whitney,The Whitney,100.0
+New City Centre,New City Centre,100.0
+Camelpaint Buildings Block II Hoi Yuen Road,Camelpaint Buildings Block II,100.0
+Texwood Plaza,Texwood Plaza,100.0
+Fortune Industrial Building,Fortune Industrial Building,100.0
+Ko Fai Industrial Building,Ko Fai Industrial Building,100.0
+COS Centre,COS Centre,100.0
+Legend Tower,Legend Tower,100.0
+Benson Tower,Benson Tower,100.0
+Lladro Building,Lladro Building,100.0
+The Quayside,The Quayside,100.0
+Wing Tai Centre,Wing Tai Centre,100.0
 Chung Mei Centre,Chung Mei Centre,100.0
 Joint Venture Factory Building,Joint Venture Factory Building,100.0
+Camelpaint Buildings Block I,Camelpaint Buildings Block I,100.0
 East Sun Industrial Centre,East Sun Industrial Centre,100.0
+Manning Industrial Building,Manning Industrial Building,100.0
 Kwun Kee Tailor Industrial Centre,Kwun Kee Tailor Industrial Centre,100.0
+Mai Gar Industrial Building,Mai Gar Industrial Building,100.0
+Sing Win Factory Building,Sing Win Factory Building,100.0
+Millennium City 1 Tower 1,Millennium City 1 Tower 1,100.0
+Houtex Industrial Building,Houtex Industrial Building,100.0
+Millennium City 5 - BEA Tower,Millennium City 5 - BEA Tower,100.0
+TG Place,TG Place,100.0
+48 Hung To Road,28 Hung To Road,93.33333333333333
+Camelpaint Buildings Block II,Camelpaint Buildings Block II,100.0
+Nathan Centre,Nathan Centre,100.0
+"Office Tower One, Grand Plaza","Office Tower One, Grand Plaza",100.0
+655 Nathan Road,655 Nathan Road,100.0
+Win Century Centre,Win Century Centre,100.0
+Chung Kiu Commercial Building,Chung Kiu Commercial Building,100.0
+38 Plaza,38 Plaza,100.0
+Richmond Commercial Building,Richmond Commercial Building,100.0
+Wealth Commercial Centre,Wealth Commercial Centre,100.0
+Hollywood Plaza,Hollywood Plaza,100.0
+Prosperity Centre,Prosperity Centre,100.0
 Pioneer Centre Nathan Road,Nathan Centre,100.0
+142 Lai Chi Kok Road,822 Lai Chi Kok Road,90.0
+231 Cheung Sha Wan Road,790-796 Cheung Sha Wan Road,90.47619047619048

@@ -151,21 +151,8 @@ def scrape_transaction_data(
     Includes node execution tracking to avoid re-running on the same day.
     """
     
-    # Check if node should be run based on max date in dataset
-    node_name = "transaction_data_scraper"
+    # Date-based decision: incremental date logic below handles when to skip.
     transaction_file = params['centaline_res'].get('res_trans_path', 'data/01_raw/centaline_res_trans_lv_0.parquet')
-    tracking_params = params.get('node_tracking', {})
-    
-    if not should_run_node(node_name, "transaction", tracking_params, transaction_file):
-        logger.info(f"Node '{node_name}' - dataset is up to date - returning existing data")
-        # Return existing data if available
-        if os.path.exists(transaction_file):
-            try:
-                return pd.read_parquet(transaction_file)
-            except Exception as e:
-                logger.warning(f"Failed to load existing transaction data: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
     
     # ============ DEFINE NESTED FUNCTIONS FIRST ============
     def parse_date_from_string(date_str):
@@ -859,16 +846,45 @@ def scrape_transaction_data(
     
     # Thread-local storage for drivers
     thread_local = threading.local()
-    
+    # Serialise Chrome launches so they don't all collide at startup
+    _driver_launch_lock = threading.Lock()
+
+    def initialize_driver_with_retry(max_attempts: int = 3) -> 'webdriver.Chrome':
+        """Launch Chrome with retry + staggered start to avoid renderer crash."""
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return initialize_driver()
+            except Exception as e:
+                if attempt == max_attempts:
+                    raise
+                wait = attempt * 3 + random.uniform(0, 2)
+                logger.warning(f"Chrome launch failed (attempt {attempt}/{max_attempts}): {e}. Retrying in {wait:.1f}s...")
+                time.sleep(wait)
+
     def get_thread_driver():
-        """Get or create driver for current thread"""
-        if not hasattr(thread_local, 'driver'):
-            thread_local.driver = initialize_driver()
+        """Get or create driver for current thread, serialising Chrome launches."""
+        if not hasattr(thread_local, 'driver') or thread_local.driver is None:
+            # Hold the lock so only one Chrome opens at a time
+            with _driver_launch_lock:
+                # Double-check after acquiring lock (another thread may have set it)
+                if not hasattr(thread_local, 'driver') or thread_local.driver is None:
+                    # Small random stagger so processes don't all hit the OS simultaneously
+                    time.sleep(random.uniform(0.5, 2.0))
+                    thread_local.driver = initialize_driver_with_retry()
         return thread_local.driver
-    
+
     def scrape_area_transactions(area_row):
-        """Scrape transactions for a single area (thread-safe)"""
-        driver = get_thread_driver()
+        """Scrape transactions for a single area (thread-safe).
+        
+        Always returns a dict — never raises — so a single area failure
+        does not crash the entire ThreadPoolExecutor job.
+        """
+        try:
+            driver = get_thread_driver()
+        except Exception as e:
+            logger.warning(f"⚠️ Could not start Chrome for {area_row['Subdistrict']}: {e}")
+            return {'success': False, 'data': [], 'area': area_row['Subdistrict'], 'error': str(e)}
+
         base_url = "https://hk.centanet.com/findproperty/en/list/transaction"
         area_data = []
         
@@ -895,7 +911,7 @@ def scrape_transaction_data(
                         if transaction_date and transaction_date < control_date:
                             date_reached = True
                             break
-                    except:
+                    except Exception:
                         pass
                     
                     # Add area_code for reference
@@ -914,10 +930,17 @@ def scrape_transaction_data(
             
         except Exception as e:
             logger.debug(f"Error scraping {area_row['Subdistrict']}: {e}")
+            # Invalidate the broken driver so the next area on this thread gets a fresh one
+            try:
+                thread_local.driver.quit()
+            except Exception:
+                pass
+            thread_local.driver = None
             return {'success': False, 'data': [], 'area': area_row['Subdistrict'], 'error': str(e)}
-    
+
     # Execute scraping with thread pool
-    max_threads = params.get('global', {}).get('max_threads', 3)
+    # Cap at 3 threads by default — macOS struggles above 3 simultaneous Chromes
+    max_threads = min(params.get('global', {}).get('max_threads', 3), 3)
     logger.info(f"🚀 Using {max_threads} parallel threads for transaction scraping")
     
     all_data = []
@@ -932,7 +955,13 @@ def scrape_transaction_data(
         # Process completed tasks with progress bar
         with tqdm(total=len(future_to_area), desc=f"Scraping areas ({max_threads} threads)") as pbar:
             for future in as_completed(future_to_area):
-                result = future.result()
+                try:
+                    result = future.result()
+                except Exception as exc:
+                    area_row = future_to_area[future]
+                    area_name = area_row.get('Subdistrict', 'unknown')
+                    logger.warning(f"⚠️ Unexpected thread exception for {area_name}: {exc}")
+                    result = {'success': False, 'data': [], 'area': area_name, 'error': str(exc)}
                 if result['success']:
                     all_data.extend(result['data'])
                     pbar.set_postfix({'area': result['area'][:15], 'total': len(all_data)})
@@ -1146,293 +1175,322 @@ def process_transaction_data(
 
 
 def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
-    """Robust estate scraper with actual data row counting for each district
-    Includes node execution tracking to avoid re-running within 7 days.
+    """Estate scraper with per-district change detection.
+
+    For each district we load page 1, count items visible on page 1
+    *and* attempt to read the website's total-estate counter.  We then
+    compare BOTH against the values stored in a lightweight metadata
+    JSON file (one entry per district code).  A district is only fully
+    re-scraped when the stored total or the page-1 count differs from
+    the live website — so an unchanged district is skipped with a single
+    page load instead of a full multi-page crawl.
     """
-    
-    # Check if node should be run based on last execution date
-    node_name = "estate_listing_scraper"
-    if not should_run_node(node_name, "estate"):
-        logger.info(f"Node '{node_name}' last run within 7 days - returning existing data")
-        # Return existing data if available
-        listings_file = params.get('estate_listings_file', 'data/01_raw/centaline_estate_lv_1.parquet')
-        if os.path.exists(listings_file):
-            try:
-                return pd.read_parquet(listings_file)
-            except Exception as e:
-                logger.warning(f"Failed to load existing estate listings: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
     from tqdm.auto import tqdm
     from datetime import datetime
-    
+    import json
+
+    listings_file = params.get('estate_listings_file', 'data/01_raw/centaline_estate_lv_1.parquet')
+    meta_file = listings_file.replace('.parquet', '_meta.json')
+
     driver = initialize_driver(params)
     required_columns = [
         'Name', 'Address', 'Blocks', 'Units', 'UnitRate',
         'MoM', 'ForSale', 'ForRent', 'Link', 'EstateCode', 'Region',
         'District', 'Subdistrict', 'Code', 'LastScraped'
     ]
-    
-    # Initialize data structures
-    district_changes = []
-    zero_count_districts = []
+
+    # ── Load existing parquet ────────────────────────────────────────────
     existing_listings = pd.DataFrame(columns=required_columns)
-    district_counts = {}
-    
     try:
-        listings_file = params.get('estate_listings_file', 'data/01_raw/centaline_estate_lv_1.parquet')
         if os.path.exists(listings_file):
-            try:
-                existing_listings = pd.read_parquet(listings_file)
-                logger.info(f"📊 Loaded {len(existing_listings)} existing estate listings")
-                
-                # Clean and standardize data
-                existing_listings['Subdistrict'] = existing_listings['Subdistrict'].str.strip()
-                existing_listings['Code'] = existing_listings['Code'].astype(str).str.strip()
-                
-                # Create district count map based on actual rows in data
-                district_counts = existing_listings.groupby(['Subdistrict', 'Code']).size().to_dict()
-                logger.info(f"🏘️  Will check {len(area_df)} districts for updates...")
-            except Exception as e:
-                logger.error(f"Data loading failed: {str(e)}")
-                existing_listings = pd.DataFrame(columns=required_columns)
+            existing_listings = pd.read_parquet(listings_file)
+            existing_listings['Subdistrict'] = existing_listings['Subdistrict'].str.strip()
+            existing_listings['Code'] = existing_listings['Code'].astype(str).str.strip()
+            logger.info(f"📊 Loaded {len(existing_listings)} existing estate listings")
     except Exception as e:
-            logger.error(f"Initialization error: {str(e)}")
-    
-    new_or_updated_estates = []
-    
+        logger.error(f"Failed to load existing listings: {e}")
+
+    # ── Load metadata (stores page1_count + total per district code) ─────
+    #
+    # Structure:  { "HMA155": {"page1_count": 24, "total": 94}, ... }
+    #
+    # page1_count  = number of items visible on page 1 the last time we
+    #               scraped (reliable proxy for detecting additions that
+    #               appear at the top of the list)
+    # total        = full scraped total across all pages (used for
+    #               display only)
+    district_meta: dict = {}
     try:
-        with tqdm(area_df.iterrows(), total=len(area_df), desc="Processing districts") as district_iter:
+        if os.path.exists(meta_file):
+            with open(meta_file, 'r') as f:
+                district_meta = json.load(f)
+    except Exception as e:
+        logger.warning(f"Could not load district metadata: {e}")
+
+    logger.info(f"🏘️  Will check {len(area_df)} districts for updates...")
+
+    new_or_updated_estates = []
+    skipped_districts = []
+    zero_count_districts = []
+    district_changes = []
+
+    # ── Per-district loop ────────────────────────────────────────────────
+    try:
+        with tqdm(area_df.iterrows(), total=len(area_df), desc="Checking districts") as district_iter:
             for _, row in district_iter:
                 subdistrict = str(row['Subdistrict']).strip()
                 code = str(row['Code']).strip()
-                district_key = (subdistrict, code)
                 current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                
+
                 try:
-                    # Generate session URL
                     subdistrict_clean = clean_subdistrict(subdistrict)
                     session_id = generate_session_id()
-                    url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_clean}_19-{code}?q={session_id}"
-                    
-                    # Navigate and get website count
+                    url = (f"https://hk.centanet.com/findproperty/en/list/estate/"
+                           f"{subdistrict_clean}_19-{code}?q={session_id}")
+
                     driver.get(url)
                     random_sleep(params['global']['min_delay'], params['global']['max_delay'])
-                    
-                    # Check if estate listings exist (ignore broken count element)
+
+                    # ── Step 1: count items visible on page 1 ─────────────
                     try:
-                        # Wait for estate listings to load
                         WebDriverWait(driver, 15).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, "a.property-text.flex.def-property-box"))
+                            EC.presence_of_element_located(
+                                (By.CSS_SELECTOR, "a.property-text.flex.def-property-box")
+                            )
                         )
-                        # Count actual estate listings on page
                         soup = BeautifulSoup(driver.page_source, 'html.parser')
-                        estate_items = soup.select("a.property-text.flex.def-property-box")
-                        current_count = len(estate_items)
-                        
-                        logger.debug(f"Found {current_count} estate listings for {subdistrict}")
-                        
-                    except Exception as e:
-                        logger.debug(f"No estate listings found for {subdistrict}: {str(e)}")
-                        current_count = 0
-                    
-                    # Get previous count from actual data rows
-                    previous_count = district_counts.get(district_key, 0)
-                    
-                    # Handle zero-count districts
-                    if current_count == 0:
-                        zero_count_districts.append(district_key)
-                        logger.debug(f"Skipping zero-count district: {subdistrict} ({code})")
+                        estate_items_page1 = soup.select("a.property-text.flex.def-property-box")
+                        page1_count = len(estate_items_page1)
+                    except Exception:
+                        page1_count = 0
+                        soup = None
+                        estate_items_page1 = []
+
+                    # ── Step 2: try to read the website's total counter ────
+                    # Centanet shows a total like "279 Results" in various
+                    # elements.  We try a few selectors; fall back to None.
+                    website_total = None
+                    if soup:
+                        total_selectors = [
+                            '.result-count',
+                            '.total-count',
+                            '[data-total]',
+                            '.search-result-count',
+                            '.count-label',
+                        ]
+                        for sel in total_selectors:
+                            el = soup.select_one(sel)
+                            if el:
+                                digits = re.sub(r'[^\d]', '', el.get_text())
+                                if digits:
+                                    website_total = int(digits)
+                                    break
+                        # Fallback: look for a span/div with a standalone
+                        # number that's larger than page1_count
+                        if website_total is None:
+                            for el in soup.find_all(['span', 'div', 'p']):
+                                txt = el.get_text(strip=True)
+                                if re.match(r'^\d+$', txt):
+                                    n = int(txt)
+                                    if n >= page1_count:
+                                        website_total = n
+                                        break
+
+                    # ── Step 3: compare against stored metadata ───────────
+                    stored = district_meta.get(code, {})
+                    stored_page1   = stored.get('page1_count')
+                    stored_total   = stored.get('total')
+
+                    # Skip if BOTH metrics are unchanged
+                    if page1_count == 0:
+                        zero_count_districts.append(code)
+                        logger.debug(f"Skipping empty district: {subdistrict} ({code})")
                         continue
-                    
-                    # Skip unchanged districts (only if we have previous data)
-                    if previous_count > 0 and current_count == previous_count:
-                        logger.debug(f"Skipping unchanged district: {subdistrict} ({code}) [{current_count}]")
+
+                    page1_unchanged  = (stored_page1 is not None and page1_count == stored_page1)
+                    total_unchanged  = (
+                        website_total is None  # can't check → rely on page1 only
+                        or (stored_total is not None and website_total == stored_total)
+                    )
+
+                    if page1_unchanged and total_unchanged and stored_total is not None:
+                        skipped_districts.append(code)
+                        logger.debug(
+                            f"⏭  {subdistrict} ({code}): unchanged "
+                            f"(page1={page1_count}, total={stored_total}) — skipping"
+                        )
+                        district_iter.set_postfix({'district': subdistrict[:12], 'skipped': len(skipped_districts)})
                         continue
-                    
-                    # Track changed districts and start scraping
+
+                    # ── Step 4: district changed — scrape all pages ───────
+                    reason = []
+                    if not page1_unchanged:
+                        reason.append(f"page1 {stored_page1}→{page1_count}")
+                    if not total_unchanged and website_total is not None:
+                        reason.append(f"total {stored_total}→{website_total}")
+                    if stored_total is None:
+                        reason.append("no previous data")
+
                     district_changes.append({
-                        'district': subdistrict,
-                        'code': code,
-                        'previous': previous_count,
-                        'current': current_count,
-                        'timestamp': current_time
+                        'district': subdistrict, 'code': code,
+                        'stored_total': stored_total, 'website_total': website_total,
+                        'page1_count': page1_count, 'reason': ', '.join(reason)
                     })
-                    
-                    # **UPDATED**: Initialize district-specific tracking
+
                     district_estates = []
                     current_page = 1
-                    
-                    # Full scraping process with row counting
+
+                    # Process page 1 items already loaded
+                    for item in estate_items_page1:
+                        try:
+                            estate_data = process_estate_item(item, row)
+                            district_estates.append(estate_data)
+                        except Exception as e:
+                            logger.error(f"Error processing estate on page 1: {e}")
+
+                    # Continue to subsequent pages
                     while True:
                         try:
-                            WebDriverWait(driver, 20).until(
-                                EC.presence_of_element_located((By.CSS_SELECTOR, "a.property-text.flex.def-property-box"))
+                            next_btn = driver.find_element(
+                                By.CSS_SELECTOR, "button.btn-next:not([disabled])"
                             )
-                            
-                            soup = BeautifulSoup(driver.page_source, 'html.parser')
-                            estate_items = soup.select("a.property-text.flex.def-property-box")
-                            
-                            # Process each estate on current page
-                            for item in estate_items:
+                            driver.execute_script("arguments[0].click();", next_btn)
+                            random_sleep(params['global']['min_delay'], params['global']['max_delay'])
+                            current_page += 1
+
+                            WebDriverWait(driver, 20).until(
+                                EC.presence_of_element_located(
+                                    (By.CSS_SELECTOR, "a.property-text.flex.def-property-box")
+                                )
+                            )
+                            soup_page = BeautifulSoup(driver.page_source, 'html.parser')
+                            for item in soup_page.select("a.property-text.flex.def-property-box"):
                                 try:
-                                    estate_data = process_estate_item(item, row)
-                                    district_estates.append(estate_data)
+                                    district_estates.append(process_estate_item(item, row))
                                 except Exception as e:
-                                    logger.error(f"Error processing estate: {str(e)}")
-                                    continue
-                            
-                            # Pagination handling
-                            try:
-                                next_btn = driver.find_element(By.CSS_SELECTOR, "button.btn-next:not([disabled])")
-                                driver.execute_script("arguments[0].click();", next_btn)
-                                random_sleep(params['global']['min_delay'], params['global']['max_delay'])
-                                current_page += 1
-                            except NoSuchElementException:
-                                break
-                                
+                                    logger.error(f"Error processing estate on page {current_page}: {e}")
+
+                        except NoSuchElementException:
+                            break
                         except TimeoutException:
                             logger.warning(f"Timeout in {subdistrict} page {current_page}")
                             break
                         except Exception as e:
-                            logger.error(f"Critical error: {str(e)}")
+                            logger.error(f"Error scraping {subdistrict} page {current_page}: {e}")
                             break
-                    
-                    # **UPDATED**: Count actual rows scraped for this district
-                    actual_scraped_count = len(district_estates)
-                    
-                    # Add district estates to main collection
+
+                    actual_total = len(district_estates)
                     new_or_updated_estates.extend(district_estates)
-                    
-                    # **ENHANCED LOGGING**: Clear and concise district completion
-                    pages_scraped = current_page - 1 if 'current_page' in locals() else 1
-                    logger.info(f"✅ {subdistrict} ({code}): {actual_scraped_count} estates scraped from {pages_scraped} pages")
-                    
-                    # **UPDATE PROGRESS BAR**: Show current district and totals
+
+                    # ── Update metadata for this district ─────────────────
+                    district_meta[code] = {
+                        'page1_count': page1_count,
+                        'total': actual_total,
+                        'last_scraped': current_time,
+                        'subdistrict': subdistrict,
+                    }
+
+                    logger.info(
+                        f"✅ {subdistrict} ({code}): {actual_total} estates "
+                        f"from {current_page} page(s) [{', '.join(reason)}]"
+                    )
                     district_iter.set_postfix({
                         'district': subdistrict[:12],
                         'total_estates': len(new_or_updated_estates)
                     })
-                    
+
                 except Exception as e:
-                    logger.error(f"District processing failed: {subdistrict} - {str(e)}")
+                    logger.error(f"District processing failed: {subdistrict} ({code}) — {e}")
                     continue
-        
-        # **UPDATED**: Final data consolidation with actual row counting
+
+        # ── Consolidate data ─────────────────────────────────────────────
         if new_or_updated_estates:
             new_df = pd.DataFrame(new_or_updated_estates)
-            logger.info(f"Processing {len(new_df)} new/updated estates")
-            
-            # Remove old data for updated districts to prevent duplicates
-            updated_districts = set((estate['Subdistrict'], estate['Code']) for estate in new_or_updated_estates)
+            updated_districts = set(
+                (e['Subdistrict'], e['Code']) for e in new_or_updated_estates
+            )
             existing_to_keep = existing_listings[
-                ~existing_listings[['Subdistrict', 'Code']].apply(tuple, axis=1).isin(updated_districts)
+                ~existing_listings[['Subdistrict', 'Code']]
+                .apply(tuple, axis=1).isin(updated_districts)
             ]
-            
-            logger.info(f"Keeping {len(existing_to_keep)} existing estates from unchanged districts")
+            logger.info(f"Keeping {len(existing_to_keep)} estates from {len(area_df) - len(district_changes)} unchanged districts")
             final_df = pd.concat([existing_to_keep, new_df], ignore_index=True)
         else:
-            logger.info("No new/updated estates found - preserving all existing data")
+            logger.info("No changed districts — preserving all existing data")
             final_df = existing_listings.copy()
-        
-        # **UPDATED**: Generate final report with actual row counts
-        logger.info("\n" + "="*60)
-        logger.info("ESTATE SCRAPING COMPLETION REPORT")
-        logger.info("="*60)
-        logger.info(f"Total districts processed: {len(area_df)}")
-        logger.info(f"Changed districts: {len(district_changes)}")
-        logger.info(f"Zero-count districts: {len(zero_count_districts)}")
-        logger.info(f"Total new estates scraped: {len(new_or_updated_estates)}")
-        
+
+        # ── Final report ─────────────────────────────────────────────────
+        logger.info(f"\n{'='*60}")
+        logger.info(f"ESTATE SCRAPING COMPLETION REPORT")
+        logger.info(f"{'='*60}")
+        logger.info(f"  Districts checked:  {len(area_df)}")
+        logger.info(f"  Skipped (no change): {len(skipped_districts)}")
+        logger.info(f"  Re-scraped:         {len(district_changes)}")
+        logger.info(f"  Empty (zero items): {len(zero_count_districts)}")
+        logger.info(f"  New estates added:  {len(new_or_updated_estates)}")
+
         if district_changes:
-            logger.info("\nDETAILED SCRAPING RESULTS:")
-            total_website_count = 0
-            total_actual_rows = 0
-            
-            for change in district_changes:
-                # **UPDATED**: Count actual rows in final dataset for this district
-                district_rows = len([e for e in new_or_updated_estates 
-                                   if e['Subdistrict'] == change['district'] 
-                                   and e['Code'] == change['code']])
-                
-                total_website_count += change['current']
-                total_actual_rows += district_rows
-                
-                rate = (district_rows / change['current'] * 100) if change['current'] > 0 else 0
-                logger.info(f"  {change['district']} ({change['code']}): "
-                          f"Website={change['current']} | Actual_Rows={district_rows} | Rate={rate:.1f}%")
-            
-            overall_rate = (total_actual_rows / total_website_count * 100) if total_website_count > 0 else 0
-            logger.info(f"\nOVERALL SUMMARY:")
-            logger.info(f"  Total expected (from websites): {total_website_count}")
-            logger.info(f"  Total actual rows scraped: {total_actual_rows}")
-            logger.info(f"  Overall completion rate: {overall_rate:.1f}%")
+            logger.info("\n  Changed districts:")
+            for ch in district_changes:
+                prev = ch['stored_total'] if ch['stored_total'] is not None else 'new'
+                web  = ch['website_total'] if ch['website_total'] is not None else '?'
+                logger.info(
+                    f"    {ch['district']} ({ch['code']}): "
+                    f"DB={prev} → Web≈{web}, scraped={district_meta.get(ch['code'], {}).get('total', '?')} "
+                    f"[{ch['reason']}]"
+                )
         
-        # **UPDATED**: Final dataset statistics with row counts by district
-        if not final_df.empty:
-            final_district_counts = final_df.groupby(['Subdistrict', 'Code']).size()
-            logger.info(f"\nFINAL DATASET STATISTICS:")
-            logger.info(f"  Total estates in dataset: {len(final_df)}")
-            logger.info(f"  Districts represented: {len(final_district_counts)}")
-            
-            # Show sample of district row counts
-            logger.info(f"  Sample district row counts:")
-            for (district, code), count in final_district_counts.head(10).items():
-                logger.info(f"    {district} ({code}): {count} rows")
-        
-        # Safety deduplication
+        # ── Safety deduplication ─────────────────────────────────────────
         before_dedup = len(final_df)
         final_df = final_df.drop_duplicates(
             subset=['Name', 'Address', 'Region', 'District', 'Subdistrict', 'Code'],
             keep='last'
         )
-        after_dedup = len(final_df)
-        if before_dedup != after_dedup:
-            logger.info(f"Removed {before_dedup - after_dedup} duplicate estates")
-        
-        # Save data
+        if before_dedup != len(final_df):
+            logger.info(f"Removed {before_dedup - len(final_df)} duplicate estates")
+
+        # Drop rows where Name is None or empty
+        final_df = final_df[final_df['Name'].notnull() & (final_df['Name'].str.strip() != '')]
+
+        # ── Save parquet + metadata ──────────────────────────────────────
         final_df.to_parquet(listings_file, index=False)
-        logger.info(f"\nSaved {len(final_df)} total estates to {listings_file}")
-        
-        # Record node execution
+        logger.info(f"📦 Saved {len(final_df)} total estates to {listings_file}")
+
+        try:
+            with open(meta_file, 'w') as f:
+                json.dump(district_meta, f, indent=2)
+            logger.info(f"📝 Saved district metadata to {meta_file}")
+        except Exception as e:
+            logger.warning(f"Could not save district metadata: {e}")
+
         record_node_execution(
             node_name="estate_listing_scraper",
             node_type="estate",
             metadata={
-                "estates_processed": len(final_df),
-                "districts_processed": len(area_df),
-                "execution_time": datetime.now().isoformat()
+                "estates_total": len(final_df),
+                "districts_checked": len(area_df),
+                "districts_scraped": len(district_changes),
+                "districts_skipped": len(skipped_districts),
             }
         )
-        
-        # Drop rows where Name is None or empty
-        final_df = final_df[final_df['Name'].notnull() & (final_df['Name'].str.strip() != '')]
-        logger.info(f"📋 Final dataset after dropping None names: {len(final_df)} estates")
-        
+
         return final_df
-        
+
     except Exception as e:
-        logger.error(f"Data consolidation failed: {str(e)}")
+        logger.error(f"Data consolidation failed: {e}")
         return existing_listings[existing_listings['Name'].notnull()]
-        
+
     finally:
         driver.quit()
 
         
 def log_district_completion(subdistrict, code, current_count, final_df):
-    """Log district completion with actual data count"""
-    # Count actual rows for this district in the final dataset
+    """Deprecated — kept for backward compatibility only."""
     actual_scraped_count = len(final_df[
-        (final_df['Subdistrict'] == subdistrict) & 
+        (final_df['Subdistrict'] == subdistrict) &
         (final_df['Code'] == code)
     ])
-    
-    completion_rate = (actual_scraped_count / current_count * 100) if current_count > 0 else 0
-    
-    logger.info(f"Processing changed district: {subdistrict} ({code}) "
-              f"Website: {current_count} | "
-              f"Actual in dataset: {actual_scraped_count} | "
-              f"Rate: {completion_rate:.1f}%")
+    logger.info(f"  {subdistrict} ({code}): scraped={actual_scraped_count} website_page1={current_count}")
 
 
 def estate_changed(existing: pd.Series, new: dict) -> bool:
@@ -1505,82 +1563,109 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
     """
     logger = logging.getLogger(__name__)
     
-    # Check if node should be run based on last execution date
-    node_name = "estate_detail_scraper"
-    tracking_params = params.get('node_tracking', {})
-    if not should_run_node(node_name, "estate", tracking_params):
-        logger.info(f"Node '{node_name}' last run within configured days - returning existing data")
-        # Return existing data if available
-        details_file = params.get('estate_details_file', 'data/01_raw/centaline_estate_lv_2.parquet')
-        if os.path.exists(details_file):
-            try:
-                return pd.read_parquet(details_file)
-            except Exception as e:
-                logger.warning(f"Failed to load existing estate details: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
-    
+    # Estate details: skip logic is Link+estate_code based (handled below — no time guard).
     details_file = params.get('estate_details_file', 'data/01_raw/centaline_estate_lv_2.parquet')
     logger.info(f"Details File: {details_file}")
-    
-    # Load existing details
+
+    # ── Load existing details ────────────────────────────────────────────
     existing_details = pd.DataFrame()
     if os.path.exists(details_file):
         existing_details = pd.read_parquet(details_file)
         logger.info(f"📊 Loaded {len(existing_details)} existing estate details")
-        
-        # Check for incomplete records (gap-filling mechanism)
-        critical_fields = ['scraped_estate_name', 'occupation_permit', 'estate_code']
-        if not existing_details.empty:
-            incomplete_mask = existing_details[critical_fields].isna().any(axis=1)
-            incomplete_count = incomplete_mask.sum()
-            if incomplete_count > 0:
-                logger.info(f"🔧 Found {incomplete_count} incomplete records - will re-scrape them")
-                # Add incomplete records back to scraping queue
-                incomplete_names = set(existing_details[incomplete_mask]['Name'].tolist())
+
+    # ── Determine completed estates using Link as the reliable key ───────
+    #
+    # Why Link and not Name?
+    #   • Name can differ between listings and details (Chinese chars, typos)
+    #   • Link is the estate's canonical URL — always consistent
+    #   • estate_code is just the last URL segment, so if it's populated the
+    #     page was successfully loaded (even if other optional fields are null)
+    #
+    # An estate counts as "done" when its Link appears in existing_details
+    # AND the scraped page produced at least an estate_code (URL parse,
+    # never fails) AND a scraped_estate_name (visible page title).
+    # If either column is missing from old data we fall back to Link-only.
+    done_links: set = set()
+    if not existing_details.empty and 'Link' in existing_details.columns:
+        ec_col  = 'estate_code'        if 'estate_code'        in existing_details.columns else None
+        sn_col  = 'scraped_estate_name' if 'scraped_estate_name' in existing_details.columns else None
+
+        if ec_col and sn_col:
+            # Proper completeness: both populated
+            done_mask = (
+                existing_details[ec_col].notna()  &
+                (existing_details[ec_col].astype(str).str.strip() != '') &
+                existing_details[sn_col].notna() &
+                (existing_details[sn_col].astype(str).str.strip() != '')
+            )
+            incomplete_count = (~done_mask).sum()
+            done_links = set(existing_details.loc[done_mask, 'Link'])
+            logger.info(f"✓ {len(done_links):,} estates complete, {incomplete_count:,} incomplete/missing")
+        elif ec_col or sn_col:
+            # Partial schema — use whichever column we have
+            col = ec_col or sn_col
+            done_mask = existing_details[col].notna() & (existing_details[col].astype(str).str.strip() != '')
+            done_links = set(existing_details.loc[done_mask, 'Link'])
+            logger.info(f"✓ {len(done_links):,} estates complete (schema: {col} only)")
+        else:
+            # Very old schema with no recognisable indicator — treat all as done
+            done_links = set(existing_details['Link'])
+            logger.info(f"ℹ️  Old schema, no scraped_estate_name/estate_code columns — "
+                        f"treating all {len(done_links):,} existing records as complete")
     else:
-        incomplete_names = set()
-    
-    # Determine which estates need scraping
-    # 1. New estates not in existing data
-    # 2. Incomplete estates (missing critical fields)
-    existing_complete_names = set()
-    if not existing_details.empty and 'Name' in existing_details.columns:
-        # Only consider estates complete if they have all critical fields
-        critical_fields = ['scraped_estate_name', 'occupation_permit', 'estate_code']
-        complete_mask = existing_details[critical_fields].notna().all(axis=1)
-        existing_complete_names = set(existing_details[complete_mask]['Name'].tolist())
-        logger.info(f"✓ {len(existing_complete_names)} estates are complete")
-    
-    estates_to_scrape = listings_df[~listings_df['Name'].isin(existing_complete_names)]
-    
+        logger.info("📂 No existing details — starting fresh")
+
+    # ── Which listings still need scraping? ──────────────────────────────
+    new_mask      = ~listings_df['Link'].isin(done_links)
+    estates_to_scrape = listings_df[new_mask].copy()
+    already_done  = len(listings_df) - len(estates_to_scrape)
+
     if estates_to_scrape.empty:
-        logger.info("✅ No estates to scrape - all complete")
+        logger.info("✅ All estates already scraped — nothing to do")
         return existing_details
-    
-    logger.info(f"🎯 Will scrape {len(estates_to_scrape)} estates ({len(estates_to_scrape) - len(incomplete_names if 'incomplete_names' in locals() else [])} new, {len(incomplete_names if 'incomplete_names' in locals() else [])} retry)")
-    
-    # Multi-threading setup
+
+    logger.info(f"🎯 Estates: {len(listings_df):,} total | "
+                f"{already_done:,} already done | "
+                f"{len(estates_to_scrape):,} to scrape now")
+
+    # ── Multi-threading setup ────────────────────────────────────────────
     from concurrent.futures import ThreadPoolExecutor, as_completed
     import threading
-    
-    # Get thread count from params or use default
-    max_threads = params.get('global', {}).get('max_threads', 5)
+
+    max_threads = min(params.get('global', {}).get('max_threads', 5), 5)
     logger.info(f"🚀 Using {max_threads} parallel threads for scraping")
-    
-    # Thread-local storage for drivers
+
     thread_local = threading.local()
-    
+    _driver_launch_lock = threading.Lock()
+
+    def _init_driver_with_retry(max_attempts: int = 3):
+        for attempt in range(1, max_attempts + 1):
+            try:
+                return initialize_driver(params)
+            except Exception as e:
+                if attempt == max_attempts:
+                    raise
+                wait = attempt * 3 + random.uniform(0, 2)
+                logger.warning(f"Chrome launch failed (attempt {attempt}): {e}. Retry in {wait:.1f}s")
+                time.sleep(wait)
+
     def get_thread_driver():
-        """Get or create driver for current thread"""
-        if not hasattr(thread_local, 'driver'):
-            thread_local.driver = initialize_driver(params)
+        """Get or create Chrome for this thread, serialising launches."""
+        if not hasattr(thread_local, 'driver') or thread_local.driver is None:
+            with _driver_launch_lock:
+                if not hasattr(thread_local, 'driver') or thread_local.driver is None:
+                    time.sleep(random.uniform(0.5, 2.0))   # stagger OS-level starts
+                    thread_local.driver = _init_driver_with_retry()
         return thread_local.driver
     
     def scrape_single_estate(row):
-        """Scrape a single estate (thread-safe)"""
-        driver = get_thread_driver()
-        
+        """Scrape a single estate (thread-safe). Never raises — always returns dict."""
+        try:
+            driver = get_thread_driver()
+        except Exception as e:
+            logger.warning(f"⚠️ Could not start Chrome for {row.get('Name', '?')}: {e}")
+            return {'success': False, 'name': row.get('Name', 'Unknown'),
+                    'link': row.get('Link', ''), 'error': str(e)}
         try:
             driver.get(row['Link'])
             random_sleep(params['global']['min_delay'], params['global']['max_delay'])
@@ -1672,24 +1757,38 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
                 pass
             
             return {'success': True, 'data': detail_data}
-            
+
         except Exception as e:
-            logger.debug(f"Failed to scrape {row.get('Name', 'Unknown')}: {str(e)}")
-            return {'success': False, 'name': row.get('Name', 'Unknown'), 'link': row.get('Link', ''), 'error': str(e)}
+            logger.debug(f"Failed to scrape {row.get('Name', 'Unknown')}: {e}")
+            # Invalidate broken driver so next estate on this thread gets a fresh one
+            try:
+                thread_local.driver.quit()
+            except Exception:
+                pass
+            thread_local.driver = None
+            return {'success': False, 'name': row.get('Name', 'Unknown'),
+                    'link': row.get('Link', ''), 'error': str(e)}
     
-    # Execute scraping with thread pool
+    # ── Execute scraping with thread pool ───────────────────────────────
     new_details = []
     failed_estates = []
-    
+
+    from tqdm.auto import tqdm
+
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        # Submit all tasks
-        future_to_estate = {executor.submit(scrape_single_estate, row): row for _, row in estates_to_scrape.iterrows()}
-        
-        # Process completed tasks with progress bar
-        from tqdm.auto import tqdm
-        with tqdm(total=len(future_to_estate), desc=f"Scraping estates ({max_threads} threads)") as pbar:
+        future_to_estate = {
+            executor.submit(scrape_single_estate, row): row
+            for _, row in estates_to_scrape.iterrows()
+        }
+        with tqdm(total=len(future_to_estate),
+                  desc=f"Scraping estates ({max_threads} threads)") as pbar:
             for future in as_completed(future_to_estate):
-                result = future.result()
+                try:
+                    result = future.result()
+                except Exception as exc:
+                    row = future_to_estate[future]
+                    result = {'success': False, 'name': row.get('Name', '?'),
+                              'link': row.get('Link', ''), 'error': str(exc)}
                 if result['success']:
                     new_details.append(result['data'])
                 else:
@@ -1706,13 +1805,20 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
         logger.warning(f"⚠️  Failed to scrape: {len(failed_estates)} estates")
         logger.info("   These will be retried on next run (gap-filling mechanism)")
     
-    # Merge and save results
+    # ── Merge and save results ───────────────────────────────────────────
+    # Replace only the rows whose Link was just scraped — keep everything else
     try:
         if new_details:
             new_df = pd.DataFrame(new_details)
-            updated_df = pd.concat([existing_details, new_df], ignore_index=True)
+            scraped_links = set(new_df['Link']) if 'Link' in new_df.columns else set()
+            # Drop stale rows for re-scraped estates, then append freshly scraped ones
+            if not existing_details.empty and 'Link' in existing_details.columns and scraped_links:
+                existing_to_keep = existing_details[~existing_details['Link'].isin(scraped_links)]
+            else:
+                existing_to_keep = existing_details
+            updated_df = pd.concat([existing_to_keep, new_df], ignore_index=True)
             updated_df.to_parquet(details_file, index=False)
-            logger.info(f"Added {len(new_df)} new estate details")
+            logger.info(f"💾 Saved {len(updated_df):,} estate details ({len(new_df):,} new/updated)")
             
             # Record node execution
             record_node_execution(
@@ -2290,33 +2396,140 @@ def enrich_estate_data(
         transactions_copy['property_type'] = 'residential'
 
     # Combine with existing data but remove duplicates
-    # This allows incremental updates without duplication
+    # This allows incremental updates without duplication, and for each set
+    # of duplicate keys we MERGE cells to keep the best non-null/non-empty
+    # value from any source (JS or HTML), instead of just keeping "latest".
     try:
+        def merge_group(group: pd.DataFrame) -> pd.Series:
+            """Merge a group of duplicate rows into a single best-effort record.
+
+            Rules:
+            - For numeric-like fields (price/area etc.), prefer non-null and non-zero.
+            - For strings, prefer the first non-empty, non-placeholder value.
+            - If all values are null/empty, fall back to the last value.
+            """
+            base = group.iloc[0].copy()
+
+            # Columns where 0 is effectively "missing" and we prefer a non-zero value
+            zero_is_missing = {'price', 'ft_price', 'area', 'g_area', 'g_unit_price'}
+
+            def is_invalid_string(val: Any) -> bool:
+                if val is None:
+                    return True
+                if not isinstance(val, str):
+                    return False
+                v = val.strip()
+                return v == '' or v.lower() in {'none', 'nan', '<na>'}
+
+            for col in group.columns:
+                vals = group[col]
+                # Drop real NaN values
+                non_na = vals.dropna()
+                if non_na.empty:
+                    # All NaN: keep last value (will stay NaN)
+                    base[col] = vals.iloc[-1]
+                    continue
+
+                # Numeric-like merging for specific columns
+                if col in zero_is_missing:
+                    # Try to treat as numeric
+                    try:
+                        numeric_vals = pd.to_numeric(non_na, errors='coerce')
+                        non_zero = numeric_vals[numeric_vals != 0]
+                        if not non_zero.empty:
+                            # Use the first non-zero numeric value
+                            base[col] = non_zero.iloc[0]
+                        else:
+                            # Fall back to the first numeric value (even if zero)
+                            base[col] = numeric_vals.iloc[0]
+                        continue
+                    except Exception:
+                        # Fall through to generic handling if conversion fails
+                        pass
+
+                # String-like merging: pick first meaningful string
+                picked = None
+                for v in non_na:
+                    if isinstance(v, str):
+                        if not is_invalid_string(v):
+                            picked = v
+                            break
+                    else:
+                        # Non-string, non-NaN value
+                        picked = v
+                        break
+
+                if picked is not None:
+                    base[col] = picked
+                else:
+                    # All values are technically "invalid" strings; keep last
+                    base[col] = non_na.iloc[-1]
+
+            return base
+
+        def merge_duplicates(df: pd.DataFrame, key_cols: list[str]) -> pd.DataFrame:
+            if not key_cols:
+                return df
+            # Group by key columns and merge each group
+            merged = (
+                df.groupby(key_cols, as_index=False, dropna=False)
+                  .apply(merge_group)
+            )
+            # groupby.apply puts key columns in the index; reset to plain df
+            merged = merged.reset_index(drop=True)
+            return merged
+
+        # First, deduplicate/merge within the current batch itself
+        current = transactions_copy.copy()
+        # Preferred keys: transaction_id; fallback composite key
+        if 'transaction_id' in current.columns:
+            batch_keys = ['transaction_id']
+        else:
+            fallback_keys = ['date', 'Name', 'Tower', 'Floor', 'Flat', 'price']
+            batch_keys = [k for k in fallback_keys if k in current.columns]
+
+            if batch_keys:
+                before_batch = len(current)
+                current = merge_duplicates(current, batch_keys)
+                after_batch = len(current)
+                if after_batch != before_batch:
+                    logger.info(
+                        f"🧬 Merged {before_batch - after_batch:,} duplicate rows inside current batch using keys {batch_keys}"
+                    )
+            else:
+                logger.warning("⚠️  No suitable keys found for within-batch merge; leaving batch as-is")
+
+        # Then merge with any existing enriched data (for incremental runs)
         if not existing_enriched.empty:
             logger.info(f"📊 Found {len(existing_enriched)} existing records")
-            
-            # Combine existing and new data
-            combined = pd.concat([existing_enriched, transactions_copy], ignore_index=True, sort=False)
-            logger.info(f"📊 Combined to {len(combined)} total records (before dedup)")
-            
-            # Remove duplicates based on transaction_id (keep most recent = last occurrence)
+
+            combined = pd.concat([existing_enriched, current], ignore_index=True, sort=False)
+            logger.info(f"📊 Combined to {len(combined)} total records (before cross-run merge)")
+
             if 'transaction_id' in combined.columns:
-                before_dedup = len(combined)
-                final_df = combined.drop_duplicates(subset=['transaction_id'], keep='last')
-                after_dedup = len(final_df)
-                
-                if before_dedup != after_dedup:
-                    logger.info(f"🗑️  Removed {before_dedup - after_dedup:,} duplicate transactions")
-                logger.info(f"✅ Final clean dataset: {len(final_df):,} unique transactions")
+                combined_keys = ['transaction_id']
             else:
-                logger.warning("⚠️  No transaction_id column - cannot deduplicate")
+                fallback_keys = ['date', 'Name', 'Tower', 'Floor', 'Flat', 'price']
+                combined_keys = [k for k in fallback_keys if k in combined.columns]
+
+            if combined_keys:
+                before_dedup = len(combined)
+                final_df = merge_duplicates(combined, combined_keys)
+                after_dedup = len(final_df)
+                if before_dedup != after_dedup:
+                    logger.info(
+                        f"🧬 Merged {before_dedup - after_dedup:,} duplicate transactions across runs using keys {combined_keys}"
+                    )
+                logger.info(f"✅ Final clean dataset: {len(final_df):,} unique, merged transactions")
+            else:
+                logger.warning("⚠️  No suitable keys found for cross-run merge; keeping all combined rows")
                 final_df = combined
         else:
-            final_df = transactions_copy
+            final_df = current
             logger.info(f"📊 Using new transaction data: {len(final_df)} records (no existing data)")
-            
+
     except Exception as e:
-        logger.error(f"⚠️ Error in combining data: {str(e)}")
+        logger.error(f"⚠️ Error in combining/merging duplicate data: {str(e)}")
         final_df = transactions_copy
         logger.info(f"📊 Falling back to new data only: {len(final_df)} records")
 

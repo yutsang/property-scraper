@@ -1,10 +1,9 @@
 import pandas as pd
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 import numpy as np
 import re
 from typing import Dict, Any
-import datetime
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -681,7 +680,7 @@ def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
                     if year_match:
                         year = int(year_match.group(1))
                         # Calculate age based on current year (2025)
-                        age = datetime.datetime.now().year - year
+                        age = datetime.now().year - year
                         return year, age
                     
                 return None, None

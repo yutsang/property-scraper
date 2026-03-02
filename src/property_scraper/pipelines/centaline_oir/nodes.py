@@ -32,22 +32,7 @@ def scrape_building_listings(
     # Initialize logging first
     logger = logging.getLogger(__name__)
     
-    # Check if node should be run based on last execution date
-    node_name = "scrape_building_listings"
-    tracking_params = params.get('node_tracking', {})
-    if not should_run_node(node_name, "estate", tracking_params):
-        logger.info(f"Node '{node_name}' last run within configured days - returning existing data")
-        # Return existing data if available
-        listings_file = params['centaline_oir']['cl_oir_building_listings_file']
-        if os.path.exists(listings_file):
-            try:
-                return pd.read_parquet(listings_file)
-            except Exception as e:
-                logger.warning(f"Failed to load existing building listings: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
-
-    # Read district information
+    # Building listings: compare API total per district vs DB count — already in loop below.
     listings_file = params['centaline_oir']['cl_oir_building_listings_file']
 
     # Load existing data with backward compatibility
@@ -205,20 +190,7 @@ def scrape_building_details(
     # Initialize logging first
     logger = logging.getLogger(__name__)
     
-    # Check if node should be run based on last execution date
-    node_name = "scrape_building_details"
-    tracking_params = params.get('node_tracking', {})
-    if not should_run_node(node_name, "estate", tracking_params):
-        logger.info(f"Node '{node_name}' last run within configured days - returning existing data")
-        # Return existing data if available
-        details_file = params.get('centanet_oir_buildings_details', 'data/02_intermediate/centanet_oir_details.parquet')
-        if os.path.exists(details_file):
-            try:
-                return pd.read_parquet(details_file, engine='pyarrow')
-            except Exception as e:
-                logger.warning(f"Failed to load existing building details: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
+    # Building details: skip already-scraped property IDs (scraped_ids set below)
     
     # Initialize persistent session for better anti-detection
     session = create_advanced_session()
@@ -523,17 +495,45 @@ def get_random_user_agent():
     return ua.random
 
 def get_cookies():
-    return {
-        "cookie1": f"value1_{random.randint(1000, 9999)}",
-        "cookie2": f"value2_{random.randint(1000, 9999)}"
+    """Load the Centaline OIR site and return the real session cookies.
+    
+    The API requires a `userID` cookie set by the site on first visit.
+    The old placeholder cookies (cookie1/cookie2) caused all API calls
+    to return 0 items.
+    """
+    _headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
     }
+    try:
+        _s = requests.Session()
+        _s.get("https://oir.centanet.com/", headers=_headers, timeout=15)
+        return dict(_s.cookies)
+    except Exception as e:
+        logger.warning(f"Could not load site cookies: {e} — returning empty dict")
+        return {}
 
 def create_session():
+    """Create a requests Session pre-loaded with real site cookies."""
     session = requests.Session()
-    retry = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504])
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
+
+    # Load the landing page so the session picks up the userID cookie
+    # (required by the API; without it all responses have 0 items)
+    _headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    }
+    try:
+        session.get("https://oir.centanet.com/", headers=_headers, timeout=15)
+        logger.info(f"✅ Centaline OIR session ready (cookies: {list(session.cookies.keys())})")
+    except Exception as e:
+        logger.warning(f"⚠️  Could not load Centaline OIR landing page: {e}")
+
     return session
 
 def create_advanced_session():
@@ -928,23 +928,8 @@ def scrape_transaction(
     # Initialize logging first
     logger = logging.getLogger(__name__)
     
-    # Check if node should be run based on max date in dataset
-    node_name = "scrape_transaction"
+    # Date-based decision: no time-based guard needed — date logic below handles it.
     input_path = params['centaline_oir']['cl_oir_transaction_file']
-    tracking_params = params.get('node_tracking', {})
-    
-    if not should_run_node(node_name, "transaction", tracking_params, input_path):
-        logger.info(f"Node '{node_name}' - dataset is up to date - returning existing data")
-        # Return existing data if available
-        if os.path.exists(input_path):
-            try:
-                return pd.read_parquet(input_path)
-            except Exception as e:
-                logger.warning(f"Failed to load existing transaction data: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
-    
-    input_path = params['centaline_oir']['cl_oir_transaction_file']  # Get path from parameters
     
     # Set default dates
     #end_date = params.get("end_date", datetime.date.today().strftime("%Y-%m-%d"))
@@ -975,7 +960,8 @@ def scrape_transaction(
             start_date = params.get('centaline_oir', {}).get('start_date', params['global']['start_date'])
             end_date = params.get("end_date", datetime.date.today().strftime("%Y-%m-%d"))
     else:
-        start_date = params.get('centaline_oir', {}).get('start_date', params['global']['start_date'])
+        # Default all the way back to 2000 so the first scrape gets full history
+        start_date = params.get('centaline_oir', {}).get('start_date', '2000-01-01')
         end_date = params.get("end_date", datetime.date.today().strftime("%Y-%m-%d"))
 
     try:
@@ -994,6 +980,14 @@ def scrape_transaction(
     end_api = end_dt.strftime("%d/%m/%Y")
     date_range = f"{start_api}-{end_api}"
     date_range_encoded = urllib.parse.quote(date_range)
+
+    # If the date range covers more than ~5 years, treat it as a full
+    # historical scrape and omit daterang entirely (equivalent of clicking
+    # 重設 on https://oir.centanet.com/transaction/ — returns all records
+    # without any date restriction).
+    full_history_mode = (end_dt - start_dt).days > 5 * 365
+    if full_history_mode:
+        logger.info("📅 Full historical mode — omitting daterang filter (equivalent of 重設 / Reset)")
 
     session = create_session()
     cookies = get_cookies()
@@ -1024,9 +1018,11 @@ def scrape_transaction(
                 cookies = get_cookies()
                 session = create_session()
 
-            # First, get total count to determine appropriate pagesize
+            # First, get total count to determine appropriate pagesize.
+            # Omit daterang in full_history_mode (no date restriction = all data).
+            _date_filter = "" if full_history_mode else f"&daterang={date_range_encoded}"
             check_url = (f"{base_url}?pageindex=1&pagesize=1"
-                         f"&daterang={date_range_encoded}&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
+                         f"{_date_filter}&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
             
             headers = {
                 "User-Agent": get_random_user_agent(),
@@ -1038,7 +1034,7 @@ def scrape_transaction(
             }
 
             try:
-                check_response = session.get(check_url, headers=headers, cookies=cookies, timeout=20)
+                check_response = session.get(check_url, headers=headers, timeout=20)
                 check_response.raise_for_status()
                 check_json_data = check_response.json()
                 total_count = check_json_data.get("data", {}).get("recordList", {}).get("totalCount", 0)
@@ -1053,17 +1049,22 @@ def scrape_transaction(
                 pbar.set_postfix_str(f"{district}: ERROR")
                 continue
 
-            # Determine appropriate pagesize - cannot exceed total_count
-            effective_pagesize = min(pagesize, total_count)
+            # Request total_count items in one shot — the API supports this.
+            # Test confirmed: pagesize=total_count returns all records in a
+            # single request regardless of district size, up to the total.
+            # Fallback: if the single-request attempt returns fewer than expected
+            # (rare edge-case), paginate with smaller pages.
+            effective_pagesize = total_count   # one request gets everything
             page_index = 1
             area_results = []
+            collected = 0
 
             while True:
                 url = (f"{base_url}?pageindex={page_index}&pagesize={effective_pagesize}"
-                       f"&daterang={date_range_encoded}&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
+                       f"{_date_filter}&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
 
                 try:
-                    response = session.get(url, headers=headers, cookies=cookies, timeout=20)
+                    response = session.get(url, headers=headers, timeout=20)
                     response.raise_for_status()
                     json_data = response.json()
                     logger.debug(f"Request URL: {url}")
@@ -1077,9 +1078,9 @@ def scrape_transaction(
                     break
 
                 items = json_data.get("data", {}).get("recordList", {}).get("items", [])
-                
+
                 if not items:
-                    break
+                    break  # No more data
 
                 # Extract all the data fields the user wants
                 for item in items:
@@ -1177,16 +1178,20 @@ def scrape_transaction(
                     }
                     
                     area_results.append(flattened_item)
-                
+
+                collected += len(items)
                 district_meta["pages"] += 1
-                district_meta["records"] += len(items)
-                
-                # Check if we got all records (no need to paginate further)
-                if len(items) < effective_pagesize or district_meta["records"] >= total_count:
+                district_meta["records"] = collected
+
+                # Normal path: single request already got everything
+                if collected >= total_count:
                     break
-                    
+
+                # Fallback: API returned fewer than requested (edge-case)
+                # Switch to pagesize=24 and continue paginating
+                effective_pagesize = 24
                 page_index += 1
-                time.sleep(random.uniform(1, 3))
+                time.sleep(random.uniform(0.5, 1.0))
 
             # Outside the while loop, but inside the for loop
             if area_results:
@@ -1323,7 +1328,16 @@ def join_transaction_with_building_details(
             trans_with_id = trans_copy[trans_copy[left_key].notna() & (trans_copy[left_key] != 'nan')].copy()
             
             if len(trans_with_id) > 0:
-                # Perform exact join
+                # Identify which ORIGINAL rows will match (before the merge resets the index)
+                buildings_ids = set(buildings_copy[right_key].astype(str))
+                matched_original_mask = (
+                    trans_copy[left_key].astype(str).isin(buildings_ids) &
+                    trans_copy[left_key].notna() &
+                    (trans_copy[left_key].astype(str) != 'nan')
+                )
+                unmatched_trans = trans_copy[~matched_original_mask].copy()
+
+                # Perform exact join (inner — only matched rows)
                 exact_matched = trans_with_id.merge(
                     buildings_copy,
                     left_on=left_key,
@@ -1333,11 +1347,7 @@ def join_transaction_with_building_details(
                 )
                 exact_matched['_match_method'] = 'exact_id'
                 exact_matched['_match_score'] = 100.0
-                
-                # Identify unmatched transactions (for fuzzy fallback)
-                matched_indices = exact_matched.index
-                unmatched_trans = trans_copy[~trans_copy.index.isin(matched_indices)].copy()
-                
+
                 logger.info(f"  ✓ Exact ID matched: {len(exact_matched):,} transactions ({len(exact_matched)/len(trans_copy)*100:.2f}%)")
                 logger.info(f"  ⚠ Unmatched (for fuzzy): {len(unmatched_trans):,} transactions ({len(unmatched_trans)/len(trans_copy)*100:.2f}%)")
             else:
@@ -1519,6 +1529,26 @@ def join_transaction_with_building_details(
     else:
         result_df = all_matched.copy()
     
+    # ==================== FINAL DEDUPLICATION ====================
+    # The same transaction ID can appear via both the exact-matched and
+    # the unmatched paths if the index tracking was imperfect in a
+    # previous run's cached data.  Deduplicate by 'id', keeping the row
+    # with the highest match score (exact match wins over unmatched).
+    if 'id' in result_df.columns and result_df['id'].notna().any():
+        if '_match_score' not in result_df.columns:
+            result_df['_match_score'] = 0.0
+        result_df['_match_score'] = pd.to_numeric(result_df['_match_score'], errors='coerce').fillna(0.0)
+        before_dedup = len(result_df)
+        result_df = (
+            result_df
+            .sort_values('_match_score', ascending=False)
+            .drop_duplicates(subset=['id'], keep='first')
+            .reset_index(drop=True)
+        )
+        removed = before_dedup - len(result_df)
+        if removed:
+            logger.info(f"  🗑️ Removed {removed:,} duplicate transaction rows (same 'id', kept best match)")
+
     # ==================== FINAL STATISTICS ====================
     logger.info("="*80)
     logger.info("JOIN SUMMARY:")
@@ -1528,7 +1558,7 @@ def join_transaction_with_building_details(
     logger.info(f"  Unmatched: {len(final_unmatched):,} ({len(final_unmatched)/len(trans_copy)*100:.2f}%)")
     logger.info(f"  Total result rows: {len(result_df):,}")
     logger.info("="*80)
-    
+
     return result_df
 
 ############################### Final Database Cleansing ###############################

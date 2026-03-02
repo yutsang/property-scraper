@@ -44,21 +44,6 @@ def scrape_midland_buildings(
     )
     logger = logging.getLogger("midland_scraper")
     
-    # Check if node should be run based on last execution date
-    node_name = "scrape_midland_buildings"
-    tracking_params = params.get('node_tracking', {})
-    if not should_run_node(node_name, "building", tracking_params):
-        logger.info(f"Node '{node_name}' last run within configured days - returning existing data")
-        # Return existing data if available
-        listing_file = params['midland_ici']['midland_ici_building_listings']
-        if os.path.exists(listing_file):
-            try:
-                return pd.read_parquet(listing_file, engine='pyarrow')
-            except Exception as e:
-                logger.warning(f"Failed to load existing building listings: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
-    
     # Define property types
     property_types = {
         "mr_ind": "Industrial",
@@ -86,25 +71,20 @@ def scrape_midland_buildings(
     area_codes = area_codes[area_codes['ID'] != 0]
     logger.info(f"Filtered to {len(area_codes)} districts (excluding 'All Districts')")
     
-    # Check if we should resume from existing file
-    already_scraped = set()
+    # Load existing building counts per (district_id, property_type_code)
+    # Used to skip combinations where the API count matches the DB count.
     existing_buildings_df = pd.DataFrame()
-    
-    if params['midland_ici']['resume_from_existing'] and os.path.exists(listing_file):
+    db_combo_counts: dict[str, int] = {}   # key: "district_id_sbu" → count
+
+    if os.path.exists(listing_file):
         try:
             existing_buildings_df = pd.read_parquet(listing_file, engine='pyarrow')
-            logger.info(f"Found existing output file with {len(existing_buildings_df)} buildings")
-            
-            # Create a set of already scraped district-property type combinations
+            logger.info(f"📊 Loaded {len(existing_buildings_df)} existing buildings")
             if 'district_id' in existing_buildings_df.columns and 'property_type_code' in existing_buildings_df.columns:
-                already_scraped = set(
-                    existing_buildings_df[['district_id', 'property_type_code']].drop_duplicates().apply(
-                        lambda x: f"{x['district_id']}_{x['property_type_code']}", axis=1
-                    )
-                )
-                logger.info(f"Found {len(already_scraped)} already scraped district-property type combinations")
+                for (did, sbu), grp in existing_buildings_df.groupby(['district_id', 'property_type_code']):
+                    db_combo_counts[f"{did}_{sbu}"] = len(grp)
         except Exception as e:
-            logger.warning(f"Could not read existing output file: {str(e)}. Starting from scratch.")
+            logger.warning(f"Could not read existing output file: {e}. Starting from scratch.")
     
     # Initialize an empty list to store all building data
     all_buildings = []
@@ -134,12 +114,9 @@ def scrape_midland_buildings(
                 })
                 pbar.refresh()  # Force immediate update
 
-                # Check if this combination has already been scraped
+                # After fetching, we compare API count vs DB count.
+                # We do the API call first to get the count, then decide.
                 combo_key = f"{district_id}_{sbu}"
-                if combo_key in already_scraped:
-                    #logger.info(f"Skipping already scraped {property_type} in {district_name_en}")
-                    pbar.update(1)
-                    continue
                 
                 # Update progress bar description
                 #pbar.set_description(f"Scraping {property_type} in {district_name_en}")
@@ -183,23 +160,23 @@ def scrape_midland_buildings(
                             # Check if there are buildings in the response
                             if 'data' in data and 'buildings' in data['data']:
                                 buildings = data['data']['buildings']
-                                
+                                api_count = len(buildings) if buildings else 0
+
+                                # Skip if count matches DB — no change
+                                if api_count == db_combo_counts.get(combo_key, -1):
+                                    logger.debug(f"⏭  {property_type}/{district_name_en}: unchanged ({api_count}) — skipping")
+                                    success = True
+                                    break  # exit retry loop; pbar updated below
+
                                 if buildings:
-                                    #logger.info(f"Found {len(buildings)} {property_type} buildings in {district_name_en}")
-                                    
-                                    # Add district and property type information to each building
                                     for building in buildings:
                                         building['district_id'] = district_id
                                         building['district_name_en'] = district_name_en
                                         building['district_name_cn'] = district_name_cn
                                         building['property_type'] = property_type
                                         building['property_type_code'] = sbu
-                                        
-                                        # Add to the list of all buildings
                                         all_buildings.append(building)
-                                #else:
-                                    #logger.info(f"No {property_type} buildings found in {district_name_en}")
-                                
+
                                 success = True
                             else:
                                 logger.warning(f"Unexpected response structure for {district_name_en}, {property_type}")
@@ -559,8 +536,10 @@ import pandas as pd
 
 def sanitize_parquet_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Clean and normalize DataFrame columns for Parquet compatibility"""
-    # Clean column names
-    df.columns = df.columns.str.replace(r'[^a-zA-Z0-9_]', '_', regex=True)
+    import re
+    # Use re.sub via list comprehension - avoids .str accessor which requires
+    # the Index dtype to already be string (fails on mixed/int column names)
+    df.columns = [re.sub(r'[^a-zA-Z0-9_]', '_', str(col)) for col in df.columns]
     
     # Handle special columns
     if 'floor' in df.columns:
@@ -594,20 +573,8 @@ def ml_ici_scrape_trans(
     # Initialize logging first
     logger = logging.getLogger(__name__)
     
-    # Check if node should be run based on max date in dataset
-    node_name = "ml_ici_scrape_trans"
+    # Date-based decision: check DB max date vs today (no timer needed)
     output_file = "data/01_raw/midland_ici_trans.parquet"
-    tracking_params = params.get('node_tracking', {})
-    
-    if not should_run_node(node_name, "transaction", tracking_params, output_file):
-        logger.info(f"Node '{node_name}' - dataset is up to date - returning existing data")
-        if os.path.exists(output_file):
-            try:
-                return pd.read_parquet(output_file)
-            except Exception as e:
-                logger.warning(f"Failed to load existing transaction data: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
     all_transactions = []
 
     def map_ics_type(value: str) -> str:
@@ -672,9 +639,10 @@ def ml_ici_scrape_trans(
     api_params["limit"] = page_size
     api_params.setdefault("page", 1)
 
-    # Convert string dates to datetime objects (prefer incremental start date)
+    # Date-based decision: read DB max date → decide start_date
     start_date = params["global"]["start_date"]
     date_columns = ["date", "transaction_date", "tx_date", "Date", "transactionDate"]
+    today = datetime.now().date()
     if os.path.exists(output_file):
         try:
             existing_df = pd.read_parquet(output_file)
@@ -682,8 +650,12 @@ def ml_ici_scrape_trans(
                 if col in existing_df.columns:
                     parsed = pd.to_datetime(existing_df[col], errors="coerce")
                     if parsed.notna().any():
-                        start_date = parsed.max().date() + timedelta(days=1)
-                        logger.info(f"Incremental fetch start date set to {start_date}")
+                        max_date = parsed.max().date()
+                        if max_date >= today:
+                            logger.info(f"✅ Midland ICI transactions up-to-date (max: {max_date}) — skipping")
+                            return existing_df
+                        start_date = max_date + timedelta(days=1)
+                        logger.info(f"📊 Incremental fetch from {start_date}")
                         break
         except Exception as exc:
             logger.warning(f"Failed to derive incremental start date: {exc}")
@@ -693,16 +665,22 @@ def ml_ici_scrape_trans(
     elif isinstance(start_date, datetime):
         start_date = start_date.date()
 
-    session = requests.Session()
-    max_retries = int(mici_params.get("max_retries", 3))
-    request_delay = float(mici_params.get("request_delay", 0.5))
-    total_count = None
-    pages_processed = 0
+    import math
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    # Step 1: Load landing page to get cookies
+    session = requests.Session()
+    max_retries   = int(mici_params.get("max_retries", 5))
+    request_delay = float(mici_params.get("request_delay", 0.3))
+    # Keep workers low — server 504s at 8; 3 is a safe ceiling
+    max_workers   = min(int(mici_params.get("max_workers", 3)), 3)
+    # Batch size: how many pages to fire in one wave before pausing
+    batch_size    = int(mici_params.get("batch_size", 15))
+    inter_batch_delay = float(mici_params.get("inter_batch_delay", 2.0))
+
+    # ── Step 1: Load landing page to acquire session cookies ─────────────
     for attempt in range(1, max_retries + 1):
         try:
-            response = session.get(landing_url, headers=headers_main, timeout=15)
+            response = session.get(landing_url, headers=headers_main, timeout=20)
             response.raise_for_status()
             break
         except requests.exceptions.RequestException as exc:
@@ -711,72 +689,127 @@ def ml_ici_scrape_trans(
                 raise
             time.sleep(2 + attempt)
 
-    # Step 2: Page through API results
-    with tqdm(desc="Processing Trans", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]") as page_pbar:
-        while True:
-            api_params["page"] = pages_processed + 1
-            data = None
-            for attempt in range(1, max_retries + 1):
-                try:
-                    response = session.get(api_url, headers=headers_api, params=api_params, timeout=15)
-                    response.raise_for_status()
-                    data = response.json()
-                    break
-                except (requests.exceptions.RequestException, json.JSONDecodeError) as exc:
-                    logger.warning(f"API request failed on page {api_params['page']} (attempt {attempt}): {exc}")
-                    if attempt == max_retries:
+    def fetch_page(page_num: int) -> tuple[int, list]:
+        """Fetch one page with exponential backoff for 5xx (server overload) errors."""
+        params_copy = dict(api_params)
+        params_copy["page"] = page_num
+        for attempt in range(1, max_retries + 1):
+            try:
+                resp = session.get(api_url, headers=headers_api,
+                                   params=params_copy, timeout=30)
+                resp.raise_for_status()
+                return page_num, resp.json()
+            except requests.exceptions.HTTPError as exc:
+                status = exc.response.status_code if exc.response is not None else 0
+                if attempt == max_retries:
+                    logger.warning(f"Page {page_num} failed after {max_retries} attempts: {exc}")
+                    return page_num, None
+                # 502/503/504 = server overloaded → exponential back-off
+                if status in (502, 503, 504):
+                    wait = (2 ** attempt) * 5   # 10s, 20s, 40s, 80s …
+                    logger.debug(f"Page {page_num}: {status} – waiting {wait}s before retry {attempt+1}")
+                    time.sleep(wait)
+                else:
+                    time.sleep(1 + attempt)
+            except (requests.exceptions.RequestException, json.JSONDecodeError) as exc:
+                if attempt == max_retries:
+                    logger.warning(f"Page {page_num} failed after {max_retries} attempts: {exc}")
+                    return page_num, None
+                time.sleep(2 + attempt)
+
+    def parse_page(data) -> tuple[list, bool]:
+        """Parse raw API response. Returns (records, stop_flag).
+        stop_flag=True means this page contains records older than start_date."""
+        if not isinstance(data, list) or not data:
+            return [], True
+        item = (data[0] or {})
+        results = item.get("results") or []
+        records = []
+        stop = False
+        for record in results:
+            tx_date = record.get("txDate")
+            try:
+                tx_date_obj = datetime.fromisoformat(tx_date).date() if tx_date else None
+            except ValueError:
+                tx_date_obj = None
+            if tx_date_obj and tx_date_obj < start_date:
+                stop = True
+                continue
+            records.append(normalize_transaction(record))
+        return records, stop
+
+    # ── Step 2: Pre-fetch page 1 to discover total_count and total_pages ─
+    _, page1_data = fetch_page(1)
+    if not page1_data or not isinstance(page1_data, list) or not page1_data[0]:
+        logger.error("Could not fetch page 1 — aborting transaction scrape")
+        trans_df = pd.DataFrame()
+    else:
+        total_count = (page1_data[0] or {}).get("count", 0) or 0
+        total_pages = math.ceil(total_count / page_size) if total_count else 1
+        logger.info(f"📊 Total transactions: {total_count:,}  |  Pages: {total_pages}  |  Workers: {max_workers}")
+
+        page1_records, page1_stop = parse_page(page1_data)
+        all_transactions.extend(page1_records)
+
+        # ── Step 3: Fetch remaining pages in parallel ─────────────────────
+        remaining_pages = range(2, total_pages + 1)
+        stop_fetching = page1_stop  # set True once oldest date crosses start_date
+
+        with tqdm(
+            total=total_pages,
+            desc="Processing Trans",
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]"
+        ) as pbar:
+            pbar.update(1)          # account for page 1 already done
+            pbar.set_postfix_str(f"Trans: {len(all_transactions):,}/{total_count:,}")
+
+            if not stop_fetching and remaining_pages:
+                page_list = list(remaining_pages)
+
+                # Process in small batches to avoid sustained server hammering.
+                # Each batch fires ≤batch_size pages with ≤max_workers threads,
+                # then pauses inter_batch_delay seconds before the next wave.
+                for batch_start in range(0, len(page_list), batch_size):
+                    if stop_fetching:
                         break
-                    time.sleep(2 + attempt)
 
-            if data is None:
-                logger.error(f"Exceeded retries for page {api_params['page']}")
-                break
+                    batch = page_list[batch_start: batch_start + batch_size]
 
-            if not isinstance(data, list) or not data:
-                logger.warning(f"Unexpected API response format on page {api_params['page']}")
-                break
+                    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                        futures = {executor.submit(fetch_page, p): p for p in batch}
+                        batch_results: dict[int, list] = {}
+                        for future in as_completed(futures):
+                            page_num, data = future.result()
+                            batch_results[page_num] = data
 
-            item = data[0] or {}
-            total_count = total_count or item.get("count", 0)
-            results = item.get("results") or []
+                    # Process batch in page order so date-cutoff logic stays correct
+                    for page_num in sorted(batch_results):
+                        data = batch_results[page_num]
+                        if data is None:
+                            pbar.update(1)
+                            continue
+                        records, stop = parse_page(data)
+                        all_transactions.extend(records)
+                        if stop:
+                            stop_fetching = True
+                        pbar.update(1)
+                        pbar.set_postfix_str(f"Trans: {len(all_transactions):,}/{total_count:,}")
 
-            if not results:
-                break
+                    # Polite pause between batches
+                    if not stop_fetching and batch_start + batch_size < len(page_list):
+                        time.sleep(inter_batch_delay)
 
-            page_records = []
-            oldest_in_page = None
-            for record in results:
-                tx_date = record.get("txDate")
-                try:
-                    tx_date_obj = datetime.fromisoformat(tx_date).date() if tx_date else None
-                except ValueError:
-                    tx_date_obj = None
+        pages_processed = total_pages
 
-                if tx_date_obj:
-                    oldest_in_page = tx_date_obj if not oldest_in_page else min(oldest_in_page, tx_date_obj)
-                    if tx_date_obj < start_date:
-                        continue
+    if not all_transactions:
+        logger.warning("No transactions collected — returning empty DataFrame")
+        trans_df = pd.DataFrame()
+    else:
+        trans_df = pd.DataFrame(all_transactions)
 
-                page_records.append(normalize_transaction(record))
-
-            if page_records:
-                all_transactions.extend(page_records)
-            pages_processed += 1
-            page_pbar.update(1)
-            page_pbar.set_postfix_str(f"Trans: {len(all_transactions):,}/{total_count or 0:,}")
-
-            if total_count and len(all_transactions) >= total_count:
-                break
-
-            if oldest_in_page and oldest_in_page < start_date:
-                break
-
-            time.sleep(request_delay)
-
-    trans_df = pd.DataFrame(all_transactions)
-        
-    # Add sanitization step
-    trans_df = sanitize_parquet_columns(trans_df)
+    # Add sanitization step (handles empty df gracefully)
+    if not trans_df.empty:
+        trans_df = sanitize_parquet_columns(trans_df)
     
     # Ensure UTF-8 encoding
     trans_df = trans_df.map(

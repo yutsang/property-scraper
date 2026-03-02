@@ -16,7 +16,7 @@ import csv
 import os
 from bs4 import BeautifulSoup
 import glob 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict, Any
 import logging
 
@@ -81,7 +81,7 @@ def fetch_district_codes():
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate, br, zstd",
         "Accept-Language": "zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNC0xMi0wNy0tLVlWN0hKU2QxelRzOHpwVDhJNEdjdGxLcjQ1Z0l4cWhsdVp3SEdvZXVSX1o3RkU2cmh1Q1NjVVpqM1E3SXIzZWVQSmZpMy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjQtMTItMDctLS1ZVjdISlNkMXpUczh6cFQ4STRHY3RsS3I0NWdJeHFobHVad0hHb2V1Ul9aN0ZFNnJodUNTY1VaajNRN0lyM2VlUEpmaTMtSUkiLCJpYXQiOjE3MzM1NDk0MjUsImV4cCI6MTc2ODEwOTQyNSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.LOOVgc_Nw7OPNnAlB8iC1kRHL0W8UVNVa0GaJYaxTxVZtO33ZbkR64rxMHSifvZOzYr38aJENj-SDIbkq4Y75CxqMPegyBUgHtaub-Fez5qaH2W0Dz71pUdYijDG3rB4Dkbdf8k21QsHerJmOFnpryzTVnZDxv-3g8Lmjz2WUhmrqMamKox3w-T9wRJ4p_wzcJwvXWgtvxkapr3Ep0YSJy3fJsV-Nwm_QiJf2JR0V4rOAu7f-YLMSy7IYje3W-HvVqAZV2cDphg_cYnf6CpirJPu_ix2z6BtIMpYMXeSiZyZtKCHiWFNtUm6QTD2adArWtLl_NvbgcH9mhVYuWi8NcrZBdBh4c72bSNRm104oEbRb9-vb1AylH2oFkEz33xXXEAJRtbQxoQ3qZj_yoDIexrinOSlkJB50fSu98Xizv9eZstnbtzkgVjfKpOAWQFdHKennjN9Azq6yTlejDVspL7A0JsY4ZlO4HQNdkNhiOQDYypHgx8jQMm0B0rbaa0cEz1S0s43Lh01eNVBN9Is35jAWFsJIP-iLvHqXJ9d0pGoHe0N7PQk2dmLo9E5szP0U04MZxt4m9TEpJkn-0uS_ZDSVABlBU2KGIkTmuzm1VltsDhPhoNrbJBJVdxJJdublpDnVFk8aO1gFWKNzptw48ipmLfpRosynC_x3Ud6QMU",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNi0wMy0wMi04R1lGdXJsRkI4a3pwcU1HamxUODFXeE8wdnNweHI4YVVySEZXc095X1lQRFJoWFJWamljeVBQbHV2M3NpNjQwWW1qY243Vy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjYtMDMtMDItOEdZRnVybEZCOGt6cHFNR2psVDgxV3hPMHZzcHhyOGFVckhGV3NPeV9ZUERSaFhSVmppY3lQUGx1djNzaTY0MFltamNuN1ctSUkiLCJpYXQiOjE3NzI0MTA4MTksImV4cCI6MTgwNjk3MDgxOSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.DMZxN6HwcREvmMMyNBJ2_NgmvSZXvk6xpLyH2yqKjVsHR-0LHRpJNAeOER34KgASJGcGrdKT8zzujl82rm41MevjLXBAJEiblJyQV0Rw81s9DiICdGoo9IdbupvwCHU9e11cogI1VeeGwPqGCQuZNMe1QfxdZqS12ucRcsUbJESCwQ1JZc4BN1b3mhImOgpC89uyGiMyHZYPN_8WwqADwRuuwVQuQEt3dk-hINbBEdV-Tc9mPOdrUMMeOiFkdqe97wJtWGo-OEN9CRV79mkuhR9n8cwjk7OGO8gTA2TKa1qb5RAzQuqTZCu043jqazBvtaxS31xtl7DEmK_qtguhWpqy9RPgkiGHPWLzx9ETm_G-A0metXA-VlP40vfc0KF13DZw1UnN5fbYsAVCDKt7EnE1ihcLWeg1pJ9_MgdzAB3T7uUHa23jFBQSAM8VmmuakEWzc_Nc7u1MgQZktMePDH8mLJgwKdS3h83xxvMCwFf00vS7Az5nencdVLlcMmrtXDVFO8zXlwDny2gS-2PPwOppimWvMJQF2O7qBHtDbSEe4c2KU0PdF-SSINTenyInBEBMMlLaxd7QfjlgOzFgCqt-hF-73Y2Vox45RR77aWXlG00Oj6NKeDHOq9gY30YrXayTMNppDDJk4ci1X-bB8vg_4omy_S04H_iuwYKXeDw",
         "Origin": "https://www.midland.com.hk",
         "Referer": "https://www.midland.com.hk/",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
@@ -120,46 +120,10 @@ def load_district_data(district_codes_df: pd.DataFrame, params: Dict[str, Any] =
     # Initialize logging
     logger = logging.getLogger(__name__)
     
-    # Check if node should be run based on last execution date
-    node_name = "load_and_clean_district_data"
-    tracking_params = params.get('node_tracking', {}) if params else {}
-    if not should_run_node(node_name, "estate", tracking_params):
-        logger.info(f"Node '{node_name}' last run within configured days - returning existing data")
-        # Return existing data if available
-        try:
-            # Try to load from the expected output location
-            output_file = "data/02_intermediate/cleaned_district_data.parquet"
-            if os.path.exists(output_file):
-                return pd.read_parquet(output_file)
-            else:
-                logger.warning(f"Existing data file not found: {output_file}")
-                logger.info("Processing input data instead of returning empty DataFrame")
-                # Process the input data instead of returning empty DataFrame
-                df = district_codes_df.copy()
-                df.drop_duplicates(subset=['subdistrict_code', 'subdistrict_name'], inplace=True)
-                return df
-        except Exception as e:
-            logger.warning(f"Failed to load existing district data: {e}")
-            logger.info("Processing input data instead of returning empty DataFrame")
-            # Process the input data instead of returning empty DataFrame
-            df = district_codes_df.copy()
-            df.drop_duplicates(subset=['subdistrict_code', 'subdistrict_name'], inplace=True)
-            return df
-    
-    # Process the data
+    # Deduplicate district codes — always instant, no scraping involved
     df = district_codes_df.copy()
     df.drop_duplicates(subset=['subdistrict_code', 'subdistrict_name'], inplace=True)
-    
-    # Record node execution
-    record_node_execution(
-        node_name="load_and_clean_district_data",
-        node_type="estate",
-        metadata={
-            "districts_processed": len(df),
-            "execution_time": datetime.now().isoformat()
-        }
-    )
-    
+    logger.info(f"📍 Loaded {len(df)} unique districts")
     return df
 
 @retry(wait=wait_exponential(multiplier=1, min=4, max=10),
@@ -171,7 +135,7 @@ def fetch_estates_data(district_code: str, limit: int = 500) -> List[Dict]:
     
     headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0', 
-            'authorization': '''Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNC0xMi0wNy0tLVlWN0hKU2QxelRzOHpwVDhJNEdjdGxLcjQ1Z0l4cWhsdVp3SEdvZXVSX1o3RkU2cmh1Q1NjVVpqM1E3SXIzZWVQSmZpMy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjQtMTItMDctLS1ZVjdISlNkMXpUczh6cFQ4STRHY3RsS3I0NWdJeHFobHVad0hHb2V1Ul9aN0ZFNnJodUNTY1VaajNRN0lyM2VlUEpmaTMtSUkiLCJpYXQiOjE3MzM1NDk0MjUsImV4cCI6MTc2ODEwOTQyNSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.LOOVgc_Nw7OPNnAlB8iC1kRHL0W8UVNVa0GaJYaxTxVZtO33ZbkR64rxMHSifvZOzYr38aJENj-SDIbkq4Y75CxqMPegyBUgHtaub-Fez5qaH2W0Dz71pUdYijDG3rB4Dkbdf8k21QsHerJmOFnpryzTVnZDxv-3g8Lmjz2WUhmrqMamKox3w-T9wRJ4p_wzcJwvXWgtvxkapr3Ep0YSJy3fJsV-Nwm_QiJf2JR0V4rOAu7f-YLMSy7IYje3W-HvVqAZV2cDphg_cYnf6CpirJPu_ix2z6BtIMpYMXeSiZyZtKCHiWFNtUm6QTD2adArWtLl_NvbgcH9mhVYuWi8NcrZBdBh4c72bSNRm104oEbRb9-vb1AylH2oFkEz33xXXEAJRtbQxoQ3qZj_yoDIexrinOSlkJB50fSu98Xizv9eZstnbtzkgVjfKpOAWQFdHKennjN9Azq6yTlejDVspL7A0JsY4ZlO4HQNdkNhiOQDYypHgx8jQMm0B0rbaa0cEz1S0s43Lh01eNVBN9Is35jAWFsJIP-iLvHqXJ9d0pGoHe0N7PQk2dmLo9E5szP0U04MZxt4m9TEpJkn-0uS_ZDSVABlBU2KGIkTmuzm1VltsDhPhoNrbJBJVdxJJdublpDnVFk8aO1gFWKNzptw48ipmLfpRosynC_x3Ud6QMU'''
+            'authorization': '''Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNi0wMy0wMi04R1lGdXJsRkI4a3pwcU1HamxUODFXeE8wdnNweHI4YVVySEZXc095X1lQRFJoWFJWamljeVBQbHV2M3NpNjQwWW1qY243Vy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjYtMDMtMDItOEdZRnVybEZCOGt6cHFNR2psVDgxV3hPMHZzcHhyOGFVckhGV3NPeV9ZUERSaFhSVmppY3lQUGx1djNzaTY0MFltamNuN1ctSUkiLCJpYXQiOjE3NzI0MTA4MTksImV4cCI6MTgwNjk3MDgxOSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.DMZxN6HwcREvmMMyNBJ2_NgmvSZXvk6xpLyH2yqKjVsHR-0LHRpJNAeOER34KgASJGcGrdKT8zzujl82rm41MevjLXBAJEiblJyQV0Rw81s9DiICdGoo9IdbupvwCHU9e11cogI1VeeGwPqGCQuZNMe1QfxdZqS12ucRcsUbJESCwQ1JZc4BN1b3mhImOgpC89uyGiMyHZYPN_8WwqADwRuuwVQuQEt3dk-hINbBEdV-Tc9mPOdrUMMeOiFkdqe97wJtWGo-OEN9CRV79mkuhR9n8cwjk7OGO8gTA2TKa1qb5RAzQuqTZCu043jqazBvtaxS31xtl7DEmK_qtguhWpqy9RPgkiGHPWLzx9ETm_G-A0metXA-VlP40vfc0KF13DZw1UnN5fbYsAVCDKt7EnE1ihcLWeg1pJ9_MgdzAB3T7uUHa23jFBQSAM8VmmuakEWzc_Nc7u1MgQZktMePDH8mLJgwKdS3h83xxvMCwFf00vS7Az5nencdVLlcMmrtXDVFO8zXlwDny2gS-2PPwOppimWvMJQF2O7qBHtDbSEe4c2KU0PdF-SSINTenyInBEBMMlLaxd7QfjlgOzFgCqt-hF-73Y2Vox45RR77aWXlG00Oj6NKeDHOq9gY30YrXayTMNppDDJk4ci1X-bB8vg_4omy_S04H_iuwYKXeDw'''
         }
     
     #pbar = tqdm(desc=f"Fetching pages for {district_code}", initial=0)
@@ -252,42 +216,122 @@ def process_market_stats(record: Dict) -> List[Dict]:
     return expanded
 
 
+def _probe_district_estate_count(district_code: str, headers: dict) -> int:
+    """Quick API probe: return the total estate count for a district code, or -1 on error."""
+    try:
+        resp = requests.get(
+            "https://data.midland.com.hk/search/v2/estates",
+            params={
+                "ad": "true", "lang": "en", "currency": "HKD", "unit": "feet",
+                "search_behavior": "normal", "intsmdist_ids": district_code,
+                "page": 1, "limit": 1
+            },
+            headers=headers,
+            timeout=10
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        # The API echoes total_count or we infer from empty result
+        if "total_count" in data:
+            return int(data["total_count"])
+        if "total" in data:
+            return int(data["total"])
+        # Fallback: if result page is non-empty the district has data (>0)
+        if data.get("result"):
+            return -1   # has data but count unknown — always refresh
+        return 0        # empty district
+    except Exception:
+        return -1       # on error always refresh
+
+
 def process_estate_data(district_df: pd.DataFrame, params: Dict[str, Any] = {}) -> pd.DataFrame:
+    """Fetch Midland Residential estate data per district.
+
+    For each district:
+    - Probe the API for its current total estate count.
+    - Compare with DB count; skip the district if they match.
+    - Fetch all pages only for districts that changed.
+    """
     logger = logging.getLogger(__name__)
-    node_name = "process_estate_data"
-    tracking_params = params.get('node_tracking', {})
     output_file = "data/02_intermediate/midland_res_estates.parquet"
-    if not should_run_node(node_name, "estate", tracking_params):
-        logger.info(f"Node '{node_name}' last run within configured days - returning existing data")
-        if os.path.exists(output_file):
-            return pd.read_parquet(output_file)
-        else:
-            logger.warning(f"Existing data file not found: {output_file}")
-            logger.info("File missing, proceeding with fresh processing")
-    all_estate_data = []
-    with tqdm(total=len(district_df), desc="Processing District") as pbar:
+
+    # Build the auth headers once (same as fetch_estates_data)
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "authorization": (
+            "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9."
+            "eyJndWlkIjoibXItMjAyNC0xMi0wNy0tLVlWN0hKU2QxelRzOHpwVDhJNEdjdGxLcjQ1Z0l4cWhsdVp3"
+            "SEd"  # token is defined inside fetch_estates_data — reuse same value
+        ),
+    }
+    # Prefer the real token already embedded in fetch_estates_data
+    try:
+        import inspect
+        src = inspect.getsource(fetch_estates_data)
+        import re as _re
+        m = _re.search(r"'authorization':\s*'''(.*?)'''", src, _re.DOTALL)
+        if m:
+            headers["authorization"] = "Bearer " + m.group(1).replace("Bearer ", "").strip()
+    except Exception:
+        pass
+
+    # Load existing DB counts per district code
+    db_counts: dict[str, int] = {}
+    existing_df = pd.DataFrame()
+    if os.path.exists(output_file):
+        try:
+            existing_df = pd.read_parquet(output_file)
+            if "intsmdist_ids" in existing_df.columns:
+                db_counts = existing_df.groupby("intsmdist_ids").size().to_dict()
+            elif "district_code" in existing_df.columns:
+                db_counts = existing_df.groupby("district_code").size().to_dict()
+        except Exception as e:
+            logger.warning(f"Could not load existing estate data: {e}")
+
+    logger.info(f"🏘️  Checking {len(district_df)} districts (DB has {len(existing_df):,} existing records)")
+
+    all_estate_data: list[dict] = []
+    skipped = changed = 0
+
+    with tqdm(total=len(district_df), desc="Estate districts") as pbar:
         for _, row in district_df.iterrows():
-            current_district = row['subdistrict_code']
-            current_subdistrict = row['subdistrict_name']  # Assuming 'Subdistrict' column exists in `district_df`
-            district_data = fetch_estates_data(current_district, limit=5000)
+            code = row["subdistrict_code"]
+            name = row["subdistrict_name"]
+
+            # Probe API for current count
+            api_count = _probe_district_estate_count(code, headers)
+            db_count = db_counts.get(str(code), 0)
+
+            if api_count >= 0 and api_count == db_count:
+                # District unchanged — keep existing rows for this district
+                if not existing_df.empty:
+                    col = "intsmdist_ids" if "intsmdist_ids" in existing_df.columns else "district_code"
+                    if col in existing_df.columns:
+                        all_estate_data.extend(
+                            existing_df[existing_df[col].astype(str) == str(code)].to_dict("records")
+                        )
+                skipped += 1
+                pbar.update(1)
+                pbar.set_postfix({"skipped": skipped, "changed": changed, "dist": name[:15]})
+                continue
+
+            # District changed or unknown — fetch all pages
+            reason = f"api={api_count} db={db_count}" if api_count >= 0 else "count unknown"
+            district_data = fetch_estates_data(code, limit=5000)
             all_estate_data.extend(district_data)
-            # Update progress bar
+            changed += 1
             pbar.update(1)
-            pbar.set_postfix({
-                'current': current_subdistrict,
-                'estates': len(all_estate_data)
-            })
+            pbar.set_postfix({"skipped": skipped, "changed": changed, "dist": name[:15]})
+
+    logger.info(f"✅ {skipped} districts skipped (unchanged), {changed} re-fetched")
+
+    if not all_estate_data:
+        logger.warning("No estate data — returning existing data unchanged")
+        return existing_df
+
     df = pd.DataFrame(all_estate_data)
     df.to_parquet(output_file, index=False)
-    record_node_execution(
-        node_name=node_name,
-        node_type="estate",
-        metadata={
-            "estates_processed": len(df),
-            "districts_processed": len(district_df),
-            "execution_time": datetime.now().isoformat()
-        }
-    )
+    logger.info(f"💾 Saved {len(df):,} estate records to {output_file}")
     return df
 
 def deep_flatten_json(df: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -409,7 +453,7 @@ def get_soup(url: str, params: Dict = {}, headers: Dict = {}, delay_min: float =
             'Accept': 'application/json, text/plain, */*',
             'Accept-Encoding': 'gzip, deflate, br, zstd',
             'Accept-Language': 'zh-TW,zh;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Authorization': '''Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNC0xMi0wNy0tLVlWN0hKU2QxelRzOHpwVDhJNEdjdGxLcjQ1Z0l4cWhsdVp3SEdvZXVSX1o3RkU2cmh1Q1NjVVpqM1E3SXIzZWVQSmZpMy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjQtMTItMDctLS1ZVjdISlNkMXpUczh6cFQ4STRHY3RsS3I0NWdJeHFobHVad0hHb2V1Ul9aN0ZFNnJodUNTY1VaajNRN0lyM2VlUEpmaTMtSUkiLCJpYXQiOjE3MzM1NDk0MjUsImV4cCI6MTc2ODEwOTQyNSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.LOOVgc_Nw7OPNnAlB8iC1kRHL0W8UVNVa0GaJYaxTxVZtO33ZbkR64rxMHSifvZOzYr38aJENj-SDIbkq4Y75CxqMPegyBUgHtaub-Fez5qaH2W0Dz71pUdYijDG3rB4Dkbdf8k21QsHerJmOFnpryzTVnZDxv-3g8Lmjz2WUhmrqMamKox3w-T9wRJ4p_wzcJwvXWgtvxkapr3Ep0YSJy3fJsV-Nwm_QiJf2JR0V4rOAu7f-YLMSy7IYje3W-HvVqAZV2cDphg_cYnf6CpirJPu_ix2z6BtIMpYMXeSiZyZtKCHiWFNtUm6QTD2adArWtLl_NvbgcH9mhVYuWi8NcrZBdBh4c72bSNRm104oEbRb9-vb1AylH2oFkEz33xXXEAJRtbQxoQ3qZj_yoDIexrinOSlkJB50fSu98Xizv9eZstnbtzkgVjfKpOAWQFdHKennjN9Azq6yTlejDVspL7A0JsY4ZlO4HQNdkNhiOQDYypHgx8jQMm0B0rbaa0cEz1S0s43Lh01eNVBN9Is35jAWFsJIP-iLvHqXJ9d0pGoHe0N7PQk2dmLo9E5szP0U04MZxt4m9TEpJkn-0uS_ZDSVABlBU2KGIkTmuzm1VltsDhPhoNrbJBJVdxJJdublpDnVFk8aO1gFWKNzptw48ipmLfpRosynC_x3Ud6QMU''',
+            'Authorization': '''Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNi0wMy0wMi04R1lGdXJsRkI4a3pwcU1HamxUODFXeE8wdnNweHI4YVVySEZXc095X1lQRFJoWFJWamljeVBQbHV2M3NpNjQwWW1qY243Vy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjYtMDMtMDItOEdZRnVybEZCOGt6cHFNR2psVDgxV3hPMHZzcHhyOGFVckhGV3NPeV9ZUERSaFhSVmppY3lQUGx1djNzaTY0MFltamNuN1ctSUkiLCJpYXQiOjE3NzI0MTA4MTksImV4cCI6MTgwNjk3MDgxOSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.DMZxN6HwcREvmMMyNBJ2_NgmvSZXvk6xpLyH2yqKjVsHR-0LHRpJNAeOER34KgASJGcGrdKT8zzujl82rm41MevjLXBAJEiblJyQV0Rw81s9DiICdGoo9IdbupvwCHU9e11cogI1VeeGwPqGCQuZNMe1QfxdZqS12ucRcsUbJESCwQ1JZc4BN1b3mhImOgpC89uyGiMyHZYPN_8WwqADwRuuwVQuQEt3dk-hINbBEdV-Tc9mPOdrUMMeOiFkdqe97wJtWGo-OEN9CRV79mkuhR9n8cwjk7OGO8gTA2TKa1qb5RAzQuqTZCu043jqazBvtaxS31xtl7DEmK_qtguhWpqy9RPgkiGHPWLzx9ETm_G-A0metXA-VlP40vfc0KF13DZw1UnN5fbYsAVCDKt7EnE1ihcLWeg1pJ9_MgdzAB3T7uUHa23jFBQSAM8VmmuakEWzc_Nc7u1MgQZktMePDH8mLJgwKdS3h83xxvMCwFf00vS7Az5nencdVLlcMmrtXDVFO8zXlwDny2gS-2PPwOppimWvMJQF2O7qBHtDbSEe4c2KU0PdF-SSINTenyInBEBMMlLaxd7QfjlgOzFgCqt-hF-73Y2Vox45RR77aWXlG00Oj6NKeDHOq9gY30YrXayTMNppDDJk4ci1X-bB8vg_4omy_S04H_iuwYKXeDw''',
             'Origin': 'https://www.midland.com.hk',
             'Referer': 'https://www.midland.com.hk/',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
@@ -609,31 +653,16 @@ def scrape_data(district_df: pd.DataFrame, base_url: str, params: Dict, delay_mi
 
 
 def fetch_transactions(
-    district_codes_df: pd.DataFrame, 
+    district_codes_df: pd.DataFrame,
     params: Dict[str, Any]) -> pd.DataFrame:
+    """Fetch Midland Residential transaction data with date-based incremental updates.
+
+    Decision logic (no time-based skip):
+    - If DB exists and max_date >= today → already up-to-date, return existing.
+    - Otherwise → scrape from max_date+1 (or full history if no DB).
     """
-    Fetch transaction data with incremental updates
-    Includes node execution tracking to avoid re-running on the same day.
-    """
-    
-    # Check if node should be run based on max date in dataset
-    node_name = "fetch_midland_transactions"
     res_trans_path = params['midland_res']['res_trans_path']
-    tracking_params = params.get('node_tracking', {})
-    
-    if not should_run_node(node_name, "transaction", tracking_params, res_trans_path):
-        logger.info(f"Node '{node_name}' - dataset is up to date - returning existing data")
-        # Return existing data if available
-        if os.path.exists(res_trans_path):
-            try:
-                return pd.read_parquet(res_trans_path)
-            except Exception as e:
-                logger.warning(f"Failed to load existing transaction data: {e}")
-                return pd.DataFrame()
-        return pd.DataFrame()
-    
     base_url = "https://data.midland.com.hk/search/v2/transactions"
-    res_trans_path = params['midland_res']['res_trans_path']
     parameters = {
         "ad": "true",
         "chart": "true",
@@ -644,13 +673,27 @@ def fetch_transactions(
         "limit": 1000
     }
 
-    # Fetch new data
+    # Determine scraping mode from actual data, not a timer
     if os.path.exists(res_trans_path):
-        logger.info("🔄 Incremental mode: Loading existing data")
         existing_df = pd.read_parquet(res_trans_path)
+        date_cols = ["tx_date", "date", "transaction_date"]
+        max_date = None
+        for col in date_cols:
+            if col in existing_df.columns:
+                parsed = pd.to_datetime(existing_df[col], errors="coerce")
+                if parsed.notna().any():
+                    max_date = parsed.max().date()
+                    break
+        if max_date and max_date >= datetime.now().date():
+            logger.info(f"✅ Midland Res transactions up-to-date (max: {max_date}) — skipping")
+            return existing_df
+        if max_date:
+            logger.info(f"📊 Incremental mode: DB max date {max_date} → scraping from {max_date + timedelta(days=1)}")
+        else:
+            logger.info("📊 No valid dates found in DB — full historical scrape")
         parameters["tx_date"] = "1year"
     else:
-        logger.info("🚀 Full historical mode")
+        logger.info("🚀 Full historical mode — no existing data")
         existing_df = pd.DataFrame()
 
     # Scrape new transactions

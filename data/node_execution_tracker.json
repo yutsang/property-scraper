@@ -1,54 +1,55 @@
 {
   "estate_listing_scraper": {
-    "last_run": "2026-02-03T23:45:32.546419",
+    "last_run": "2026-02-24T09:38:04.868637",
     "node_type": "estate",
-    "execution_count": 4,
+    "execution_count": 13,
     "metadata": {
-      "estates_processed": 18436,
-      "districts_processed": 174,
-      "execution_time": "2026-02-03T23:45:32.546413"
+      "estates_total": 18401,
+      "districts_checked": 174,
+      "districts_scraped": 1,
+      "districts_skipped": 172
     }
   },
   "transaction_data_scraper": {
-    "last_run": "2026-02-03T23:55:42.918852",
+    "last_run": "2026-02-24T10:11:23.617071",
     "node_type": "transaction",
-    "execution_count": 14,
+    "execution_count": 16,
     "metadata": {
-      "records_processed": 256948,
+      "records_processed": 257653,
       "areas_processed": 174,
       "failed_areas": 0,
-      "execution_time": "2026-02-03T23:55:42.918845"
+      "execution_time": "2026-02-24T10:11:23.617063"
     }
   },
   "estate_detail_scraper": {
-    "last_run": "2026-02-04T16:11:11.529399",
+    "last_run": "2026-02-22T17:23:41.180171",
     "node_type": "estate",
-    "execution_count": 2,
+    "execution_count": 3,
     "metadata": {
-      "estates_processed": 50034,
-      "new_details_scraped": 18237,
-      "execution_time": "2026-02-04T16:11:11.529379"
+      "estates_processed": 50044,
+      "new_details_scraped": 10,
+      "execution_time": "2026-02-22T17:23:41.180157"
     }
   },
   "ml_ici_scrape_trans": {
-    "last_run": "2026-02-03T23:24:42.242125",
+    "last_run": "2026-02-24T10:00:26.720557",
     "node_type": "transaction",
-    "execution_count": 30,
+    "execution_count": 38,
     "metadata": {
-      "records_processed": 299746,
-      "pages_processed": 1,
-      "execution_time": "2026-02-03T23:24:42.242103"
+      "records_processed": 75075,
+      "pages_processed": 772,
+      "execution_time": "2026-02-24T10:00:26.720540"
     }
   },
   "scrape_midland_buildings": {
-    "last_run": "2026-02-03T23:48:35.393505",
+    "last_run": "2026-02-24T10:01:55.207552",
     "node_type": "building",
-    "execution_count": 2,
+    "execution_count": 8,
     "metadata": {
-      "buildings_processed": 1800,
+      "buildings_processed": 2285,
       "districts_processed": 16,
       "property_types_processed": 3,
-      "execution_time": "2026-02-03T23:48:35.393490"
+      "execution_time": "2026-02-24T10:01:55.207536"
     }
   },
   "load_and_clean_district_data": {
@@ -71,47 +72,45 @@
     }
   },
   "fetch_midland_transactions": {
-    "last_run": "2026-02-04T16:52:43.338885",
+    "last_run": "2026-02-24T10:35:07.493159",
     "node_type": "transaction",
-    "execution_count": 17,
+    "execution_count": 20,
     "metadata": {
-      "records_processed": 344509,
+      "records_processed": 351016,
       "districts_processed": 130,
-      "execution_time": "2026-02-04T16:52:43.338877"
+      "execution_time": "2026-02-24T10:35:07.493153"
     }
   },
   "scrape_building_listings": {
-    "last_run": "2026-02-03T23:48:25.544019",
+    "last_run": "2026-02-24T10:01:19.634343",
     "node_type": "estate",
-    "execution_count": 2,
+    "execution_count": 8,
     "metadata": {
-      "buildings_processed": 1586,
+      "buildings_processed": 1590,
       "districts_processed": 53,
-      "execution_time": "2026-02-03T23:48:25.544012"
+      "execution_time": "2026-02-24T10:01:19.634332"
     }
   },
   "scrape_transaction": {
-    "last_run": "2026-02-03T23:51:26.980055",
+    "last_run": "2026-02-24T10:05:09.039217",
     "node_type": "transaction",
-    "execution_count": 7,
+    "execution_count": 13,
     "metadata": {
-      "records_processed": 372856,
+      "records_processed": 374282,
       "areas_processed": 53,
-      "execution_time": "2026-02-03T23:51:26.980050"
+      "execution_time": "2026-02-24T10:05:09.039211"
     }
   },
   "scrape_building_details": {
-    "last_run": "2026-02-04T16:38:14.466566",
+    "last_run": "2026-02-24T10:11:24.312109",
     "node_type": "estate",
-    "execution_count": 2,
+    "execution_count": 5,
     "metadata": {
-      "buildings_processed": 1578,
-      "new_details_scraped": 321,
-      "total_requests": 29,
-      "successful_requests": 321,
-      "error_requests": 8,
+      "buildings_processed": 1582,
+      "new_details_scraped": 0,
+      "total_requests": 8,
       "timeouts_encountered": 0,
-      "execution_time": "2026-02-04T16:38:14.466557"
+      "execution_time": "2026-02-24T10:11:24.312104"
     }
   }
 }
