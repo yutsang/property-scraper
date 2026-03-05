@@ -511,28 +511,27 @@ def get_cookies():
         _s.get("https://oir.centanet.com/", headers=_headers, timeout=15)
         return dict(_s.cookies)
     except Exception as e:
-        logger.warning(f"Could not load site cookies: {e} — returning empty dict")
+        logging.getLogger(__name__).warning(f"Could not load site cookies: {e} — returning empty dict")
         return {}
 
 def create_session():
     """Create a requests Session pre-loaded with real site cookies."""
+    _log = logging.getLogger(__name__)
     session = requests.Session()
     retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry)
     session.mount('http://', adapter)
     session.mount('https://', adapter)
 
-    # Load the landing page so the session picks up the userID cookie
-    # (required by the API; without it all responses have 0 items)
     _headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
     try:
         session.get("https://oir.centanet.com/", headers=_headers, timeout=15)
-        logger.info(f"✅ Centaline OIR session ready (cookies: {list(session.cookies.keys())})")
+        _log.info(f"✅ Centaline OIR session ready (cookies: {list(session.cookies.keys())})")
     except Exception as e:
-        logger.warning(f"⚠️  Could not load Centaline OIR landing page: {e}")
+        _log.warning(f"⚠️  Could not load Centaline OIR landing page: {e}")
 
     return session
 
@@ -942,17 +941,28 @@ def scrape_transaction(
         end_date = params.get("end_date", datetime.date.today().strftime("%Y-%m-%d"))
     
     existing_df = pd.DataFrame()  # Initialize empty DataFrame
+    our_counts_by_code = {}  # Per-district record counts in existing data
     if os.path.exists(input_path):
         try:
             existing_df = pd.read_parquet(input_path)
             logger.info(f"Loaded {len(existing_df)} existing transaction records from storage")
+            # Build per-district count map for gap detection
+            if not existing_df.empty and "AreaCode" in existing_df.columns:
+                our_counts_by_code = existing_df.groupby("AreaCode").size().to_dict()
         except Exception as e:
             logger.warning(f"Failed to load existing data: {str(e)}")
             
         if not existing_df.empty:
-            #latest_date = pd.to_datetime(existing_df["transactionDate"]).max()
-            date_in_df = pd.to_datetime(existing_df["transactionDate"], errors='coerce')
-            latest_date = date_in_df.max()#.strftime("%Y-%m-%d")
+            try:
+                date_in_df = pd.to_datetime(
+                    existing_df["transactionDate"], errors='coerce',
+                    format='mixed', dayfirst=True
+                )
+            except TypeError:
+                date_in_df = pd.to_datetime(
+                    existing_df["transactionDate"], errors='coerce', dayfirst=True
+                )
+            latest_date = date_in_df.max()
             
             start_date = (latest_date + pd.DateOffset(days=1)).strftime("%Y-%m-%d")
             end_date = datetime.date.today().strftime("%Y-%m-%d")
@@ -982,12 +992,15 @@ def scrape_transaction(
     date_range_encoded = urllib.parse.quote(date_range)
 
     # If the date range covers more than ~5 years, treat it as a full
-    # historical scrape and omit daterang entirely (equivalent of clicking
-    # 重設 on https://oir.centanet.com/transaction/ — returns all records
-    # without any date restriction).
+    # historical scrape and omit daterang entirely. NOTE: the API without a
+    # date filter only returns records from ~2010 onward; 2000-2009 data
+    # requires an explicit date-range pass (done in a separate post-loop step).
     full_history_mode = (end_dt - start_dt).days > 5 * 365
     if full_history_mode:
-        logger.info("📅 Full historical mode — omitting daterang filter (equivalent of 重設 / Reset)")
+        logger.info("📅 Full historical mode — omitting daterang filter (covers ~2010-present)")
+
+    # Encoded date range for the pre-2010 historical pass (run after main loop)
+    pre2010_date_range = urllib.parse.quote("01/01/2000-31/12/2009")
 
     session = create_session()
     cookies = get_cookies()
@@ -1018,12 +1031,6 @@ def scrape_transaction(
                 cookies = get_cookies()
                 session = create_session()
 
-            # First, get total count to determine appropriate pagesize.
-            # Omit daterang in full_history_mode (no date restriction = all data).
-            _date_filter = "" if full_history_mode else f"&daterang={date_range_encoded}"
-            check_url = (f"{base_url}?pageindex=1&pagesize=1"
-                         f"{_date_filter}&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
-            
             headers = {
                 "User-Agent": get_random_user_agent(),
                 "Accept": "application/json, text/plain, */*",
@@ -1033,20 +1040,63 @@ def scrape_transaction(
                 "Connection": "keep-alive"
             }
 
+            # First, get total count (no date filter = all-time count for gap detection).
+            # We always check the all-time total so we can detect under-scraped districts.
             try:
-                check_response = session.get(check_url, headers=headers, timeout=20)
+                count_url = (f"{base_url}?pageindex=1&pagesize=1"
+                             f"&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
+                check_response = session.get(count_url, headers=headers, timeout=20)
                 check_response.raise_for_status()
                 check_json_data = check_response.json()
-                total_count = check_json_data.get("data", {}).get("recordList", {}).get("totalCount", 0)
+                total_count_alltime = check_json_data.get("data", {}).get("recordList", {}).get("totalCount", 0)
                 district_meta["requests"] += 1
-                
-                if total_count == 0:
-                    pbar.set_postfix_str(f"{district}: 0 records")
-                    continue
-                    
             except requests.exceptions.RequestException as e:
                 logger.error(f"Failed to get total count for {district}: {e}")
                 pbar.set_postfix_str(f"{district}: ERROR")
+                continue
+
+            # Per-district gap detection: if the API has significantly more records
+            # than we do, force a full re-fetch (no date filter) for this district.
+            # This catches districts that were silently skipped due to rate-limit
+            # failures returning 0 count on the initial scrape.
+            our_district_count = our_counts_by_code.get(code, 0)
+            gap = total_count_alltime - our_district_count
+            # Force a full re-fetch when:
+            #   (a) we have zero records for this district and the API has any, OR
+            #   (b) the gap exceeds 10% of the API total (or 100 records, whichever
+            #       is larger) — catches partially-scraped districts.
+            force_full_district = (
+                total_count_alltime > 0
+                and (our_district_count == 0 or gap > max(100, total_count_alltime * 0.10))
+            )
+
+            if force_full_district:
+                logger.info(
+                    f"⚠️  {district} gap detected: API={total_count_alltime:,} ours={our_district_count:,} "
+                    f"(gap={gap:,}) — forcing full re-fetch"
+                )
+                _date_filter = ""  # No date filter = all 2010+ records
+                total_count = total_count_alltime
+            else:
+                # Normal incremental mode: apply the global date filter
+                _date_filter = "" if full_history_mode else f"&daterang={date_range_encoded}"
+                # Re-check count WITH the date filter so effective_pagesize is correct
+                if _date_filter:
+                    try:
+                        time.sleep(random.uniform(0.3, 0.8))
+                        filtered_url = (f"{base_url}?pageindex=1&pagesize=1"
+                                        f"{_date_filter}&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code}&lang=EN")
+                        fr = session.get(filtered_url, headers=headers, timeout=20)
+                        fr.raise_for_status()
+                        total_count = fr.json().get("data", {}).get("recordList", {}).get("totalCount", 0)
+                        district_meta["requests"] += 1
+                    except requests.exceptions.RequestException:
+                        total_count = total_count_alltime
+                else:
+                    total_count = total_count_alltime
+
+            if total_count == 0:
+                pbar.set_postfix_str(f"{district}: 0 records")
                 continue
 
             # Request total_count items in one shot — the API supports this.
@@ -1203,6 +1253,157 @@ def scrape_transaction(
             
             time.sleep(random.uniform(3, 5))
 
+    # ── Post-loop: fetch pre-2010 data (2000-2009) explicitly ───────────────
+    # The API without a date filter only returns ~2010-present; records from
+    # 2000-2009 require an explicit date-range pass (≈7,174 records total).
+    existing_early_ids = set()
+    if not existing_df.empty and "id" in existing_df.columns:
+        # Use format='mixed' so both ISO ("2009-12-31T00:00:00") and
+        # dd/mm/yyyy ("31/12/2009") are recognised correctly (pandas 2.x).
+        try:
+            date_in_df = pd.to_datetime(
+                existing_df["transactionDate"], errors='coerce',
+                format='mixed', dayfirst=True
+            )
+        except TypeError:
+            date_in_df = pd.to_datetime(
+                existing_df["transactionDate"], errors='coerce', dayfirst=True
+            )
+        early_mask = date_in_df < pd.Timestamp("2010-01-01")
+        existing_early_ids = set(existing_df.loc[early_mask, "id"].dropna().astype(str))
+
+    if not existing_early_ids:
+        logger.info("📅 Fetching pre-2010 records (2000-2009) with explicit date-range filter …")
+        pre2010_results = []
+        session_pre = create_session()
+        cookies_pre = get_cookies()
+        with tqdm(area_codes.iterrows(), total=area_codes.shape[0], desc="Pre-2010 Areas") as pbar2:
+            for idx2, row2 in pbar2:
+                time.sleep(random.uniform(0.5, 1.2))
+                if idx2 % 10 == 0:
+                    cookies_pre = get_cookies()
+                    session_pre = create_session()
+                region2 = row2["Region"]
+                district2 = row2["District"]
+                code2 = row2["Code"]
+                headers2 = {
+                    "User-Agent": get_random_user_agent(),
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Referer": "https://oir.centanet.com/",
+                    "Origin": "https://oir.centanet.com",
+                    "Connection": "keep-alive"
+                }
+                try:
+                    check2 = session_pre.get(
+                        f"{base_url}?pageindex=1&pagesize=1&daterang={pre2010_date_range}"
+                        f"&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code2}&lang=EN",
+                        headers=headers2, timeout=20
+                    )
+                    check2.raise_for_status()
+                    cnt2 = check2.json().get("data", {}).get("recordList", {}).get("totalCount", 0)
+                except Exception:
+                    pbar2.set_postfix_str(f"{district2}: ERR")
+                    continue
+
+                if cnt2 == 0:
+                    pbar2.set_postfix_str(f"{district2}: 0")
+                    continue
+
+                time.sleep(random.uniform(0.5, 1.0))
+                try:
+                    resp2 = session_pre.get(
+                        f"{base_url}?pageindex=1&pagesize={cnt2}&daterang={pre2010_date_range}"
+                        f"&sellpricetype=TOTAL&rentpricetype=TOTAL&districtids={code2}&lang=EN",
+                        headers=headers2, timeout=30
+                    )
+                    resp2.raise_for_status()
+                    items2 = resp2.json().get("data", {}).get("recordList", {}).get("items", [])
+                except Exception:
+                    pbar2.set_postfix_str(f"{district2}: ERR")
+                    continue
+
+                for item in items2:
+                    item["Region"] = region2
+                    item["District"] = district2
+                    item["AreaCode"] = code2
+                    price_info = item.get("priceInfo") or {}
+                    area_info = item.get("areaInfo") or {}
+                    post_url_info = item.get("postUrlInfo") or {}
+                    property_url_info = item.get("propertyUrlInfo") or {}
+                    pre2010_results.append({
+                        "id": item.get("id"),
+                        "ibsTransactionID": item.get("ibsTransactionID"),
+                        "ibsBuildingID": item.get("ibsBuildingID"),
+                        "ibsPropertyNo": item.get("ibsPropertyNo"),
+                        "ibsDept": item.get("ibsDept"),
+                        "deptDisplayName": item.get("deptDisplayName"),
+                        "centabldg": item.get("centabldg"),
+                        "transactionDate": item.get("transactionDate"),
+                        "transactionType": item.get("transactionType"),
+                        "propertyNameCn": item.get("propertyNameCn"),
+                        "propertyNameSc": item.get("propertyNameSc"),
+                        "propertyNameEn": item.get("propertyNameEn"),
+                        "propertyUsageEn": item.get("propertyUsageEn"),
+                        "propertyUsageDisplayName": item.get("propertyUsageDisplayName"),
+                        "floor": item.get("floor"),
+                        "unit": item.get("unit"),
+                        "isPriceEstimated": item.get("isPriceEstimated"),
+                        "transactionArea": item.get("transactionArea"),
+                        "transactionAreaDisplayName": item.get("transactionAreaDisplayName"),
+                        "agency": item.get("agency"),
+                        "remarks": item.get("remarks"),
+                        "source": item.get("source"),
+                        "sourceDisplayName": item.get("sourceDisplayName"),
+                        "price": price_info.get("price"),
+                        "priceDisplayName": price_info.get("priceDisplayName"),
+                        "pricePostTypeDisplayName": price_info.get("pricePostTypeDisplayName"),
+                        "avgPrice": price_info.get("avgPrice"),
+                        "avgPriceDisplayName": price_info.get("avgPriceDisplayName"),
+                        "rental": price_info.get("rental"),
+                        "rentalDisplayName": price_info.get("rentalDisplayName"),
+                        "rentPostTypeDisplayName": price_info.get("rentPostTypeDisplayName"),
+                        "avgRental": price_info.get("avgRental"),
+                        "avgRentalDisplayName": price_info.get("avgRentalDisplayName"),
+                        "gains_Price": price_info.get("gains_Price"),
+                        "gains_Rental": price_info.get("gains_Rental"),
+                        "priceTo": price_info.get("priceTo"),
+                        "rentalTo": price_info.get("rentalTo"),
+                        "unitPriceTo": price_info.get("unitPriceTo"),
+                        "unitRentalTo": price_info.get("unitRentalTo"),
+                        "priceDesc": price_info.get("priceDesc"),
+                        "districtID": area_info.get("districtID"),
+                        "districtNameCn": area_info.get("districtNameCn"),
+                        "districtNameEn": area_info.get("districtNameEn"),
+                        "districtNameSc": area_info.get("districtNameSc"),
+                        "zoneEn": area_info.get("zoneEn"),
+                        "ibsContractID": item.get("ibsContractID"),
+                        "isVideo": item.get("isVideo"),
+                        "addressDisplayName": item.get("addressDisplayName"),
+                        "isPost": item.get("isPost"),
+                        "postUrlInfo_centabldg": post_url_info.get("centabldg"),
+                        "postUrlInfo_propertyNameEn": post_url_info.get("propertyNameEn"),
+                        "postUrlInfo_propertyUsageEn": post_url_info.get("propertyUsageEn"),
+                        "postUrlInfo_districtID": post_url_info.get("districtID"),
+                        "postUrlInfo_districtNameEn": post_url_info.get("districtNameEn"),
+                        "postUrlInfo_zoneEn": post_url_info.get("zoneEn"),
+                        "propertyId": property_url_info.get("propertyId"),
+                        "Region": region2,
+                        "District": district2,
+                        "AreaCode": code2,
+                    })
+
+                pbar2.set_postfix_str(f"{district2}: {len(items2)}")
+                time.sleep(random.uniform(1.5, 3.0))
+
+        if pre2010_results:
+            logger.info(f"📅 Fetched {len(pre2010_results):,} pre-2010 records")
+            all_results.extend(pre2010_results)
+        else:
+            logger.info("📅 No pre-2010 records found (API may not expose them for this account)")
+    else:
+        logger.info(f"📅 Pre-2010 pass skipped — {len(existing_early_ids):,} records already present")
+
     # Clean and transform data
     if not all_results:
         logger.warning("No new transaction records collected in this scrape")
@@ -1237,13 +1438,23 @@ def scrape_transaction(
                 logger.warning(f"⚠️ Could not fix {col}: {e}")
         
         # Fix date formats to dd/mm/yyyy
+        # Use format='mixed' to handle both ISO ("2026-03-03T00:00:00") and
+        # dd/mm/yyyy ("25/02/2026") in the same column (pandas 2.x compatible).
         date_columns = [col for col in final_df.columns if 'date' in col.lower()]
         for col in date_columns:
             try:
                 if col in final_df.columns:
-                    # Convert to datetime first
-                    date_dt = pd.to_datetime(final_df[col], errors='coerce')
-                    # Convert to dd/mm/yyyy format
+                    try:
+                        date_dt = pd.to_datetime(
+                            final_df[col], errors='coerce',
+                            format='mixed', dayfirst=True
+                        )
+                    except TypeError:
+                        # Older pandas that doesn't support format='mixed'
+                        date_dt = pd.to_datetime(
+                            final_df[col], errors='coerce', dayfirst=True,
+                            infer_datetime_format=True
+                        )
                     final_df[col] = date_dt.dt.strftime('%d/%m/%Y')
                     logger.info(f"✅ Fixed {col} date format to dd/mm/yyyy")
             except Exception as e:
@@ -1482,10 +1693,25 @@ def join_transaction_with_building_details(
         all_matched = fuzzy_matched.copy()
     
     # Add unmatched transactions
-    if len(final_unmatched) > 0:
-        # IMPORTANT: Preserve original transaction columns!
-        # Start with original unmatched transactions to keep ALL transaction data
+    # Collect all IDs that were successfully matched (exact or fuzzy) so we can
+    # correctly select truly-unmatched rows from trans_copy.  We MUST NOT rely on
+    # the index of `final_unmatched` here because an earlier pd.concat with
+    # ignore_index=True may have reset it to 0..N-1, causing the wrong rows to be
+    # selected.
+    matched_ids: set = set()
+    if len(exact_matched) > 0 and 'id' in exact_matched.columns:
+        matched_ids |= set(exact_matched['id'].dropna().astype(str))
+    if len(fuzzy_matched) > 0 and 'id' in fuzzy_matched.columns:
+        matched_ids |= set(fuzzy_matched['id'].dropna().astype(str))
+
+    if 'id' in trans_copy.columns:
+        unmatched_mask = ~trans_copy['id'].astype(str).isin(matched_ids)
+        final_unmatched_clean = trans_copy[unmatched_mask].copy()
+    else:
+        # Fallback: use index when no 'id' column (should not happen for OIR)
         final_unmatched_clean = trans_copy[trans_copy.index.isin(final_unmatched.index)].copy()
+
+    if len(final_unmatched_clean) > 0:
         
         # Add match metadata columns
         final_unmatched_clean['_match_method'] = 'unmatched'

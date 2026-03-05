@@ -584,6 +584,7 @@ def ml_ici_scrape_trans(
             "COMMERCIAL": "commercial",
             "INDUSTRIAL": "industrial",
             "RETAIL": "retail",
+            "SHOPS": "retail",
         }
         return mapping.get(str(value).upper(), str(value).lower())
 
@@ -639,23 +640,35 @@ def ml_ici_scrape_trans(
     api_params["limit"] = page_size
     api_params.setdefault("page", 1)
 
-    # Date-based decision: read DB max date → decide start_date
+    # Date-based decision: read DB max date → decide start_date.
+    # NOTE: we intentionally do NOT return early here even when max_date >= today.
+    # We must fetch page 1 first so the gap detection (API total vs our count) can
+    # decide whether a full re-scrape is needed.  The early "up-to-date" skip only
+    # happens later, after confirming no significant gap exists.
     start_date = params["global"]["start_date"]
     date_columns = ["date", "transaction_date", "tx_date", "Date", "transactionDate"]
     today = datetime.now().date()
+    existing_record_count = 0  # track for gap detection later
+    _max_date_is_current = False  # True when existing data already reaches today
     if os.path.exists(output_file):
         try:
             existing_df = pd.read_parquet(output_file)
+            existing_record_count = len(existing_df)
             for col in date_columns:
                 if col in existing_df.columns:
                     parsed = pd.to_datetime(existing_df[col], errors="coerce")
                     if parsed.notna().any():
                         max_date = parsed.max().date()
                         if max_date >= today:
-                            logger.info(f"✅ Midland ICI transactions up-to-date (max: {max_date}) — skipping")
-                            return existing_df
-                        start_date = max_date + timedelta(days=1)
-                        logger.info(f"📊 Incremental fetch from {start_date}")
+                            _max_date_is_current = True
+                            # Don't skip yet — gap detection happens after page-1 fetch
+                            logger.info(
+                                f"📅 Existing data reaches {max_date}; "
+                                f"will verify API count before skipping (existing={existing_record_count:,})"
+                            )
+                        else:
+                            start_date = max_date + timedelta(days=1)
+                            logger.info(f"📊 Incremental fetch from {start_date}")
                         break
         except Exception as exc:
             logger.warning(f"Failed to derive incremental start date: {exc}")
@@ -748,7 +761,29 @@ def ml_ici_scrape_trans(
         total_pages = math.ceil(total_count / page_size) if total_count else 1
         logger.info(f"📊 Total transactions: {total_count:,}  |  Pages: {total_pages}  |  Workers: {max_workers}")
 
-        page1_records, page1_stop = parse_page(page1_data)
+        # Gap detection: if the API total significantly exceeds our existing
+        # record count, the incremental start_date may be skipping historical
+        # gaps (e.g., missed pages during a previous partial scrape).
+        # Reset start_date to a very early date so ALL pages are processed;
+        # deduplication at merge time handles any overlap with existing data.
+        gap = total_count - existing_record_count
+        if existing_record_count > 0 and gap > max(100, existing_record_count * 0.01):
+            logger.warning(
+                f"⚠️  Gap detected: API total={total_count:,} existing={existing_record_count:,} "
+                f"(gap={gap:,}) — resetting start_date to 2000-01-01 for full re-fetch"
+            )
+            start_date = datetime(2000, 1, 1).date()
+            _max_date_is_current = False  # force full scrape even if max_date was today
+            # Re-parse page 1 with the updated start_date so records aren't
+            # incorrectly filtered out by the old (incremental) cutoff.
+            page1_records, page1_stop = parse_page(page1_data)
+        elif _max_date_is_current:
+            # Data is genuinely up-to-date and no gap — safe to skip.
+            logger.info(f"✅ Midland ICI transactions up-to-date (API={total_count:,} = existing={existing_record_count:,}) — skipping")
+            return existing_df if existing_record_count > 0 else pd.DataFrame(all_transactions)
+        else:
+            page1_records, page1_stop = parse_page(page1_data)
+
         all_transactions.extend(page1_records)
 
         # ── Step 3: Fetch remaining pages in parallel ─────────────────────
@@ -802,7 +837,18 @@ def ml_ici_scrape_trans(
         pages_processed = total_pages
 
     if not all_transactions:
-        logger.warning("No transactions collected — returning empty DataFrame")
+        _existing_file = "data/01_raw/midland_ici_trans.parquet"
+        if os.path.exists(_existing_file):
+            logger.info("No new transactions found — returning existing data unchanged")
+            existing_df = pd.read_parquet(_existing_file, engine='pyarrow')
+            record_node_execution(
+                node_name="ml_ici_scrape_trans",
+                node_type="transaction",
+                metadata={"records_processed": len(existing_df), "pages_processed": 0,
+                          "execution_time": datetime.now().isoformat()}
+            )
+            return existing_df
+        logger.warning("No transactions collected and no existing file — returning empty DataFrame")
         trans_df = pd.DataFrame()
     else:
         trans_df = pd.DataFrame(all_transactions)
@@ -851,8 +897,13 @@ def ml_ici_scrape_trans(
                     combined_df = pd.concat([existing_df, trans_df], ignore_index=True)
                     logger.info(f"Combined: {len(combined_df):,} ({len(existing_df):,} existing + {len(trans_df):,} new)")
                     
-                    # Deduplicate
-                    dedup_cols = ['tx_date', 'building_id', 'floor', 'flat']
+                    # Deduplicate using a broad key that preserves distinct
+                    # transactions. ICI records often have NULL floor, so using
+                    # only (tx_date, building_id, floor, flat) collapses legitimate
+                    # records. Adding tx_type + sell + rent + area gives much
+                    # better selectivity without a proper transaction ID.
+                    dedup_cols = ['tx_date', 'building_id', 'floor', 'flat',
+                                  'tx_type', 'sell', 'rent', 'area']
                     existing_dedup_cols = [col for col in dedup_cols if col in combined_df.columns]
                     
                     if existing_dedup_cols:

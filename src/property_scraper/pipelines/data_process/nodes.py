@@ -1241,26 +1241,44 @@ def cleanse_midland_ici(
             logger.error(f"Error in step 1 - Error handling: {str(e)}")
             # Continue processing even if some error handling fails
 
-        # 2. Process ics_type column (i=Industrial, c=Commercial, s=Retail)
+        # 2. Process ics_type column (i=Industrial, c=Commercial, s=Retail/Shops)
         logger.info("Step 2: Processing ics_type column")
         try:
             if 'ics_type' in df.columns:
-                # Map full words to proper format
                 ics_type_mapping = {
                     'industrial': 'Industrial',
-                    'commercial': 'Office', 
+                    'commercial': 'Office',
                     'retail': 'Retail',
-                    # Also handle single letters if they exist
+                    'shops': 'Retail',   # API returns sbuOwner="SHOPS" for retail units
+                    # Single-letter variants
                     'i': 'Industrial',
-                    'c': 'Office', 
-                    's': 'Retail'
+                    'c': 'Office',
+                    's': 'Retail',
+                    'r': 'Retail',
                 }
                 df['ics_type'] = df['ics_type'].str.lower().map(ics_type_mapping)
                 df['ics_type'] = df['ics_type'].fillna('Unknown')
                 logger.info("ics_type column processed successfully")
         except Exception as e:
             logger.error(f"Error processing ics_type column: {str(e)}")
-        
+
+        # 2b. Use the English building name from joined building details when available.
+        # After midland_ici_join, the 'Building Name' column (English, from the detail
+        # page scrape) is present alongside 'eng_name' (which carries the Chinese name
+        # returned by the transaction API).  Prefer the English name so the final output
+        # has the correct eng_name.
+        try:
+            if 'Building Name' in df.columns and 'eng_name' in df.columns:
+                valid_mask = (
+                    df['Building Name'].notna()
+                    & ~df['Building Name'].isin(['', 'nan', 'None', 'NaN'])
+                )
+                df['eng_name'] = df['Building Name'].where(valid_mask, df['eng_name'])
+                matched = valid_mask.sum()
+                logger.info(f"eng_name updated with English building name for {matched:,} rows")
+        except Exception as e:
+            logger.error(f"Error updating eng_name from Building Name: {str(e)}")
+
         # 3. Placeholder for column rename and reorder
         logger.info("Step 3: Column rename and reorder (placeholder)")
         # TODO: Manually specify column renaming here
