@@ -1,14 +1,32 @@
 from kedro.pipeline import Pipeline, node, pipeline
-from .nodes import (
+from .health import (
+    check_centaline_api_health_node,
+    update_area_codes_from_sitemap,
+)
+from .estates import (
     scrape_estate_listings,
     scrape_estate_details,
+)
+from .nodes import (
     scrape_transaction_data,
     process_transaction_data,
     enrich_estate_data,
 )
 
+
 def create_pipeline(**kwargs) -> Pipeline:
     return pipeline([
+        node(
+            func=check_centaline_api_health_node,
+            inputs=["params:webscraper"],
+            name="check_api_health",
+        ),
+        node(
+            func=update_area_codes_from_sitemap,
+            inputs=["params:webscraper"],
+            outputs="area_codes",
+            name="update_area_codes",
+        ),
         node(
             func=scrape_estate_listings,
             inputs=["area_codes", "params:webscraper"],

@@ -1,14 +1,14 @@
 # Parameters for Centaline Residential Pipeline # Purely Based on Control-Date
 webscraper:
   global:
-    use_edge: False  # True = Edge, False = Chrome
+    use_edge: False  # Deprecated: now using Playwright
     headless: True
     user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36"
     min_delay: 0.3  # Reduced from 0.5 for faster scraping
     max_delay: 1.0  # Reduced from 2.0 for faster scraping
     max_retries: 3
-    max_threads: 5  # FIXED: Reduced from 20 to 5 to prevent ChromeDriver crashes
-    page_load_timeout: 30
+    max_threads: 8  # Multithreading for Playwright (transactions + estates)
+    page_load_timeout: 35  # Fast fail; retries handle slow districts (was 60)
     start_date: "2000-01-01"
     end_date: "2025-06-17"
     page_size: 10000
@@ -19,15 +19,28 @@ webscraper:
     
   # Node execution tracking configuration
   node_tracking:
-    transaction_skip_days: 0   # Transaction nodes ALWAYS run (incremental mode)
-    estate_skip_days: 28       # Skip estate nodes if run within 28 days
+    live_compare_enabled: true
+    fail_open_on_probe_error: true
+    transaction_skip_days: 0   # Retained for backward compatibility; live compare now drives skips
+    estate_skip_days: 28       # Retained for backward compatibility; estate nodes use live probes
     building_skip_days: 28     # Skip building nodes if run within 28 days
     default_skip_days: 0       # Default nodes always run (0 = no skip)
   
   centaline_res:
+    area_code_path: data/01_raw/Centanet_Res_Area_Code.csv
+    res_trans_path: data/01_raw/centaline_res_trans_lv_0.parquet
     max_pages_per_area: 999
+    max_transaction_workers: 6
+    transaction_full_rerun: false  # When true: backup transactions and rescrape all (Playwright)
+    abort_on_corrupt_transaction_file: true
+    restore_from_backup_on_corruption: true
     estate_listings_file: data/01_raw/centaline_estate_lv_1.parquet
     estate_details_file: data/01_raw/centaline_estate_lv_2.parquet
+    health_check_max_stale_days: 10
+    confirm_stale_data: true   # Proceed when stale (no param needed for normal kedro run)
+    full_rerun: false
+    estate_full_rerun: false  # When true: rescrape all estate districts (gets ~19k to match website)
+    fuzzy_match_threshold: 85  # For enrich fallback when no direct code match
   
   centaline_oir:
     transaction_api_url: "https://oir.centanet.com/api/Transaction/GetTransactionList"
@@ -78,6 +91,9 @@ webscraper:
       lang: "zh-hk"
       sort: "txDate-desc"
       unit: "feet"
+    # Bilingual fetch: zh-hk row + en row merged per record (see ml_ici_scrape_trans)
+    transaction_lang_zh: "zh-hk"
+    transaction_lang_en: "en"
     transaction_headers_main:
       User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
       Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
@@ -98,6 +114,16 @@ webscraper:
       join_type: left
       cast_join_keys: True
       cast_direction: left_to_right
+
+  building_supplement:
+    enabled: true
+    workbook_file: "data/02_intermediate/buildings.xlsx"
+    consolidated_master_file: "data/03_primary/consolidated_commercial_building_master.parquet"
+    create_empty_master_if_missing: true
+    commercial_domain: "commercial"
+    residential_domain: "residential"
+    approved_status: "approved"
+    default_limit: 0
   
   processing:
     phase_keywords: ["Phase", "Site", "(Block"]

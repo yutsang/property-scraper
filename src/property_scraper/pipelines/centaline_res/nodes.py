@@ -3,18 +3,11 @@ import time
 import random
 import pandas as pd
 import numpy as np
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import chromedriver_autoinstaller
 import logging
 from typing import Dict, Any, List, Tuple
 from tqdm import tqdm
 import configparser
 import re
-import string
-from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, NoSuchElementException
 import os
 import json
 from pathlib import Path
@@ -27,116 +20,134 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 import sys
 
+import asyncio
+import requests
+from playwright.sync_api import sync_playwright, Page, TimeoutError as PlaywrightTimeout
+from playwright.async_api import async_playwright
+
 # Import node tracking utilities
-from ...utils.node_tracker import should_run_node, record_node_execution
+from ...utils.node_tracker import (
+    evaluate_node_run,
+    record_node_decision,
+    record_node_execution,
+)
+from ...utils.playwright_browser import launch_browser, launch_browser_async
+from ...utils.centaline_health_check import check_centaline_api_health
+from ...utils.centaline_backup import restore_latest_backup
+from ...utils.centaline_utils import (
+    parse_date_from_string,
+    extract_completion_year,
+    parse_html_area,
+    parse_html_price,
+    parse_html_ft_price,
+    clean_subdistrict,
+    block_slow_resources,
+    block_slow_resources_async,
+    estate_changed,
+    safe_extract_bs4,
+)
+from ...utils.web_scraping import random_sleep, generate_session_id
+from ...utils.data_processing import drop_non_parquet_serializable_columns, fix_transaction_df_parquet_types
 
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
-def generate_session_id(length=10):
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
-
-def clean_subdistrict(subdistrict):
-    cleaned = re.sub(r'[^A-Za-z0-9]+', '-', subdistrict)
-    return cleaned.strip('-').lower()
-
-# Helper functions
-# nodes.py (updated ChromeDriver configuration)
-def initialize_driver(params: Dict[str, Any]) -> webdriver.Remote:
-    """Universal driver initialization with auto-installation"""
-    if params['global'].get('use_edge', False):
-        return _initialize_edge_driver(params['global'])
-    return _initialize_chrome_driver(params['global'])
-
-def _initialize_chrome_driver(params: Dict[str, Any]) -> webdriver.Chrome:
-    """Chrome-specific initialization"""
-    import chromedriver_autoinstaller
-    chromedriver_autoinstaller.install()
-    
-    options = webdriver.ChromeOptions()
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    
-    if params.get('headless', True):
-        options.add_argument("--headless=new")
-    
-    # Log suppression
-    options.add_argument("--log-level=3")
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    
-    service = webdriver.ChromeService(
-        service_args=['--disable-build-check', '--verbose=0']
-    )
-    return webdriver.Chrome(service=service, options=options)
-
-
-def _initialize_edge_driver(params: Dict[str, Any]) -> webdriver.Edge:
-    """Edge-specific initialization"""
-    import edgedriver_autoinstaller
-    edgedriver_autoinstaller.install()
-    
-    options = webdriver.EdgeOptions()
-    options.use_chromium = True
-    
-    if params.get('headless', True):
-        options.add_argument("--headless=new")
-        options.add_argument("--window-size=1920,1080")
-    
-    # Common configurations
-    options.add_argument("--log-level=3")
-    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-gpu")
-    # Anti-detection configuration  
-    options.add_argument("--disable-blink-features=AutomationControlled")  
-    #options.add_argument("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.6943.127 Safari/537.36")  
-    #options.add_argument(params['user_agent'])
-    driver = webdriver.Edge(options=options)
-
-    return driver
-
-def adaptive_wait(driver, selector, timeout=30, poll=3):
-    """Hybrid waiting strategy with multiple fallback approaches"""
-    end_time = time.time() + timeout
-    last_exception = None
-    
-    while time.time() < end_time:
-        try:
-            # Try direct element location first
-            elements = driver.find_elements(By.CSS_SELECTOR, selector)
-            if elements:
-                return elements
-                
-            # Fallback to JavaScript DOM query
-            elements = driver.execute_script(
-                f"return document.querySelectorAll('{selector}')"
-            )
-            if elements:
-                return elements
-                
-            # Final fallback to WebDriverWait
-            return WebDriverWait(driver, timeout).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, selector))
-            )
-            
-        except Exception as e:
-            last_exception = e
-            time.sleep(poll + random.uniform(0, 2))
-    
-    raise TimeoutException(f"Element not found: {selector}") from last_exception
-
-
-def random_sleep(min_delay: float, max_delay: float) -> None:
-    """Random delay between actions to mimic human behavior"""
-    delay = random.uniform(min_delay, max_delay)
-    time.sleep(delay)
-    
-def scroll_down(driver: webdriver.Chrome) -> None:
+def scroll_down(page: Page) -> None:
     """Scroll to bottom of page to trigger lazy loading"""
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
     time.sleep(random.uniform(0.5, 1.5))
+
+
+def _build_tracker_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    return params.get("node_tracking", {})
+
+
+def _probe_centaline_live_state(
+    params: Dict[str, Any],
+    node_name: str,
+) -> Dict[str, Any]:
+    """Use a lightweight website probe to decide if a node likely needs work."""
+    centa_params = params.get("centaline_res", {})
+    if node_name == "transaction_data_scraper":
+        health = check_centaline_api_health(
+            params,
+            max_stale_days=centa_params.get("health_check_max_stale_days", 10),
+        )
+        return {
+            "node_name": node_name,
+            "source": "sitemap_lastmod",
+            "probe_failed": not health.get("ok", False),
+            "latest_date": health.get("latest_date"),
+            "message": health.get("message"),
+        }
+
+    return {
+        "node_name": node_name,
+        "source": "none",
+        "probe_failed": True,
+        "message": "No live probe configured",
+    }
+
+
+def _load_existing_transactions_with_recovery(
+    transaction_file: str,
+    params: Dict[str, Any],
+) -> tuple[pd.DataFrame, Optional[dict]]:
+    """
+    Load transactions, optionally restoring the newest backup when the file is corrupt.
+
+    Returns (dataframe, recovery_metadata).
+    Raises RuntimeError when the file is corrupt and recovery is not possible.
+    """
+    centa_params = params.get("centaline_res", {})
+    restore_on_corruption = centa_params.get("restore_from_backup_on_corruption", True)
+    abort_on_corruption = centa_params.get("abort_on_corrupt_transaction_file", True)
+
+    try:
+        existing = pd.read_parquet(transaction_file)
+        return existing, None
+    except Exception as exc:
+        logger.error("Error loading existing data from %s: %s", transaction_file, exc)
+        recovery_metadata = {
+            "file": transaction_file,
+            "load_error": str(exc),
+            "restored_from_backup": False,
+            "backup_path": None,
+        }
+
+        if restore_on_corruption:
+            restore_result = restore_latest_backup(transaction_file, base_dir=".")
+            recovery_metadata["backup_path"] = restore_result.get("backup_path")
+            recovery_metadata["restore_message"] = restore_result.get("message")
+            if restore_result.get("restored"):
+                try:
+                    restored_df = pd.read_parquet(transaction_file)
+                    recovery_metadata["restored_from_backup"] = True
+                    logger.warning(
+                        "Recovered %s by restoring latest backup %s",
+                        transaction_file,
+                        restore_result.get("backup_path"),
+                    )
+                    return restored_df, recovery_metadata
+                except Exception as restore_exc:
+                    recovery_metadata["restore_error"] = str(restore_exc)
+                    logger.error(
+                        "Backup restore succeeded but restored file still failed to load: %s",
+                        restore_exc,
+                    )
+
+        if abort_on_corruption:
+            raise RuntimeError(
+                "Existing transaction file is unreadable and safe recovery failed. "
+                "Restore a valid backup or disable abort_on_corrupt_transaction_file "
+                "if you explicitly want to ignore the broken file."
+            ) from exc
+
+        logger.warning(
+            "Proceeding without existing transaction data after corruption because "
+            "abort_on_corrupt_transaction_file is disabled."
+        )
+        return pd.DataFrame(), recovery_metadata
 
 ########################## scrape transaction data ##########################
     
@@ -155,259 +166,176 @@ def scrape_transaction_data(
     transaction_file = params['centaline_res'].get('res_trans_path', 'data/01_raw/centaline_res_trans_lv_0.parquet')
     
     # ============ DEFINE NESTED FUNCTIONS FIRST ============
-    def parse_date_from_string(date_str):
-        """Enhanced date parsing with ISO format support for JavaScript extraction"""
-        if not date_str or pd.isna(date_str):
-            return None
-        date_str = str(date_str).strip()
-        
-        # Try pandas first (handles ISO: "2026-01-14T00:00:00" and other formats)
-        try:
-            parsed = pd.to_datetime(date_str, errors='coerce')
-            if pd.notna(parsed):
-                return parsed.date()
-        except:
-            pass
-        
-        # Fallback to manual parsing
-        date_formats = [
-            '%Y-%m-%dT%H:%M:%S',  # ISO from JavaScript
-            '%Y-%m-%d',
-            '%d/%m/%Y',
-            '%m/%d/%Y',
-            '%Y%m%d',
-            '%d-%m-%Y'
-        ]
-        for fmt in date_formats:
-            try:
-                return datetime.strptime(date_str, fmt).date()
-            except (ValueError, TypeError):
-                continue
-        return None
+    def _smart_sleep():
+        random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
 
-    def smart_sleep():
-        """Unified sleep function with random timing"""
-        sleep_time = random.uniform(params['global']['min_delay'], params['global']['max_delay'])
-        time.sleep(sleep_time)
-
-    def initialize_driver():
-        """Setup Chrome driver with anti-detection configuration"""
-        chromedriver_autoinstaller.install()
-        options = webdriver.ChromeOptions()
-        if params['global'].get('headless', True):
-            options.add_argument("--headless=new")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-        options.add_argument(f"--user-agent={params['global'].get('user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')}")
-        options.add_argument("--window-size=1920,1080")
-        driver = webdriver.Chrome(options=options)
-        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        return driver
-
-    def enhanced_scroll_down(driver):
+    def enhanced_scroll_down(page: Page):
         """Enhanced scrolling strategy for dynamic content loading"""
-        last_height = driver.execute_script("return document.body.scrollHeight")
+        last_height = page.evaluate("document.body.scrollHeight")
         scroll_attempts = 0
         while scroll_attempts < 3:
             scroll_distance = random.randint(300, 800)
-            driver.execute_script(f"window.scrollBy(0, {scroll_distance})")
-            smart_sleep()
-            new_height = driver.execute_script("return document.body.scrollHeight")
+            page.evaluate(f"window.scrollBy(0, {scroll_distance})")
+            _smart_sleep()
+            new_height = page.evaluate("document.body.scrollHeight")
             if new_height == last_height:
                 break
             last_height = new_height
             scroll_attempts += 1
 
-    def extract_nuxt_transactions(driver):
+    def _parse_nuxt_transaction_list(transactions: list) -> list:
+        """Parse raw transaction list from __NUXT__ into record dicts. Shared by sync/async."""
+        parsed_transactions = []
+        for txn in transactions:
+            try:
+                scope = txn.get('scope', {})
+                display_text = txn.get('displayText', {}).get('addr', {})
+                big_estate = txn.get('bigEstateName', '').strip()
+                estate = txn.get('estateName', '').strip()
+                building = txn.get('buildingName', '').strip()
+                formatted_address = display_text.get('line1', '').strip()
+                if big_estate and estate and building:
+                    full_name = f"{big_estate} {estate} {building}"
+                elif big_estate and estate:
+                    full_name = f"{big_estate} {estate}"
+                elif big_estate and building:
+                    full_name = f"{big_estate} {building}"
+                elif big_estate:
+                    full_name = big_estate
+                elif estate and building:
+                    full_name = f"{estate} {building}"
+                elif building:
+                    full_name = building
+                elif estate:
+                    full_name = estate
+                elif formatted_address:
+                    parts = formatted_address.split()
+                    name_parts = []
+                    for part in parts:
+                        if part in ['Upper', 'Middle', 'Lower', 'High', 'Mid', 'Low'] or 'Floor' in part or '/F' in part:
+                            break
+                        name_parts.append(part)
+                    full_name = ' '.join(name_parts) if name_parts else formatted_address
+                else:
+                    full_name = ''
+                completion_year_str = txn.get('opYear', '')
+                completion_year = None
+                if completion_year_str:
+                    year_match = re.search(r'(\d{4})', completion_year_str)
+                    if year_match:
+                        try:
+                            completion_year = int(year_match.group(1))
+                        except Exception:
+                            pass
+                age = None
+                if completion_year:
+                    age = datetime.now().year - completion_year
+                    if age < 0:
+                        age = None
+                n_area = txn.get('nArea')
+                g_area = txn.get('gArea')
+                salable_area = txn.get('salableArea')
+                floor_area = txn.get('floorArea')
+                build_area = txn.get('buildUpArea')
+                usable_area = txn.get('usableArea')
+                area_value = (n_area or g_area or salable_area or floor_area or build_area or usable_area)
+                n_unit_price = txn.get('nUnitPrice')
+                g_unit_price = txn.get('gUnitPrice')
+                ft_price_value = n_unit_price if n_unit_price is not None else g_unit_price
+                is_carpark = bool((full_name and 'carpark' in full_name.lower()) or (building and 'carpark' in building.lower()))
+                property_type = 'Carpark' if is_carpark else 'residential'
+                record = {
+                    "date": txn.get("insDate", ""),
+                    "date_original": txn.get("insDate", ""),
+                    "region": scope.get("terr", ""),
+                    "district": scope.get("db", ""),
+                    "subdistrict": scope.get("hma", ""),
+                    "Name": full_name if full_name else None,
+                    "Tower": building if building else (estate if estate and not building else None),
+                    "Floor": txn.get("yAxis", ""),
+                    "Flat": txn.get("xAxis", ""),
+                    "transaction_type": "SALE" if txn.get("postType") == "S" else "RENT" if txn.get("postType") == "R" else "",
+                    "area": area_value,
+                    "price": txn.get("transactionPrice"),
+                    "ft_price": ft_price_value,
+                    "source": "centaline_res",
+                    "property_type": property_type,
+                    "address": formatted_address,
+                    "street_address": txn.get("address", ""),
+                    "building_code": txn.get("typeCode", ""),
+                    "estate_code": txn.get("estateId") or txn.get("bigEstateId") or txn.get("estateCode"),
+                    "g_area": g_area,
+                    "g_unit_price": g_unit_price,
+                    "completion_year": completion_year,
+                    "age": age,
+                    "estate_type": txn.get("estateType", ""),
+                    "transaction_url": txn.get("detailUrl", ""),
+                    "transaction_id": txn.get("id", ""),
+                    "title_lg": display_text.get("line5", ""),
+                    "rooms": txn.get("bedroomCount"),
+                    "direction": txn.get("direction", ""),
+                    "estate_name": estate if estate else None,
+                    "building_name": building if building else None,
+                }
+                known_keys = {
+                    "scope", "displayText", "bigEstateName", "estateName", "buildingName",
+                    "opYear", "nArea", "gArea", "salableArea", "floorArea", "buildUpArea", "usableArea",
+                    "nUnitPrice", "gUnitPrice", "postType", "insDate", "yAxis", "xAxis",
+                    "transactionPrice", "address", "typeCode", "estateType", "detailUrl", "id",
+                    "bedroomCount", "direction", "estateId", "bigEstateId", "estateCode",
+                    "media",
+                }
+                for key, val in txn.items():
+                    if key not in known_keys and val is not None and val != "":
+                        if isinstance(val, (dict, list)):
+                            continue
+                        safe_key = f"nuxt_{key}" if not key.startswith("nuxt_") else key
+                        record[safe_key] = val
+                parsed_transactions.append(record)
+            except Exception as e:
+                logger.debug(f"Error parsing transaction: {e}")
+                continue
+        return parsed_transactions
+
+    def extract_nuxt_transactions(page: Page):
         """
-        IMPROVED: Extract transaction data from window.__NUXT__ JavaScript object.
+        Extract transaction data from window.__NUXT__ JavaScript object.
         Gets ALL data: gArea, nArea, gUnitPrice, nUnitPrice, region, district, building codes.
-        Much more reliable and complete than HTML scraping.
         """
         try:
-            # Execute JavaScript to get the __NUXT__ object
-            nuxt_data = driver.execute_script("return window.__NUXT__;")
-            
+            nuxt_data = page.evaluate("() => window.__NUXT__")
             if not nuxt_data:
                 logger.warning("window.__NUXT__ is empty")
                 return []
-            
-            # Navigate to transactions: state.transaction.transactionList.data
-            transactions = nuxt_data.get('state', {}).get('transaction', {}).get('transactionList', {}).get('data', [])
-            
+            transactions = nuxt_data.get("state", {}).get("transaction", {}).get("transactionList", {}).get("data", [])
             if not transactions:
                 logger.debug("No transactions found in __NUXT__ object")
                 return []
-            
-            # Parse each transaction
-            parsed_transactions = []
-            
-            for txn in transactions:
-                try:
-                    # Extract nested data
-                    scope = txn.get('scope', {})
-                    display_text = txn.get('displayText', {}).get('addr', {})
-                    
-                    # Extract building information
-                    big_estate = txn.get('bigEstateName', '').strip()  # Main estate name (e.g. "Residence Bel-Air")
-                    estate = txn.get('estateName', '').strip()  # Phase/sub-estate (e.g. "Phase 2 South Tower")
-                    building = txn.get('buildingName', '').strip()  # Tower/Block (e.g. "Tower 1")
-                    formatted_address = display_text.get('line1', '').strip()
-                    
-                    # Build full name with priority: big_estate > estate > building
-                    # For phased developments: "Estate Name Phase X Tower Y"
-                    # For simple buildings: "Building Name"
-                    if big_estate and estate and building:
-                        # Full hierarchy: "Residence Bel-Air Phase 2 South Tower Tower 1"
-                        full_name = f"{big_estate} {estate} {building}"
-                    elif big_estate and estate:
-                        # Main estate + phase: "Residence Bel-Air Phase 2 South Tower"
-                        full_name = f"{big_estate} {estate}"
-                    elif big_estate and building:
-                        # Main estate + building: "Residence Bel-Air Tower 1"
-                        full_name = f"{big_estate} {building}"
-                    elif big_estate:
-                        # Just main estate: "Residence Bel-Air"
-                        full_name = big_estate
-                    elif estate and building:
-                        # Phase + building: "Phase 2 South Tower Tower 1"
-                        full_name = f"{estate} {building}"
-                    elif building:
-                        full_name = building
-                    elif estate:
-                        full_name = estate
-                    elif formatted_address:
-                        # Extract building name from formatted address
-                        # Format: "Building Name Floor Flat" - take first part before Floor
-                        parts = formatted_address.split()
-                        name_parts = []
-                        for part in parts:
-                            # Stop at floor indicators
-                            if part in ['Upper', 'Middle', 'Lower', 'High', 'Mid', 'Low'] or 'Floor' in part or '/F' in part:
-                                break
-                            name_parts.append(part)
-                        full_name = ' '.join(name_parts) if name_parts else formatted_address
-                    else:
-                        full_name = ''
-                    
-                    # Extract completion year and convert to number
-                    completion_year_str = txn.get('opYear', '')
-                    completion_year = None
-                    if completion_year_str:
-                        import re
-                        # Extract 4-digit year from strings like "2021年" or "1983年"
-                        year_match = re.search(r'(\d{4})', completion_year_str)
-                        if year_match:
-                            try:
-                                completion_year = int(year_match.group(1))
-                            except:
-                                pass
-                    
-                    # Calculate age with month precision if available
-                    from datetime import datetime
-                    current_year = datetime.now().year
-                    current_month = datetime.now().month
-                    age = None
-                    if completion_year:
-                        # Calculate age based on year and month if available
-                        # If building completed in December 2023 and now is January 2026:
-                        # Age = (2026 - 2023) = 3 years (simple)
-                        # Or with month: if completed Dec 2023, now Jan 2026 = ~2 years 1 month
-                        # For simplicity, use year-based age (more accurate would need completion month)
-                        age = current_year - completion_year
-                        if age < 0:
-                            age = None
-                    
-                    # Extract area with multiple fallbacks: prefer nArea (net), then gArea (gross), then any other area field
-                    n_area = txn.get('nArea')
-                    g_area = txn.get('gArea')
-                    
-                    # Try additional area fields that might exist
-                    salable_area = txn.get('salableArea')
-                    floor_area = txn.get('floorArea')
-                    build_area = txn.get('buildUpArea')
-                    usable_area = txn.get('usableArea')
-                    
-                    # Use first available area value
-                    area_value = (n_area if n_area is not None 
-                                 else g_area if g_area is not None
-                                 else salable_area if salable_area is not None
-                                 else floor_area if floor_area is not None
-                                 else build_area if build_area is not None
-                                 else usable_area)
-                    
-                    # Log if no area found for non-carpark properties
-                    if area_value is None:
-                        property_name = full_name if full_name else ''
-                        if 'carpark' not in property_name.lower():
-                            logger.debug(f"No area found for: {property_name} (ID: {txn.get('id')})")
-                    
-                    # Extract unit price with same fallback logic
-                    n_unit_price = txn.get('nUnitPrice')
-                    g_unit_price = txn.get('gUnitPrice')
-                    ft_price_value = n_unit_price if n_unit_price is not None else g_unit_price
-                    
-                    # Detect if this is a carpark transaction
-                    is_carpark = False
-                    if full_name and 'carpark' in full_name.lower():
-                        is_carpark = True
-                    elif building and 'carpark' in building.lower():
-                        is_carpark = True
-                    
-                    # Set property type based on carpark detection
-                    property_type = 'Carpark' if is_carpark else 'residential'
-                    
-                    record = {
-                        # Match your required column order exactly
-                        'date': txn.get('insDate', ''),
-                        'date_original': txn.get('insDate', ''),  # Keep original date for fallback sorting
-                        'region': scope.get('terr', ''),
-                        'district': scope.get('db', ''),
-                        'subdistrict': scope.get('hma', ''),
-                        'Name': full_name if full_name else None,  # Use None instead of empty string
-                        'Tower': building if building else (estate if estate and not building else None),
-                        'Floor': txn.get('yAxis', ''),
-                        'Flat': txn.get('xAxis', ''),
-                        'transaction_type': 'SALE' if txn.get('postType') == 'S' else 'RENT' if txn.get('postType') == 'R' else '',
-                        'area': area_value,  # Use nArea with gArea fallback
-                        'price': txn.get('transactionPrice'),
-                        'ft_price': ft_price_value,  # Use nUnitPrice with gUnitPrice fallback
-                        'source': 'centaline_res',
-                        'property_type': property_type,  # 'Carpark' or 'residential'
-                        'address': formatted_address,  # KEEP the full formatted address from JavaScript
-                        'street_address': txn.get('address', ''),
-                        'building_code': txn.get('typeCode', ''),
-                        'g_area': g_area,  # Keep original gross area
-                        'g_unit_price': g_unit_price,  # Keep original gross unit price
-                        'completion_year': completion_year,
-                        'age': age,  # Age calculated with current year
-                        'estate_type': txn.get('estateType', ''),
-                        'transaction_url': txn.get('detailUrl', ''),
-                        'transaction_id': txn.get('id', ''),
-                        'title_lg': display_text.get('line5', ''),
-                        'rooms': txn.get('bedroomCount'),
-                        'direction': txn.get('direction', ''),
-                        'estate_name': estate if estate else None,
-                        'building_name': building if building else None,
-                    }
-                    
-                    parsed_transactions.append(record)
-                    
-                except Exception as e:
-                    logger.debug(f"Error parsing transaction: {e}")
-                    continue
-            
-            return parsed_transactions
-            
+            return _parse_nuxt_transaction_list(transactions)
         except Exception as e:
             logger.error(f"Error extracting __NUXT__ data: {e}")
             return []
+
+    def get_nuxt_transaction_total(page: Page) -> Optional[int]:
+        """Extract website total count from __NUXT__ for validation. Returns None if not found."""
+        try:
+            txl = page.evaluate(
+                "() => window.__NUXT__?.state?.transaction?.transactionList"
+            )
+            if not txl:
+                return None
+            total = txl.get("total") or txl.get("totalCount")
+            if total is not None:
+                return int(total)
+            pag = txl.get("pagination") or txl.get("pageInfo")
+            if pag and isinstance(pag, dict):
+                t = pag.get("total") or pag.get("totalCount")
+                return int(t) if t is not None else None
+            return None
+        except Exception:
+            return None
     
-    def extract_combined_data(driver):
+    def extract_combined_data(page: Page):
         """
         Extract transaction data from BOTH JavaScript __NUXT__ and HTML table.
         - JavaScript provides: metadata (building codes, dates, etc.)
@@ -416,12 +344,9 @@ def scrape_transaction_data(
         Returns merged data with all available fields.
         """
         try:
-            # Extract from JavaScript (most complete for metadata)
-            js_data = extract_nuxt_transactions(driver)
-            
-            # Extract from HTML table (has visible area/price that might be missing from JS)
+            js_data = extract_nuxt_transactions(page)
             try:
-                html_data = extract_table_data(driver)
+                html_data = extract_table_data(page)
             except Exception as e:
                 logger.warning(f"HTML table extraction failed: {e}")
                 html_data = []
@@ -432,48 +357,6 @@ def scrape_transaction_data(
             
             # If we have both sources, merge them
             if js_data and html_data:
-                # Helper function to parse HTML values to numeric
-                def parse_html_area(area_text):
-                    """Parse area from HTML like '401呎' to 401.0"""
-                    if not area_text or area_text == '--':
-                        return None
-                    import re
-                    area_clean = re.sub(r'[^\d,.]', '', str(area_text))
-                    area_clean = area_clean.replace(',', '')
-                    return float(area_clean) if area_clean else None
-                
-                def parse_html_price(price_text):
-                    """Parse price from HTML like '$545.5萬' to 5455000.0"""
-                    if not price_text or price_text == '--':
-                        return None
-                    import re
-                    price_str = str(price_text).replace('$', '').replace(',', '')
-                    # Handle millions (萬 = 10,000)
-                    if '萬' in price_str:
-                        number = re.findall(r'[\d.]+', price_str)
-                        if number:
-                            return float(number[0]) * 10000
-                    # Handle billions (億)
-                    elif '億' in price_str:
-                        number = re.findall(r'[\d.]+', price_str)
-                        if number:
-                            return float(number[0]) * 100000000
-                    # Regular number
-                    else:
-                        number = re.findall(r'[\d.]+', price_str)
-                        if number:
-                            return float(number[0])
-                    return None
-                
-                def parse_html_ft_price(ft_price_text):
-                    """Parse ft_price from HTML like '@$13,603' to 13603.0"""
-                    if not ft_price_text or ft_price_text == '--':
-                        return None
-                    import re
-                    price_clean = str(ft_price_text).replace('@', '').replace('$', '').replace(',', '')
-                    numbers = re.findall(r'[\d.]+', price_clean)
-                    return float(numbers[0]) if numbers else None
-                
                 # Merge by position/index
                 merged_data = []
                 area_fallback_count = 0
@@ -522,89 +405,46 @@ def scrape_transaction_data(
             logger.error(f"Error in extract_combined_data: {e}")
             return []
     
-    def extract_table_data(driver):
+    def extract_table_data(page: Page):
         """Extract visible data from HTML table on the transaction list page."""
         table_data = []
         try:
-            enhanced_scroll_down(driver)
-
-            # Find all transaction rows (desktop table format)
-            rows = driver.find_elements(By.CSS_SELECTOR, "tr.cv-structured-list-item")
+            enhanced_scroll_down(page)
+            rows = page.locator("tr.cv-structured-list-item").all()
             logger.debug(f"   Found {len(rows)} table rows for HTML extraction")
             
             for row in rows:
                 try:
-                    # Get all cells in the row
-                    cells = row.find_elements(By.CSS_SELECTOR, "td.cv-structured-list-data")
-                    
-                    if len(cells) >= 6:  # Ensure we have enough cells (minimum 6 for basic data with title_lg)
-                        # IMPORTANT: Extract transaction URL for later duplicate estate matching
-                        transaction_url = ""
-                        try:
-                            # Try to find a link in the row that leads to transaction details
-                            link_element = row.find_element(By.CSS_SELECTOR, "a[href*='/transaction/'], a.transaction-link")
-                            transaction_url = link_element.get_attribute('href')
-                        except:
-                            # Try alternative: check if row itself is clickable
-                            try:
-                                transaction_url = row.get_attribute('data-href')
-                            except:
-                                pass
-                        
-                        # Extract date from the first cell
-                        try:
-                            date_element = cells[0].find_element(By.CSS_SELECTOR, ".info-date span")
-                            date_text = date_element.text.strip()
-                        except:
-                            # Fallback: use cell text directly
-                            date_text = cells[0].text.strip()
-                        
-                        # Extract address from the second cell
-                        try:
-                            address_element = cells[1].find_element(By.CSS_SELECTOR, ".addr")
-                            address_text = address_element.text.strip()
-                        except:
-                            # Fallback: use cell text directly
-                            address_text = cells[1].text.strip()
+                    cells = row.locator("td.cv-structured-list-data").all()
+                    if len(cells) < 6:
+                        continue
+                    cell_text = lambda i: (cells[i].text_content() or "").strip()
 
-                        # Extract title_lg from the third cell (ACTUAL TITLE_LG COLUMN)
-                        title_lg_text = cells[2].text.strip()
+                    transaction_url = row.locator("a[href*='/transaction/'], a.transaction-link").first.get_attribute("href") or row.get_attribute("data-href") or ""
 
-                        # Extract rooms from the fourth cell
-                        rooms_text = cells[3].text.strip()
+                    date_span = cells[0].locator(".info-date span").first.text_content()
+                    date_text = (date_span or "").strip() or cell_text(0)
+                    addr_el = cells[1].locator(".addr").first.text_content()
+                    address_text = (addr_el or "").strip() or cell_text(1)
 
-                        # Determine transaction type and extract price from the FIFTH cell
-                        transaction_type = "SALE"
-                        price_text = cells[4].text.strip()
+                    title_lg_text = cell_text(2)
+                    rooms_text = cell_text(3)
+                    transaction_type = "SALE"
+                    price_text = cell_text(4)
+                    if "租" in price_text:
+                        transaction_type = "RENT"
+                    elif price_text.startswith("$") and len(price_text) < 10 and any(c.isdigit() for c in price_text):
+                        transaction_type = "RENT"
 
-                        # Check if it's a rent transaction
-                        # Priority 1: If price contains "租" (Chinese character for rent), it's definitely a rent transaction
-                        if "租" in price_text:
-                            transaction_type = "RENT"
-                        # Priority 2: If price starts with "$" and is short (likely rent amount), it's a rent transaction
-                        elif price_text.startswith("$") and len(price_text) < 10 and any(char.isdigit() for char in price_text):
-                            transaction_type = "RENT"
+                    area_text = cell_text(5)
+                    if area_text and area_text != "--":
+                        logger.debug(f"   HTML area extracted: {area_text}")
 
-                        # Extract area from the SIXTH cell (面積實)
-                        area_text = cells[5].text.strip()
-                        
-                        # Debug: log if area is found
-                        if area_text and area_text != '--':
-                            logger.debug(f"   HTML area extracted: {area_text}")
-
-                        # Initialize optional fields
-                        ft_price_text = ""
-                        changes_text = ""
-
-                        # Extract additional data if available
-                        if len(cells) >= 7:
-                            ft_price_text = cells[6].text.strip()
-                        if len(cells) >= 8:
-                            try:
-                                changes_element = cells[7].find_element(By.CSS_SELECTOR, ".riseBox span")
-                                changes_text = changes_element.text.strip()
-                            except:
-                                changes_text = cells[7].text.strip()
+                    ft_price_text = cell_text(6) if len(cells) >= 7 else ""
+                    changes_text = ""
+                    if len(cells) >= 8:
+                        ch_el = cells[7].locator(".riseBox span").first.text_content()
+                        changes_text = (ch_el or cell_text(7))
                         
                         record = {
                             'date': date_text,
@@ -624,96 +464,43 @@ def scrape_transaction_data(
                     logger.debug(f"Error processing row: {str(e)}")
                     continue
                     
-            # Extract title-lg and price information from mobile card format
-            mobile_cards = driver.find_elements(By.CSS_SELECTOR, ".transactions-content")
-            
-            # Create lists for title-lg and price values from mobile cards
+            mobile_cards = page.locator(".transactions-content").all()
             title_lg_values = []
             price_values = []
-            
             for card in mobile_cards:
                 try:
-                    # Extract title-lg with multiple approaches
                     title_lg_text = None
-                    
-                    # Method 1: Try .text01 .title-lg
-                    text01_elements = card.find_elements(By.CSS_SELECTOR, ".text01")
-                    if text01_elements:
-                        title_lg_elements = text01_elements[0].find_elements(By.CSS_SELECTOR, ".title-lg")
-                        if title_lg_elements:
-                            title_lg_text = title_lg_elements[0].text.strip()
-                    
-                    # Method 2: Try direct .title-lg
+                    text01 = card.locator(".text01 .title-lg").first.text_content()
+                    if text01:
+                        title_lg_text = text01.strip()
                     if not title_lg_text:
-                        title_lg_elements = card.find_elements(By.CSS_SELECTOR, ".title-lg")
-                        if title_lg_elements:
-                            title_lg_text = title_lg_elements[0].text.strip()
-                    
-                    # Method 3: Try to extract from the first line of card text
+                        title_lg_text = (card.locator(".title-lg").first.text_content() or "").strip()
                     if not title_lg_text:
-                        card_text = card.text.strip()
-                        lines = card_text.split('\n')
-                        if lines:
-                            # The first line usually contains the property name
-                            first_line = lines[0].strip()
-                            if first_line and len(first_line) > 5:  # Reasonable length for a property name
-                                title_lg_text = first_line
-                    
+                        card_txt = (card.text_content() or "").strip()
+                        lines = card_txt.split("\n")
+                        if lines and len(lines[0].strip()) > 5:
+                            title_lg_text = lines[0].strip()
                     if title_lg_text:
                         title_lg_values.append(title_lg_text)
-                    
-                    # Extract price from mobile card
                     price_text = None
-                    try:
-                        # Look for price in content-price section with multiple selectors
-                        price_selectors = [
-                            ".content-price .saleprice span",
-                            ".content-price .saleprice",
-                            ".content-price span",
-                            ".content-price",
-                            ".saleprice span",
-                            ".saleprice"
-                        ]
-                        
-                        for selector in price_selectors:
-                            price_elements = card.find_elements(By.CSS_SELECTOR, selector)
-                            if price_elements:
-                                temp_price = price_elements[0].text.strip()
-                                # Check if it looks like a price (contains $ and numbers)
-                                if temp_price and '$' in temp_price and any(char.isdigit() for char in temp_price):
-                                    # Prefer the largest amount (likely the main price, not per sq ft)
-                                    # Look for patterns like $X,XXX or $X.XM which are likely main prices
-                                    if 'M' in temp_price or (',' in temp_price and len(temp_price) > 6):
-                                        price_text = temp_price
-                                        break
-                                    elif not price_text:
-                                        price_text = temp_price
-                        
-                        # If still no price, try to extract from the entire card text
-                        if not price_text:
-                            card_text = card.text
-                            # Look for price patterns like $X.XM, $X,XXX, etc.
-                            import re
-                            price_patterns = [
-                                r'\$\d+\.?\d*M',  # $1.2M, $2M
-                                r'\$\d{1,3}(?:,\d{3})*',  # $1,234, $12,345
-                                r'\$\d+',  # $1234
-                            ]
-                            for pattern in price_patterns:
-                                matches = re.findall(pattern, card_text)
-                                if matches:
-                                    price_text = matches[0]
-                                    break
-                    except Exception as e:
-                        logger.debug(f"Error extracting price from mobile card: {e}")
-                    
-                    price_values.append(price_text if price_text else "")
-                    
+                    for sel in [".content-price .saleprice span", ".content-price .saleprice", ".content-price span", ".saleprice span", ".saleprice"]:
+                        el = card.locator(sel).first.text_content()
+                        if el and "$" in el and any(c.isdigit() for c in el):
+                            if "M" in el or ("," in el and len(el) > 6):
+                                price_text = el.strip()
+                                break
+                            price_text = price_text or el.strip()
+                    if not price_text:
+                        for pat in [r"\$\d+\.?\d*M", r"\$\d{1,3}(?:,\d{3})*", r"\$\d+"]:
+                            m = re.findall(pat, card.text_content() or "")
+                            if m:
+                                price_text = m[0]
+                                break
+                    price_values.append(price_text or "")
                 except Exception as e:
-                    logger.debug(f"Error processing mobile card: {str(e)}")
+                    logger.debug(f"Error processing mobile card: {e}")
                     title_lg_values.append("")
                     price_values.append("")
-                    continue
             
 
             
@@ -762,150 +549,390 @@ def scrape_transaction_data(
             logger.error(f"Error extracting table data: {str(e)}")
             return []
 
-    def check_for_next_page(driver):
-        """Check if next page button exists and is clickable"""
-        try:
-            next_selectors = [
-                "button.btn-next:not(.disabled):not([disabled])",
-                "a.pagination-next:not(.disabled)"
-            ]
-            
-            for selector in next_selectors:
-                try:
-                    next_buttons = driver.find_elements(By.CSS_SELECTOR, selector)
-                    if next_buttons and next_buttons[0].is_displayed() and next_buttons[0].is_enabled():
-                        return next_buttons[0]
-                except:
-                    continue
-            return None
-        except:
-            return None
-
-    def go_to_next_page(driver):
+    def go_to_next_page(page: Page):
         """Navigate to next page with enhanced verification"""
         try:
-            next_button = check_for_next_page(driver)
-            if next_button:
-                driver.execute_script("arguments[0].scrollIntoView({behavior: 'smooth', block: 'center'});", next_button)
-                smart_sleep()
-                driver.execute_script("arguments[0].click();", next_button)
-                smart_sleep()
-                smart_sleep()  # Extra wait for page load
+            next_loc = page.locator("button.btn-next:not(.disabled):not([disabled]), a.pagination-next:not(.disabled)")
+            if next_loc.count() > 0:
+                next_btn = next_loc.first
+                next_btn.scroll_into_view_if_needed()
+                _smart_sleep()
+                next_btn.click()
+                _smart_sleep()
+                _smart_sleep()
                 return True
             return False
-        except:
+        except Exception:
             return False
 
     # ============ INCREMENTAL UPDATE LOGIC ============
-    transaction_file = "data/01_raw/centaline_res_trans_lv_0.parquet"
+    transaction_file = params.get("centaline_res", {}).get(
+        "res_trans_path", "data/01_raw/centaline_res_trans_lv_0.parquet"
+    )
+    tracker_params = _build_tracker_params(params)
+    full_rerun = params.get("centaline_res", {}).get("full_rerun", False)
+    transaction_full_rerun = params.get("centaline_res", {}).get("transaction_full_rerun", False)
     existing_data = pd.DataFrame()
-    
-    if os.path.exists(transaction_file):
-        try:
-            existing_data = pd.read_parquet(transaction_file)
-            logger.info(f"Loaded {len(existing_data)} existing transactions")
-            
-            if 'date' in existing_data.columns and not existing_data.empty:
-                existing_data_temp = existing_data.copy()
-                existing_data_temp['parsed_date'] = existing_data_temp['date'].apply(
-                    lambda x: parse_date_from_string(x) if pd.notna(x) else None
+    recovery_metadata = None
+    live_state = {
+        "node_name": "transaction_data_scraper",
+        "source": "manual_full_rerun" if (full_rerun or transaction_full_rerun) else "pending",
+        "probe_failed": False,
+    }
+
+    if full_rerun or transaction_full_rerun:
+        logger.info("Full rerun mode: starting fresh (no existing data loaded)")
+
+    if not (full_rerun or transaction_full_rerun) and os.path.exists(transaction_file):
+        existing_data, recovery_metadata = _load_existing_transactions_with_recovery(
+            transaction_file,
+            params,
+        )
+        logger.info(f"Loaded {len(existing_data)} existing transactions")
+
+        if "date" in existing_data.columns and not existing_data.empty:
+            existing_data_temp = existing_data.copy()
+            existing_data_temp["parsed_date"] = existing_data_temp["date"].apply(
+                lambda x: parse_date_from_string(x) if pd.notna(x) else None
+            )
+
+            valid_dates = existing_data_temp["parsed_date"].dropna()
+            if not valid_dates.empty:
+                max_date = valid_dates.max()
+                control_date = max_date + timedelta(days=1)
+                logger.info(
+                    f"✅ Using incremental control date: {control_date} (max existing: {max_date})"
                 )
-                
-                valid_dates = existing_data_temp['parsed_date'].dropna()
-                if not valid_dates.empty:
-                    max_date = valid_dates.max()
-                    control_date = max_date + timedelta(days=1)
-                    logger.info(f"✅ Using incremental control date: {control_date} (max existing: {max_date})")
-                else:
-                    control_date = pd.to_datetime(params.get('centaline_res', {}).get('control_date', params['global']['start_date'])).date()
-                    logger.info(f"⚠️ No valid dates found in existing data, using parameter control date: {control_date}")
             else:
-                control_date = pd.to_datetime(params.get('centaline_res', {}).get('control_date', params['global']['start_date'])).date()
-                logger.info(f"No date column found, using parameter control date: {control_date}")
-                
-        except Exception as e:
-            logger.error(f"Error loading existing data: {str(e)}")
-            existing_data = pd.DataFrame()
-            control_date = pd.to_datetime(params.get('centaline_res', {}).get('control_date', params['global']['start_date'])).date()
+                control_date = pd.to_datetime(
+                    params.get("centaline_res", {}).get(
+                        "control_date",
+                        params["global"]["start_date"],
+                    )
+                ).date()
+                logger.info(
+                    f"⚠️ No valid dates found in existing data, using parameter control date: {control_date}"
+                )
+        else:
+            control_date = pd.to_datetime(
+                params.get("centaline_res", {}).get(
+                    "control_date",
+                    params["global"]["start_date"],
+                )
+            ).date()
+            logger.info(f"No date column found, using parameter control date: {control_date}")
     else:
-        logger.info("No existing transaction file found, starting fresh")
-        control_date = pd.to_datetime(params.get('centaline_res', {}).get('control_date', params['global']['start_date'])).date()
-    
+        if not (full_rerun or transaction_full_rerun):
+            logger.info("No existing transaction file found, starting fresh")
+        control_date = pd.to_datetime(
+            params.get("centaline_res", {}).get("control_date", params["global"]["start_date"])
+        ).date()
+        if full_rerun or transaction_full_rerun:
+            control_date = datetime(1900, 1, 1).date()
+
     # Set end date to today
     end_date = datetime.now().date()
     logger.info(f"Scraping transactions from {control_date} to {end_date}")
-    
+
+    if not (full_rerun or transaction_full_rerun):
+        live_state = _probe_centaline_live_state(params, "transaction_data_scraper")
+        tracker_decision = evaluate_node_run(
+            node_name="transaction_data_scraper",
+            node_type="transaction",
+            tracking_params=tracker_params,
+            data_file_path=transaction_file,
+            live_state=live_state,
+        )
+        if recovery_metadata:
+            tracker_decision.setdefault("dataset_state", {})
+            tracker_decision["dataset_state"] = tracker_decision.get("dataset_state") or {}
+            tracker_decision["dataset_state"]["recovery"] = recovery_metadata
+
+        record_node_decision(
+            node_name="transaction_data_scraper",
+            node_type="transaction",
+            should_run=tracker_decision["should_run"],
+            reason=tracker_decision["reason"],
+            metadata={
+                "records_seen_locally": len(existing_data),
+                "control_date": control_date.isoformat(),
+            },
+            live_state=live_state,
+            dataset_state=tracker_decision.get("dataset_state"),
+        )
+
+        if not tracker_decision["should_run"]:
+            logger.info(
+                "Skipping transaction scrape because live state indicates no upstream change (%s)",
+                tracker_decision["reason"],
+            )
+            return existing_data if not existing_data.empty else pd.DataFrame()
+
     # If control date is already today or later, return existing data
     if control_date >= end_date:
         logger.info("No new transactions to scrape - control date is current")
         return existing_data if not existing_data.empty else pd.DataFrame()
 
-    # ============ MAIN SCRAPING LOGIC WITH MULTI-THREADING ============
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    import threading
-    
-    # Thread-local storage for drivers
-    thread_local = threading.local()
-    # Serialise Chrome launches so they don't all collide at startup
-    _driver_launch_lock = threading.Lock()
+    # ============ MAIN SCRAPING LOGIC (Playwright) ============
+    from tqdm.auto import tqdm
 
-    def initialize_driver_with_retry(max_attempts: int = 3) -> 'webdriver.Chrome':
-        """Launch Chrome with retry + staggered start to avoid renderer crash."""
-        for attempt in range(1, max_attempts + 1):
+    headless = params["global"].get("headless", True)
+    user_agent = params["global"].get("user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    max_concurrent = min(
+        params.get("centaline_res", {}).get(
+            "max_transaction_workers",
+            params.get("global", {}).get("max_threads", 5),
+        ),
+        8,
+    )
+    area_rows = list(area_df.iterrows())
+
+    async def _run_async_scrape():
+        """Async concurrent scraping using Playwright async API (safe for parallelism)."""
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def extract_nuxt_async(page):
+            nuxt_data = await page.evaluate("() => window.__NUXT__")
+            if not nuxt_data:
+                return []
+            transactions = nuxt_data.get('state', {}).get('transaction', {}).get('transactionList', {}).get('data', [])
+            return _parse_nuxt_transaction_list(transactions) if transactions else []
+
+        async def go_to_next_page_async(page):
             try:
-                return initialize_driver()
-            except Exception as e:
-                if attempt == max_attempts:
-                    raise
-                wait = attempt * 3 + random.uniform(0, 2)
-                logger.warning(f"Chrome launch failed (attempt {attempt}/{max_attempts}): {e}. Retrying in {wait:.1f}s...")
-                time.sleep(wait)
+                next_loc = page.locator("button.btn-next:not(.disabled):not([disabled]), a.pagination-next:not(.disabled)")
+                if await next_loc.count() > 0:
+                    await next_loc.first.scroll_into_view_if_needed()
+                    await asyncio.sleep(random.uniform(params['global']['min_delay'], params['global']['max_delay']))
+                    await next_loc.first.click()
+                    await asyncio.sleep(random.uniform(params['global']['min_delay'], params['global']['max_delay']) * 2)
+                    return True
+            except Exception:
+                pass
+            return False
 
-    def get_thread_driver():
-        """Get or create driver for current thread, serialising Chrome launches."""
-        if not hasattr(thread_local, 'driver') or thread_local.driver is None:
-            # Hold the lock so only one Chrome opens at a time
-            with _driver_launch_lock:
-                # Double-check after acquiring lock (another thread may have set it)
-                if not hasattr(thread_local, 'driver') or thread_local.driver is None:
-                    # Small random stagger so processes don't all hit the OS simultaneously
-                    time.sleep(random.uniform(0.5, 2.0))
-                    thread_local.driver = initialize_driver_with_retry()
-        return thread_local.driver
+        async def extract_table_data_async(page):
+            """Async HTML table extraction (fallback when __NUXT__ missing)."""
+            table_data = []
+            try:
+                rows = await page.locator("tr.cv-structured-list-item").all()
+                for row in rows:
+                    try:
+                        cells = await row.locator("td.cv-structured-list-data").all()
+                        if len(cells) < 6:
+                            continue
 
-    def scrape_area_transactions(area_row):
-        """Scrape transactions for a single area (thread-safe).
-        
-        Always returns a dict — never raises — so a single area failure
-        does not crash the entire ThreadPoolExecutor job.
-        """
-        try:
-            driver = get_thread_driver()
-        except Exception as e:
-            logger.warning(f"⚠️ Could not start Chrome for {area_row['Subdistrict']}: {e}")
-            return {'success': False, 'data': [], 'area': area_row['Subdistrict'], 'error': str(e)}
+                        async def _ct(i):
+                            t = await cells[i].text_content()
+                            return (t or "").strip()
 
+                        href = await row.locator("a[href*='/transaction/'], a.transaction-link").first.get_attribute("href") or ""
+                        date_el = cells[0].locator(".info-date span").first
+                        date_text = (await date_el.text_content() or "").strip() or await _ct(0)
+                        addr_el = cells[1].locator(".addr").first
+                        address_text = (await addr_el.text_content() or "").strip() or await _ct(1)
+                        title_lg_text = await _ct(2)
+                        rooms_text = await _ct(3)
+                        price_text = await _ct(4)
+                        transaction_type = "RENT" if "租" in price_text else "SALE"
+                        area_text = await _ct(5)
+                        ft_price_text = (await _ct(6)) if len(cells) >= 7 else ""
+                        record = {
+                            "date": date_text, "address": address_text, "title_lg": title_lg_text,
+                            "rooms": rooms_text, "price": price_text, "area": area_text,
+                            "ft_price": ft_price_text, "transaction_type": transaction_type,
+                            "transaction_url": href,
+                        }
+                        table_data.append(record)
+                    except Exception:
+                        continue
+            except Exception:
+                pass
+            return table_data
+
+        async def extract_combined_async(page):
+            """Merge __NUXT__ + HTML (async). Ensures we get all data from both sources."""
+            js_data = await extract_nuxt_async(page)
+            html_data = await extract_table_data_async(page)
+            if not js_data and not html_data:
+                return []
+            if js_data and html_data:
+                merged = []
+                for i, js_rec in enumerate(js_data):
+                    if i < len(html_data):
+                        hr = html_data[i]
+                        if js_rec.get("area") is None and hr.get("area") and hr["area"] != "--":
+                            area_clean = re.sub(r"[^\d.]", "", str(hr["area"]))
+                            if area_clean:
+                                js_rec["area"] = float(area_clean)
+                        if js_rec.get("price") is None and hr.get("price"):
+                            p = str(hr["price"]).replace("$", "").replace(",", "")
+                            if "萬" in p:
+                                m = re.findall(r"[\d.]+", p)
+                                if m:
+                                    js_rec["price"] = float(m[0]) * 10000
+                            else:
+                                m = re.findall(r"[\d.]+", p)
+                                if m:
+                                    js_rec["price"] = float(m[0])
+                        if js_rec.get("ft_price") is None and hr.get("ft_price") and hr["ft_price"] != "--":
+                            fp = re.findall(r"[\d.]+", str(hr["ft_price"]))
+                            if fp:
+                                js_rec["ft_price"] = float(fp[0])
+                    merged.append(js_rec)
+                return merged
+            return js_data if js_data else html_data
+
+        async def scrape_one_area(context, area_row):
+            async with semaphore:
+                page = await context.new_page()
+                base_url = "https://hk.centanet.com/findproperty/en/list/transaction"
+                area_data = []
+                try:
+                    subdistrict = area_row["Subdistrict"].replace(" ", "-").lower()
+                    url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q=session_{int(datetime.now().timestamp())}"
+                    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                    await asyncio.sleep(random.uniform(params['global']['min_delay'], params['global']['max_delay']))
+                    try:
+                        await page.wait_for_function(
+                            "() => (window.__NUXT__?.state?.transaction?.transactionList?.data?.length || 0) > 0",
+                            timeout=12000,
+                        )
+                    except Exception:
+                        await page.wait_for_selector("tr.cv-structured-list-item, .transactions-content", timeout=8000)
+                    website_total = None
+                    try:
+                        website_total = await page.evaluate(
+                            "() => { const t = window.__NUXT__?.state?.transaction?.transactionList; "
+                            "return t?.total ?? t?.totalCount ?? t?.pagination?.total ?? t?.pageInfo?.total ?? null; }"
+                        )
+                        if website_total is not None:
+                            website_total = int(website_total)
+                    except Exception:
+                        pass
+                    page_num = 1
+                    date_reached = False
+                    max_pages = params.get("centaline_res", {}).get(
+                        "max_pages_per_area",
+                        params["global"].get("max_pages_per_area", 50),
+                    )
+                    while not date_reached and page_num <= max_pages:
+                        page_data = await extract_combined_async(page)
+                        for record in page_data:
+                            try:
+                                txn_date = parse_date_from_string(record.get('date'))
+                                if txn_date and txn_date < control_date:
+                                    date_reached = True
+                                    break
+                            except Exception:
+                                pass
+                            record['area_code'] = area_row['Code']
+                            record['scrape_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                            area_data.append(record)
+                        if date_reached:
+                            break
+                        if not await go_to_next_page_async(page):
+                            break
+                        page_num += 1
+                    if website_total is not None:
+                        if len(area_data) > website_total:
+                            logger.warning(
+                                f"⚠️ Transaction count exceeds website {area_row['Subdistrict']} ({area_row['Code']}): "
+                                f"scraped={len(area_data)} website_total={website_total}"
+                            )
+                        elif not date_reached and len(area_data) < website_total:
+                            logger.info(
+                                f"   {area_row['Subdistrict']}: scraped={len(area_data)} website_total={website_total} (pagination complete)"
+                            )
+                    return {"success": True, "data": area_data, "area": area_row["Subdistrict"]}
+                except Exception as e:
+                    logger.debug(f"Error scraping {area_row['Subdistrict']}: {e}")
+                    return {"success": False, "data": [], "area": area_row["Subdistrict"], "error": str(e)}
+                finally:
+                    await page.close()
+
+        async with async_playwright() as p:
+            browser = await launch_browser_async(p, headless=headless)
+            try:
+                context = await browser.new_context(user_agent=user_agent)
+                await context.route("**/*", block_slow_resources_async)
+                results = [None] * len(area_rows)
+                total_records = [0]  # mutable for closure
+
+                def make_done_cb(i):
+                    def cb(fut):
+                        try:
+                            if fut.cancelled():
+                                res = None
+                            elif fut.exception():
+                                res = fut.exception()
+                            else:
+                                res = fut.result()
+                        except Exception as e:
+                            res = e
+                        results[i] = res
+                        if isinstance(res, dict) and res.get("success"):
+                            total_records[0] += len(res.get("data", []))
+                        area = (res.get("area", "?") if isinstance(res, dict) else "err")[:15]
+                        try:
+                            pbar.set_postfix(area=area, total=total_records[0])
+                            pbar.update(1)
+                        except Exception:
+                            pass
+                    return cb
+
+                pbar = tqdm(
+                    total=len(area_rows),
+                    desc="Scraping areas",
+                    file=sys.stderr,
+                    dynamic_ncols=True,
+                    mininterval=0.5,
+                    initial=0,
+                )
+                pbar.refresh()  # Force display before first task completes
+                tasks = []
+                for i, (_, row) in enumerate(area_rows):
+                    t = asyncio.create_task(scrape_one_area(context, row))
+                    t.add_done_callback(make_done_cb(i))
+                    tasks.append(t)
+
+                await asyncio.gather(*tasks)
+                pbar.close()
+                return results
+            finally:
+                try:
+                    await context.close()
+                except Exception:
+                    pass
+                await browser.close()
+
+    def scrape_area_transactions(page, area_row):
+        """Scrape transactions for a single area. Must run in the same thread as sync_playwright."""
         base_url = "https://hk.centanet.com/findproperty/en/list/transaction"
         area_data = []
-        
         try:
-            subdistrict = area_row['Subdistrict'].replace(' ', '-').lower()
-            session_id = f"session_{int(datetime.now().timestamp())}_{threading.get_ident()}"
+            subdistrict = area_row["Subdistrict"].replace(" ", "-").lower()
+            session_id = f"session_{int(datetime.now().timestamp())}"
             url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
-            
-            driver.get(url)
-            smart_sleep()
-            
-            page = 1
+
+            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            _smart_sleep()
+            try:
+                page.wait_for_selector("tr.cv-structured-list-item, .transactions-content", timeout=12000)
+            except Exception:
+                pass
+            website_total = get_nuxt_transaction_total(page)
+
+            page_num = 1
             date_reached = False
-            max_pages = params['global'].get('max_pages_per_area', 50)
-            
-            while not date_reached and page <= max_pages:
-                # Extract from BOTH JavaScript and HTML table (HTML as fallback for missing area/price)
-                page_data = extract_combined_data(driver)
-                            
+            max_pages = params.get("centaline_res", {}).get(
+                "max_pages_per_area",
+                params["global"].get("max_pages_per_area", 50),
+            )
+
+            while not date_reached and page_num <= max_pages:
+                page_data = extract_combined_data(page)
                 for record in page_data:
-                    # Check control date
                     try:
                         transaction_date = parse_date_from_string(record['date'])
                         if transaction_date and transaction_date < control_date:
@@ -913,63 +940,81 @@ def scrape_transaction_data(
                             break
                     except Exception:
                         pass
-                    
-                    # Add area_code for reference
+
                     record['area_code'] = area_row['Code']
                     record['scrape_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     area_data.append(record)
-                
+
                 if date_reached:
                     break
-                    
-                if not go_to_next_page(driver):
+                if not go_to_next_page(page):
                     break
-                page += 1
-            
-            return {'success': True, 'data': area_data, 'area': area_row['Subdistrict']}
-            
+                page_num += 1
+
+            if website_total is not None:
+                if len(area_data) > website_total:
+                    logger.warning(
+                        f"⚠️ Transaction count exceeds website {area_row['Subdistrict']} ({area_row['Code']}): "
+                        f"scraped={len(area_data)} website_total={website_total}"
+                    )
+                elif not date_reached and len(area_data) < website_total:
+                    logger.info(
+                        f"   {area_row['Subdistrict']}: scraped={len(area_data)} website_total={website_total} (pagination complete)"
+                    )
+
+            return {"success": True, "data": area_data, "area": area_row["Subdistrict"]}
+
         except Exception as e:
             logger.debug(f"Error scraping {area_row['Subdistrict']}: {e}")
-            # Invalidate the broken driver so the next area on this thread gets a fresh one
-            try:
-                thread_local.driver.quit()
-            except Exception:
-                pass
-            thread_local.driver = None
-            return {'success': False, 'data': [], 'area': area_row['Subdistrict'], 'error': str(e)}
+            return {"success": False, "data": [], "area": area_row["Subdistrict"], "error": str(e)}
 
-    # Execute scraping with thread pool
-    # Cap at 3 threads by default — macOS struggles above 3 simultaneous Chromes
-    max_threads = min(params.get('global', {}).get('max_threads', 3), 3)
-    logger.info(f"🚀 Using {max_threads} parallel threads for transaction scraping")
-    
     all_data = []
     failed_areas = []
-    
-    from tqdm.auto import tqdm
-    
-    with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        # Submit all area scraping tasks
-        future_to_area = {executor.submit(scrape_area_transactions, row): row for _, row in area_df.iterrows()}
-        
-        # Process completed tasks with progress bar
-        with tqdm(total=len(future_to_area), desc=f"Scraping areas ({max_threads} threads)") as pbar:
-            for future in as_completed(future_to_area):
+
+    if max_concurrent > 1:
+        logger.info(f"Scraping transaction areas with {max_concurrent} concurrent workers (Playwright async API)")
+        raw_results = asyncio.run(_run_async_scrape())
+        for i, res in enumerate(raw_results):
+            if isinstance(res, Exception):
+                row = area_rows[i][1]
+                logger.warning(f"Unexpected exception for {row.get('Subdistrict', 'unknown')}: {res}")
+                failed_areas.append({"success": False, "data": [], "area": row.get("Subdistrict", "unknown"), "error": str(res)})
+            elif res.get("success"):
+                all_data.extend(res["data"])
+            else:
+                failed_areas.append(res)
+    else:
+        logger.info("Scraping transaction areas sequentially")
+        with sync_playwright() as playwright:
+            browser = launch_browser(playwright, headless=headless)
+            context = browser.new_context(user_agent=user_agent)
+            page = context.new_page()
+            page.route("**/*", block_slow_resources)
+            try:
+                with tqdm(total=len(area_rows), desc="Scraping areas") as pbar:
+                    for _, row in area_rows:
+                        try:
+                            result = scrape_area_transactions(page, row)
+                        except Exception as exc:
+                            logger.warning(f"Unexpected exception for {row.get('Subdistrict', 'unknown')}: {exc}")
+                            result = {"success": False, "data": [], "area": row.get("Subdistrict", "unknown"), "error": str(exc)}
+                        if result["success"]:
+                            all_data.extend(result["data"])
+                            pbar.set_postfix({"area": result["area"][:15], "total": len(all_data)})
+                        else:
+                            failed_areas.append(result)
+                        pbar.update(1)
+            finally:
                 try:
-                    result = future.result()
-                except Exception as exc:
-                    area_row = future_to_area[future]
-                    area_name = area_row.get('Subdistrict', 'unknown')
-                    logger.warning(f"⚠️ Unexpected thread exception for {area_name}: {exc}")
-                    result = {'success': False, 'data': [], 'area': area_name, 'error': str(exc)}
-                if result['success']:
-                    all_data.extend(result['data'])
-                    pbar.set_postfix({'area': result['area'][:15], 'total': len(all_data)})
-                else:
-                    failed_areas.append(result)
-                pbar.update(1)
+                    context.close()
+                except Exception:
+                    pass
+                try:
+                    browser.close()
+                except Exception:
+                    pass
     
-    logger.info(f"✅ Successfully scraped {len(all_data)} transactions from {len(future_to_area) - len(failed_areas)} areas")
+    logger.info(f"✅ Successfully scraped {len(all_data)} transactions from {len(area_rows) - len(failed_areas)} areas")
     if failed_areas:
         logger.warning(f"⚠️ Failed to scrape {len(failed_areas)} areas")
 
@@ -1006,30 +1051,15 @@ def scrape_transaction_data(
 
     # Deduplicate and clean data types
     if not combined_df.empty:
+        combined_df = drop_non_parquet_serializable_columns(combined_df)
+        combined_df = fix_transaction_df_parquet_types(combined_df)
+
         # Normalize timestamp
         if 'scrape_timestamp' in combined_df.columns:
             combined_df['scrape_timestamp'] = pd.to_datetime(
                 combined_df['scrape_timestamp'], errors='coerce'
             ).dt.strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Fix data types for parquet compatibility
-        # Fix rooms column - convert to Int64 (nullable integer)
-        if 'rooms' in combined_df.columns:
-            combined_df['rooms'] = pd.to_numeric(combined_df['rooms'], errors='coerce').astype('Int64')
-        
-        # Fix completion_year - ensure it's Int64
-        if 'completion_year' in combined_df.columns:
-            combined_df['completion_year'] = pd.to_numeric(combined_df['completion_year'], errors='coerce').astype('Int64')
-        
-        # Fix age - ensure it's Int64
-        if 'age' in combined_df.columns:
-            combined_df['age'] = pd.to_numeric(combined_df['age'], errors='coerce').astype('Int64')
-        
-        # Fix price columns - ensure numeric
-        for col in ['price', 'area', 'ft_price', 'g_area', 'g_unit_price', 'n_area', 'n_unit_price']:
-            if col in combined_df.columns:
-                combined_df[col] = pd.to_numeric(combined_df[col], errors='coerce')
-        
+
         # Deduplicate based on transaction_id (if available) or key columns
         if 'transaction_id' in combined_df.columns:
             before_dedup = len(combined_df)
@@ -1058,8 +1088,14 @@ def scrape_transaction_data(
             "records_processed": len(combined_df),
             "areas_processed": len(area_df),
             "failed_areas": len(failed_areas),
-            "execution_time": datetime.now().isoformat()
-        }
+            "execution_time": datetime.now().isoformat(),
+        },
+        live_state=live_state,
+        dataset_state={
+            "path": transaction_file,
+            "row_count": len(combined_df),
+            "recovery": recovery_metadata,
+        },
     )
     
     return combined_df
@@ -1175,57 +1211,41 @@ def process_transaction_data(
 
 
 def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
-    """Estate scraper with per-district change detection.
-
-    For each district we load page 1, count items visible on page 1
-    *and* attempt to read the website's total-estate counter.  We then
-    compare BOTH against the values stored in a lightweight metadata
-    JSON file (one entry per district code).  A district is only fully
-    re-scraped when the stored total or the page-1 count differs from
-    the live website — so an unchanged district is skipped with a single
-    page load instead of a full multi-page crawl.
-    """
+    """Estate scraper with per-district change detection. Uses Playwright (Chromium/Edge)."""
     from tqdm.auto import tqdm
     from datetime import datetime
     import json
 
-    listings_file = params.get('estate_listings_file', 'data/01_raw/centaline_estate_lv_1.parquet')
-    meta_file = listings_file.replace('.parquet', '_meta.json')
-
-    driver = initialize_driver(params)
+    centa_params = params.get("centaline_res", {})
+    listings_file = centa_params.get("estate_listings_file", "data/01_raw/centaline_estate_lv_1.parquet")
+    meta_file = listings_file.replace(".parquet", "_meta.json")
+    full_rerun = centa_params.get("full_rerun", False)
+    estate_full_rerun = centa_params.get("estate_full_rerun", False)
     required_columns = [
-        'Name', 'Address', 'Blocks', 'Units', 'UnitRate',
-        'MoM', 'ForSale', 'ForRent', 'Link', 'EstateCode', 'Region',
-        'District', 'Subdistrict', 'Code', 'LastScraped'
+        "Name", "Address", "Blocks", "Units", "UnitRate",
+        "MoM", "ForSale", "ForRent", "Link", "EstateCode", "Region",
+        "District", "Subdistrict", "Code", "LastScraped",
     ]
 
-    # ── Load existing parquet ────────────────────────────────────────────
     existing_listings = pd.DataFrame(columns=required_columns)
-    try:
-        if os.path.exists(listings_file):
-            existing_listings = pd.read_parquet(listings_file)
-            existing_listings['Subdistrict'] = existing_listings['Subdistrict'].str.strip()
-            existing_listings['Code'] = existing_listings['Code'].astype(str).str.strip()
-            logger.info(f"📊 Loaded {len(existing_listings)} existing estate listings")
-    except Exception as e:
-        logger.error(f"Failed to load existing listings: {e}")
-
-    # ── Load metadata (stores page1_count + total per district code) ─────
-    #
-    # Structure:  { "HMA155": {"page1_count": 24, "total": 94}, ... }
-    #
-    # page1_count  = number of items visible on page 1 the last time we
-    #               scraped (reliable proxy for detecting additions that
-    #               appear at the top of the list)
-    # total        = full scraped total across all pages (used for
-    #               display only)
     district_meta: dict = {}
-    try:
-        if os.path.exists(meta_file):
-            with open(meta_file, 'r') as f:
-                district_meta = json.load(f)
-    except Exception as e:
-        logger.warning(f"Could not load district metadata: {e}")
+    if not (full_rerun or estate_full_rerun):
+        try:
+            if os.path.exists(listings_file):
+                existing_listings = pd.read_parquet(listings_file)
+                existing_listings["Subdistrict"] = existing_listings["Subdistrict"].str.strip()
+                existing_listings["Code"] = existing_listings["Code"].astype(str).str.strip()
+                logger.info(f"Loaded {len(existing_listings)} existing estate listings")
+        except Exception as e:
+            logger.error(f"Failed to load existing listings: {e}")
+        try:
+            if os.path.exists(meta_file):
+                with open(meta_file, "r") as f:
+                    district_meta = json.load(f)
+        except Exception as e:
+            logger.warning(f"Could not load district metadata: {e}")
+    else:
+        logger.info("Full rerun mode: rescraping all districts (no skip)")
 
     logger.info(f"🏘️  Will check {len(area_df)} districts for updates...")
 
@@ -1234,174 +1254,286 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
     zero_count_districts = []
     district_changes = []
 
-    # ── Per-district loop ────────────────────────────────────────────────
+    # ── Per-district loop (Playwright) ────────────────────────────────────
+    def _run_estate_listings():
+        with sync_playwright() as p:
+            browser = launch_browser(p, headless=params["global"].get("headless", True))
+            page = browser.new_page()
+
+            page.route("**/*", block_slow_resources)
+            try:
+                return _scrape_estate_listings_impl(page, area_df, params, listings_file, meta_file, required_columns, district_meta, existing_listings)
+            finally:
+                try:
+                    browser.close()
+                except Exception:
+                    pass
+
     try:
+        return _run_estate_listings()
+    except Exception as e:
+        logger.error(f"Estate listings failed: {e}")
+        return existing_listings[existing_listings["Name"].notnull()] if not existing_listings.empty else pd.DataFrame()
+
+
+def _scrape_estate_listings_impl(page, area_df, params, listings_file, meta_file, required_columns, district_meta, existing_listings):
+    """Estate listings: Playwright probes page 1, then full-scrapes only changed districts."""
+    from tqdm.auto import tqdm
+
+    new_or_updated_estates = []
+    skipped_districts = []
+    zero_count_districts = []
+    district_changes = []
+    probe_timeout_ms = int(params["global"].get("page_load_timeout", 35) * 1000)
+
+    def _probe_page1_with_playwright(url):
+        """Load page 1 once and return HTML-derived + NUXT-derived counts."""
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
+            try:
+                page.wait_for_selector(
+                    "a.property-text.flex.def-property-box, .transactions-content, body",
+                    timeout=probe_timeout_ms,
+                )
+            except Exception:
+                pass
+
+            html = page.content()
+            soup = BeautifulSoup(html, "html.parser")
+            estate_items_page1 = soup.select("a.property-text.flex.def-property-box")
+            nuxt_estates = _extract_nuxt_estate_list(page)
+            page1_count = max(len(estate_items_page1), len(nuxt_estates))
+
+            website_total = None
+            total_selectors = [
+                ".result-count",
+                ".total-count",
+                "[data-total]",
+                ".search-result-count",
+                ".count-label",
+                "[class*='count']",
+                "[class*='total']",
+            ]
+            for sel in total_selectors:
+                el = soup.select_one(sel)
+                if el:
+                    digits = re.sub(r"[^\d]", "", el.get_text())
+                    if digits:
+                        website_total = int(digits)
+                        break
+
+            if website_total is None:
+                try:
+                    website_total = page.evaluate(
+                        """
+                        () => {
+                          const state = window.__NUXT__?.state || {};
+                          const buckets = [state.estate, state.property, state.search];
+                          for (const bucket of buckets) {
+                            if (!bucket || typeof bucket !== "object") continue;
+                            for (const value of Object.values(bucket)) {
+                              if (!value || typeof value !== "object") continue;
+                              const total = value.total ?? value.totalCount ?? value.pagination?.total ?? value.pageInfo?.total;
+                              if (typeof total === "number") return total;
+                            }
+                          }
+                          return null;
+                        }
+                        """
+                    )
+                    if website_total is not None:
+                        website_total = int(website_total)
+                except Exception:
+                    website_total = None
+
+            if website_total is None:
+                for el in soup.find_all(["span", "div", "p", "h2"]):
+                    txt = el.get_text(strip=True)
+                    match = re.search(r"(\d+)\s*Estate", txt, re.I)
+                    if match:
+                        website_total = int(match.group(1))
+                        break
+                    if re.match(r"^\d+$", txt):
+                        n = int(txt)
+                        if n >= page1_count:
+                            website_total = n
+                            break
+
+            return {
+                "soup": soup,
+                "estate_items_page1": estate_items_page1,
+                "nuxt_page1_count": len(nuxt_estates),
+                "page1_count": page1_count,
+                "website_total": website_total,
+            }
+        except Exception as e:
+            logger.debug(f"Playwright page-1 probe failed for {url}: {e}")
+            return {
+                "soup": None,
+                "estate_items_page1": [],
+                "nuxt_page1_count": 0,
+                "page1_count": 0,
+                "website_total": None,
+            }
+
+    try:
+        logger.info("Phase 1: Checking district page 1 with Playwright probes")
         with tqdm(area_df.iterrows(), total=len(area_df), desc="Checking districts") as district_iter:
             for _, row in district_iter:
-                subdistrict = str(row['Subdistrict']).strip()
-                code = str(row['Code']).strip()
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+                subdistrict = str(row["Subdistrict"]).strip()
+                code = str(row["Code"]).strip()
                 try:
                     subdistrict_clean = clean_subdistrict(subdistrict)
                     session_id = generate_session_id()
-                    url = (f"https://hk.centanet.com/findproperty/en/list/estate/"
-                           f"{subdistrict_clean}_19-{code}?q={session_id}")
+                    url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_clean}_19-{code}?q={session_id}"
 
-                    driver.get(url)
-                    random_sleep(params['global']['min_delay'], params['global']['max_delay'])
+                    probe = _probe_page1_with_playwright(url)
+                    estate_items_page1 = probe["estate_items_page1"]
+                    page1_count = probe["page1_count"]
+                    website_total = probe["website_total"]
 
-                    # ── Step 1: count items visible on page 1 ─────────────
-                    try:
-                        WebDriverWait(driver, 15).until(
-                            EC.presence_of_element_located(
-                                (By.CSS_SELECTOR, "a.property-text.flex.def-property-box")
-                            )
-                        )
-                        soup = BeautifulSoup(driver.page_source, 'html.parser')
-                        estate_items_page1 = soup.select("a.property-text.flex.def-property-box")
-                        page1_count = len(estate_items_page1)
-                    except Exception:
-                        page1_count = 0
-                        soup = None
-                        estate_items_page1 = []
-
-                    # ── Step 2: try to read the website's total counter ────
-                    # Centanet shows a total like "279 Results" in various
-                    # elements.  We try a few selectors; fall back to None.
-                    website_total = None
-                    if soup:
-                        total_selectors = [
-                            '.result-count',
-                            '.total-count',
-                            '[data-total]',
-                            '.search-result-count',
-                            '.count-label',
-                        ]
-                        for sel in total_selectors:
-                            el = soup.select_one(sel)
-                            if el:
-                                digits = re.sub(r'[^\d]', '', el.get_text())
-                                if digits:
-                                    website_total = int(digits)
-                                    break
-                        # Fallback: look for a span/div with a standalone
-                        # number that's larger than page1_count
-                        if website_total is None:
-                            for el in soup.find_all(['span', 'div', 'p']):
-                                txt = el.get_text(strip=True)
-                                if re.match(r'^\d+$', txt):
-                                    n = int(txt)
-                                    if n >= page1_count:
-                                        website_total = n
-                                        break
-
-                    # ── Step 3: compare against stored metadata ───────────
                     stored = district_meta.get(code, {})
-                    stored_page1   = stored.get('page1_count')
-                    stored_total   = stored.get('total')
+                    stored_page1 = stored.get("page1_count")
+                    stored_total = stored.get("total")
 
-                    # Skip if BOTH metrics are unchanged
                     if page1_count == 0:
                         zero_count_districts.append(code)
-                        logger.debug(f"Skipping empty district: {subdistrict} ({code})")
-                        continue
+                        logger.debug(
+                            "Page-1 probe returned 0 items for %s (%s) — forcing full scrape",
+                            subdistrict,
+                            code,
+                        )
 
-                    page1_unchanged  = (stored_page1 is not None and page1_count == stored_page1)
-                    total_unchanged  = (
-                        website_total is None  # can't check → rely on page1 only
-                        or (stored_total is not None and website_total == stored_total)
+                    page1_unchanged = stored_page1 is not None and page1_count == stored_page1
+                    total_unchanged = (
+                        website_total is not None
+                        and stored_total is not None
+                        and website_total == stored_total
                     )
 
-                    if page1_unchanged and total_unchanged and stored_total is not None:
+                    if page1_unchanged and total_unchanged:
                         skipped_districts.append(code)
-                        logger.debug(
-                            f"⏭  {subdistrict} ({code}): unchanged "
-                            f"(page1={page1_count}, total={stored_total}) — skipping"
-                        )
-                        district_iter.set_postfix({'district': subdistrict[:12], 'skipped': len(skipped_districts)})
+                        logger.debug(f"Skipping unchanged {subdistrict} ({code})")
+                        district_iter.set_postfix({"district": subdistrict[:12], "skipped": len(skipped_districts)})
                         continue
 
-                    # ── Step 4: district changed — scrape all pages ───────
                     reason = []
                     if not page1_unchanged:
-                        reason.append(f"page1 {stored_page1}→{page1_count}")
+                        reason.append(f"page1 {stored_page1}->{page1_count}")
                     if not total_unchanged and website_total is not None:
-                        reason.append(f"total {stored_total}→{website_total}")
+                        reason.append(f"total {stored_total}->{website_total}")
                     if stored_total is None:
                         reason.append("no previous data")
 
                     district_changes.append({
-                        'district': subdistrict, 'code': code,
-                        'stored_total': stored_total, 'website_total': website_total,
-                        'page1_count': page1_count, 'reason': ', '.join(reason)
+                        "district": subdistrict,
+                        "code": code,
+                        "row": row,
+                        "stored_total": stored_total,
+                        "website_total": website_total,
+                        "page1_count": page1_count,
+                        "estate_items_page1": estate_items_page1,
+                        "reason": ", ".join(reason),
                     })
-
-                    district_estates = []
-                    current_page = 1
-
-                    # Process page 1 items already loaded
-                    for item in estate_items_page1:
-                        try:
-                            estate_data = process_estate_item(item, row)
-                            district_estates.append(estate_data)
-                        except Exception as e:
-                            logger.error(f"Error processing estate on page 1: {e}")
-
-                    # Continue to subsequent pages
-                    while True:
-                        try:
-                            next_btn = driver.find_element(
-                                By.CSS_SELECTOR, "button.btn-next:not([disabled])"
-                            )
-                            driver.execute_script("arguments[0].click();", next_btn)
-                            random_sleep(params['global']['min_delay'], params['global']['max_delay'])
-                            current_page += 1
-
-                            WebDriverWait(driver, 20).until(
-                                EC.presence_of_element_located(
-                                    (By.CSS_SELECTOR, "a.property-text.flex.def-property-box")
-                                )
-                            )
-                            soup_page = BeautifulSoup(driver.page_source, 'html.parser')
-                            for item in soup_page.select("a.property-text.flex.def-property-box"):
-                                try:
-                                    district_estates.append(process_estate_item(item, row))
-                                except Exception as e:
-                                    logger.error(f"Error processing estate on page {current_page}: {e}")
-
-                        except NoSuchElementException:
-                            break
-                        except TimeoutException:
-                            logger.warning(f"Timeout in {subdistrict} page {current_page}")
-                            break
-                        except Exception as e:
-                            logger.error(f"Error scraping {subdistrict} page {current_page}: {e}")
-                            break
-
-                    actual_total = len(district_estates)
-                    new_or_updated_estates.extend(district_estates)
-
-                    # ── Update metadata for this district ─────────────────
-                    district_meta[code] = {
-                        'page1_count': page1_count,
-                        'total': actual_total,
-                        'last_scraped': current_time,
-                        'subdistrict': subdistrict,
-                    }
-
-                    logger.info(
-                        f"✅ {subdistrict} ({code}): {actual_total} estates "
-                        f"from {current_page} page(s) [{', '.join(reason)}]"
-                    )
-                    district_iter.set_postfix({
-                        'district': subdistrict[:12],
-                        'total_estates': len(new_or_updated_estates)
-                    })
+                    district_iter.set_postfix({"district": subdistrict[:12], "skipped": len(skipped_districts), "to_scrape": len(district_changes)})
+                    continue
 
                 except Exception as e:
-                    logger.error(f"District processing failed: {subdistrict} ({code}) — {e}")
+                    logger.error(f"District check failed: {subdistrict} ({code}) - {e}")
                     continue
+
+            if district_changes:
+                logger.info(f"Phase 2: Scraping {len(district_changes)} changed district(s) with Playwright")
+                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                for ch in district_changes:
+                    subdistrict, code, row = ch["district"], ch["code"], ch["row"]
+                    estate_items_page1, page1_count = ch["estate_items_page1"], ch["page1_count"]
+                    try:
+                        subdistrict_clean = clean_subdistrict(subdistrict)
+                        url = f"https://hk.centanet.com/findproperty/en/list/estate/{subdistrict_clean}_19-{code}?q={generate_session_id()}"
+                        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                        random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
+                        page.wait_for_selector("a.property-text.flex.def-property-box", timeout=15000)
+
+                        nuxt_estates = _extract_nuxt_estate_list(page)
+                        nuxt_by_code = {}
+                        if nuxt_estates:
+                            for e in nuxt_estates:
+                                estate_key = (e.get("estateCode") or e.get("id") or e.get("typeCode") or "")
+                                if isinstance(estate_key, str) and estate_key:
+                                    nuxt_by_code[estate_key] = e
+                            logger.debug(f"   __NUXT__ estate list: {len(nuxt_estates)} items")
+
+                        district_estates = []
+                        current_page = 1
+                        if estate_items_page1:
+                            for item in estate_items_page1:
+                                try:
+                                    rec = process_estate_item(item, row)
+                                    if rec.get("EstateCode") and rec["EstateCode"] in nuxt_by_code:
+                                        for k, v in nuxt_by_code[rec["EstateCode"]].items():
+                                            if k not in rec and v is not None and v != "" and not isinstance(v, (dict, list)):
+                                                rec[f"nuxt_{k}"] = v
+                                    district_estates.append(rec)
+                                except Exception as e:
+                                    logger.error(f"Error processing estate on page 1: {e}")
+                        else:
+                            soup_p1 = BeautifulSoup(page.content(), "html.parser")
+                            for item in soup_p1.select("a.property-text.flex.def-property-box"):
+                                try:
+                                    rec = process_estate_item(item, row)
+                                    if rec.get("EstateCode") and rec["EstateCode"] in nuxt_by_code:
+                                        for k, v in nuxt_by_code[rec["EstateCode"]].items():
+                                            if k not in rec and v is not None and v != "" and not isinstance(v, (dict, list)):
+                                                rec[f"nuxt_{k}"] = v
+                                    district_estates.append(rec)
+                                except Exception as e:
+                                    logger.error(f"Error processing estate on page 1: {e}")
+
+                        while True:
+                            try:
+                                next_loc = page.locator("button.btn-next:not([disabled])")
+                                if next_loc.count() == 0:
+                                    break
+                                next_loc.first.click()
+                                random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
+                                current_page += 1
+                                page.wait_for_selector("a.property-text.flex.def-property-box", timeout=20000)
+                                for e in (_extract_nuxt_estate_list(page) or []):
+                                    estate_key = (e.get("estateCode") or e.get("id") or e.get("typeCode") or "")
+                                    if isinstance(estate_key, str) and estate_key:
+                                        nuxt_by_code[estate_key] = e
+                                soup_page = BeautifulSoup(page.content(), "html.parser")
+                                for item in soup_page.select("a.property-text.flex.def-property-box"):
+                                    try:
+                                        rec = process_estate_item(item, row)
+                                        if rec.get("EstateCode") and rec["EstateCode"] in nuxt_by_code:
+                                            for k, v in nuxt_by_code[rec["EstateCode"]].items():
+                                                if k not in rec and v is not None and v != "" and not isinstance(v, (dict, list)):
+                                                    rec[f"nuxt_{k}"] = v
+                                        district_estates.append(rec)
+                                    except Exception as e:
+                                        logger.error(f"Error processing estate on page {current_page}: {e}")
+                            except PlaywrightTimeout:
+                                logger.warning(f"Timeout in {subdistrict} page {current_page}")
+                                break
+                            except Exception as e:
+                                logger.error(f"Error scraping {subdistrict} page {current_page}: {e}")
+                                break
+
+                        new_or_updated_estates.extend(district_estates)
+                        scraped_total = len(district_estates)
+                        district_meta[code] = {"page1_count": page1_count, "total": scraped_total, "last_scraped": current_time, "subdistrict": subdistrict}
+                        website_total_ch = ch.get("website_total")
+                        if website_total_ch is not None and scraped_total != website_total_ch:
+                            logger.warning(
+                                f"⚠️ Estate count mismatch {subdistrict} ({code}): "
+                                f"scraped={scraped_total} website_total={website_total_ch}"
+                            )
+                        logger.info(f"{subdistrict} ({code}): {scraped_total} estates from {current_page} page(s)")
+                    except Exception as e:
+                        logger.error(f"District scrape failed: {subdistrict} ({code}) - {e}")
 
         # ── Consolidate data ─────────────────────────────────────────────
         if new_or_updated_estates:
@@ -1426,8 +1558,8 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
         logger.info(f"  Districts checked:  {len(area_df)}")
         logger.info(f"  Skipped (no change): {len(skipped_districts)}")
         logger.info(f"  Re-scraped:         {len(district_changes)}")
-        logger.info(f"  Empty (zero items): {len(zero_count_districts)}")
-        logger.info(f"  New estates added:  {len(new_or_updated_estates)}")
+        logger.info(f"  Phase-1 zero-count probes: {len(zero_count_districts)}")
+        logger.info(f"  Estates from changed districts: {len(new_or_updated_estates)}")
 
         if district_changes:
             logger.info("\n  Changed districts:")
@@ -1440,6 +1572,9 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
                     f"[{ch['reason']}]"
                 )
         
+        # ── Parquet compatibility ───────────────────────────────────────
+        final_df = drop_non_parquet_serializable_columns(final_df)
+
         # ── Safety deduplication ─────────────────────────────────────────
         before_dedup = len(final_df)
         final_df = final_df.drop_duplicates(
@@ -1463,6 +1598,15 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
         except Exception as e:
             logger.warning(f"Could not save district metadata: {e}")
 
+        live_state = {
+            "source": "estate_page1_probe",
+            "probe_failed": False,
+            "districts_checked": len(area_df),
+            "districts_skipped": len(skipped_districts),
+            "districts_changed": len(district_changes),
+            "zero_probe_districts": zero_count_districts,
+            "changed_codes": [ch["code"] for ch in district_changes],
+        }
         record_node_execution(
             node_name="estate_listing_scraper",
             node_type="estate",
@@ -1471,19 +1615,22 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
                 "districts_checked": len(area_df),
                 "districts_scraped": len(district_changes),
                 "districts_skipped": len(skipped_districts),
-            }
+            },
+            live_state=live_state,
+            dataset_state={
+                "path": listings_file,
+                "row_count": len(final_df),
+                "meta_path": meta_file,
+            },
         )
 
         return final_df
 
     except Exception as e:
         logger.error(f"Data consolidation failed: {e}")
-        return existing_listings[existing_listings['Name'].notnull()]
+        return existing_listings[existing_listings["Name"].notnull()]
 
-    finally:
-        driver.quit()
 
-        
 def log_district_completion(subdistrict, code, current_count, final_df):
     """Deprecated — kept for backward compatibility only."""
     actual_scraped_count = len(final_df[
@@ -1493,63 +1640,57 @@ def log_district_completion(subdistrict, code, current_count, final_df):
     logger.info(f"  {subdistrict} ({code}): scraped={actual_scraped_count} website_page1={current_count}")
 
 
-def estate_changed(existing: pd.Series, new: dict) -> bool:
-    """Safe comparison of individual values"""
-    comparison_fields = ['Address', 'Blocks', 'Units', 'UnitRate', 'ForSale', 'ForRent']
-    return any(
-        str(existing.get(field, '')) != str(new.get(field, ''))
-        for field in comparison_fields
-    )
-
+def _extract_nuxt_estate_list(page: Page) -> list:
+    """Try to extract estate list from __NUXT__. Returns [] if not found."""
+    try:
+        nuxt = page.evaluate("() => window.__NUXT__")
+        if not nuxt:
+            return []
+        state = nuxt.get("state", {})
+        for path in ("estate", "property", "findproperty"):
+            obj = state.get(path) or {}
+            for key in ("estateList", "propertyList", "list"):
+                val = obj.get(key)
+                if isinstance(val, list):
+                    return val
+                if isinstance(val, dict):
+                    data = val.get("data")
+                    if isinstance(data, list):
+                        return data
+        return []
+    except Exception:
+        return []
 
 
 def process_estate_item(item, district_row) -> dict:
     """Extract structured data from individual estate elements."""
-    link = item.get('href', '')
-    
-    # Extract estate code from URL by splitting on last "/"
-    estate_code = ''
-    if link:
-        try:
-            estate_code = link.rstrip('/').split('/')[-1]
-        except:
-            estate_code = ''
-    
+    link = item.get("href", "")
+    estate_code = link.rstrip("/").split("/")[-1] if link else ""
     return {
-        'Name': item.select_one("div.main-text").get_text(strip=True),
-        'Address': item.select_one("div.address.f-middle").get_text(strip=True),
-        'Blocks': safe_extract(item, "div:-soup-contains('No. of Block(s)') + div"),
-        'Units': safe_extract(item, "div:-soup-contains('No. of Units') + div"),
-        'UnitRate': safe_extract(item, "div:-soup-contains('Unit Rate of Saleable Area') + div"),
-        'MoM': safe_extract(item, "div:-soup-contains('MoM') + div"),
-        'ForSale': safe_extract(item, "div:-soup-contains('For Sale') + div"),
-        'ForRent': safe_extract(item, "div:-soup-contains('For Rent') + div"),
-        'Link': link,
-        'EstateCode': estate_code,
-        'Region': district_row['Region'],
-        'District': district_row['District'],
-        'Subdistrict': district_row['Subdistrict'],
-        'Code': district_row['Code'],
-        'LastScraped': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "Name": item.select_one("div.main-text").get_text(strip=True),
+        "Address": item.select_one("div.address.f-middle").get_text(strip=True),
+        "Blocks": safe_extract_bs4(item, "div:-soup-contains('No. of Block(s)') + div"),
+        "Units": safe_extract_bs4(item, "div:-soup-contains('No. of Units') + div"),
+        "UnitRate": safe_extract_bs4(item, "div:-soup-contains('Unit Rate of Saleable Area') + div"),
+        "MoM": safe_extract_bs4(item, "div:-soup-contains('MoM') + div"),
+        "ForSale": safe_extract_bs4(item, "div:-soup-contains('For Sale') + div"),
+        "ForRent": safe_extract_bs4(item, "div:-soup-contains('For Rent') + div"),
+        "Link": link,
+        "EstateCode": estate_code,
+        "Region": district_row["Region"],
+        "District": district_row["District"],
+        "Subdistrict": district_row["Subdistrict"],
+        "Code": district_row["Code"],
+        "LastScraped": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     }
 
-def safe_extract(item, selector):
-    """Safe element text extraction with error handling."""
-    element = item.select_one(selector)
-    return element.get_text(strip=True) if element else ""
 
-def estate_changed(existing, new) -> bool:
-    """Compare key fields for change detection."""
-    return any(
-        str(existing.get(field, '')) != str(new.get(field, ''))
-        for field in ['Address', 'Blocks', 'Units', 'UnitRate', 'ForSale', 'ForRent']
-    )
-
-
-def safe_get_text(element, selector):
-    """Helper function for fault-tolerant text extraction"""
+def _extract_element_text_playwright(page: Page, xpath: str) -> Optional[str]:
+    """Extract text from element by XPath (Playwright)."""
     try:
-        return element.find_element(By.CSS_SELECTOR, selector).text.strip()
+        el = page.locator(f"xpath={xpath}").first
+        el.wait_for(state="attached", timeout=10000)
+        return (el.text_content() or "").strip()
     except Exception:
         return None
 
@@ -1563,15 +1704,18 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
     """
     logger = logging.getLogger(__name__)
     
-    # Estate details: skip logic is Link+estate_code based (handled below — no time guard).
-    details_file = params.get('estate_details_file', 'data/01_raw/centaline_estate_lv_2.parquet')
+    details_file = params.get("centaline_res", {}).get(
+        "estate_details_file", "data/01_raw/centaline_estate_lv_2.parquet"
+    )
+    full_rerun = params.get("centaline_res", {}).get("full_rerun", False)
     logger.info(f"Details File: {details_file}")
 
-    # ── Load existing details ────────────────────────────────────────────
     existing_details = pd.DataFrame()
-    if os.path.exists(details_file):
+    if not full_rerun and os.path.exists(details_file):
         existing_details = pd.read_parquet(details_file)
-        logger.info(f"📊 Loaded {len(existing_details)} existing estate details")
+        logger.info(f"Loaded {len(existing_details)} existing estate details")
+    elif full_rerun:
+        logger.info("Full rerun mode: scraping all estates (no skip)")
 
     # ── Determine completed estates using Link as the reliable key ───────
     #
@@ -1628,177 +1772,120 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
                 f"{already_done:,} already done | "
                 f"{len(estates_to_scrape):,} to scrape now")
 
-    # ── Multi-threading setup ────────────────────────────────────────────
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    import threading
+    # ── Scraping setup ────────────────────────────────────────────────────
+    # NOTE: Playwright's sync API uses greenlets bound to a single thread and cannot
+    # be used from ThreadPoolExecutor workers. We run sequentially in the main thread.
+    from tqdm.auto import tqdm
 
-    max_threads = min(params.get('global', {}).get('max_threads', 5), 5)
-    logger.info(f"🚀 Using {max_threads} parallel threads for scraping")
+    headless = params["global"].get("headless", True)
 
-    thread_local = threading.local()
-    _driver_launch_lock = threading.Lock()
-
-    def _init_driver_with_retry(max_attempts: int = 3):
-        for attempt in range(1, max_attempts + 1):
-            try:
-                return initialize_driver(params)
-            except Exception as e:
-                if attempt == max_attempts:
-                    raise
-                wait = attempt * 3 + random.uniform(0, 2)
-                logger.warning(f"Chrome launch failed (attempt {attempt}): {e}. Retry in {wait:.1f}s")
-                time.sleep(wait)
-
-    def get_thread_driver():
-        """Get or create Chrome for this thread, serialising launches."""
-        if not hasattr(thread_local, 'driver') or thread_local.driver is None:
-            with _driver_launch_lock:
-                if not hasattr(thread_local, 'driver') or thread_local.driver is None:
-                    time.sleep(random.uniform(0.5, 2.0))   # stagger OS-level starts
-                    thread_local.driver = _init_driver_with_retry()
-        return thread_local.driver
-    
-    def scrape_single_estate(row):
-        """Scrape a single estate (thread-safe). Never raises — always returns dict."""
+    def scrape_single_estate(page, row):
+        """Scrape a single estate. Must run in the same thread as sync_playwright."""
         try:
-            driver = get_thread_driver()
-        except Exception as e:
-            logger.warning(f"⚠️ Could not start Chrome for {row.get('Name', '?')}: {e}")
-            return {'success': False, 'name': row.get('Name', 'Unknown'),
-                    'link': row.get('Link', ''), 'error': str(e)}
-        try:
-            driver.get(row['Link'])
-            random_sleep(params['global']['min_delay'], params['global']['max_delay'])
-            
-            # Extract estate code from URL
-            estate_code = ''
-            try:
-                estate_code = row['Link'].rstrip('/').split('/')[-1]
-            except:
-                estate_code = ''
-            
-            # Extract core information
+            page.goto(row["Link"], wait_until="domcontentloaded", timeout=30000)
+            random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
+
+            estate_code = row['Link'].rstrip('/').split('/')[-1] if row.get('Link') else ''
+
+            title_el = page.locator(".estate-detail-banner-title").first
+            title_el.wait_for(state="visible", timeout=10000)
+            scraped_name = (title_el.text_content() or "").strip()
             detail_data = {
-                'Name': row['Name'],
-                'scraped_estate_name': WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, ".estate-detail-banner-title"))
-                ).text.strip(),
-                'occupation_permit': extract_element_text(
-                    driver, 
-                    "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
+                "Name": row["Name"],
+                "scraped_estate_name": scraped_name,
+                "occupation_permit": _extract_element_text_playwright(
+                    page, "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
                 ),
-                'scraped_blocks': extract_element_text(
-                    driver,
-                    "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
+                "scraped_blocks": _extract_element_text_playwright(
+                    page, "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
                 ),
-                'chinese_name': None,
-                'school_net_info': None,
-                'estate_detailed_address': None,
-                'developer': None,
-                'estate_code': estate_code,
-                'Link': row['Link'],
-                'Region': row['Region'],
-                'District': row['District']
+                "chinese_name": None,
+                "school_net_info": None,
+                "estate_detailed_address": None,
+                "developer": None,
+                "estate_code": estate_code,
+                "Link": row["Link"],
+                "Region": row["Region"],
+                "District": row["District"],
             }
-            
-            # Extract Chinese name
+
             try:
-                chinese_name_elem = driver.find_element(By.CSS_SELECTOR, ".estate-detail-banner-title-cn, .chinese-name, h1.cn, .title-cn")
-                detail_data['chinese_name'] = chinese_name_elem.text.strip()
-            except:
+                cn_el = page.locator(".estate-detail-banner-title-cn, .chinese-name, h1.cn, .title-cn").first.text_content()
+                detail_data["chinese_name"] = (cn_el or "").strip()
+            except Exception:
                 try:
-                    import re
-                    chinese_pattern = re.compile(r'[\u4e00-\u9fff]+')
-                    title_section = driver.find_element(By.CSS_SELECTOR, ".estate-detail-banner")
-                    chinese_matches = chinese_pattern.findall(title_section.text)
+                    banner = page.locator(".estate-detail-banner").first.text_content()
+                    chinese_matches = re.findall(r"[\u4e00-\u9fff]+", banner or "")
                     if chinese_matches:
-                        detail_data['chinese_name'] = ''.join(chinese_matches[:10])
-                except:
+                        detail_data["chinese_name"] = "".join(chinese_matches[:10])
+                except Exception:
                     pass
-            
-            # Extract School Net information
+
             try:
-                items_divs = driver.find_elements(By.CLASS_NAME, "item")
-                for div in items_divs:
-                    try:
-                        label = div.find_element(By.CLASS_NAME, "label-item-left").text.strip()
-                        if "School Net" in label:
-                            links = div.find_elements(By.TAG_NAME, "a")
-                            if len(links) >= 2:
-                                primary = links[0].text.strip()
-                                secondary = links[1].text.strip()
-                                detail_data['school_net_info'] = f"{primary} | {secondary}"
-                            break
-                    except:
-                        continue
-            except:
+                items = page.locator(".item").all()
+                for div in items:
+                    label_el = div.locator(".label-item-left").first.text_content()
+                    if label_el and "School Net" in label_el:
+                        links = div.locator("a").all()
+                        if len(links) >= 2:
+                            detail_data["school_net_info"] = f"{(links[0].text_content() or '').strip()} | {(links[1].text_content() or '').strip()}"
+                        break
+            except Exception:
                 pass
-            
-            # Extract Detailed Address
+
             try:
-                address_elem = driver.find_element(By.CLASS_NAME, "estate-detail-banner-position")
-                detail_data['estate_detailed_address'] = address_elem.text.strip()
-            except:
+                addr_el = page.locator(".estate-detail-banner-position").first.text_content()
+                detail_data["estate_detailed_address"] = (addr_el or "").strip()
+            except Exception:
                 pass
-            
-            # Extract Developer
+
             try:
-                items = driver.find_elements(By.CLASS_NAME, "item")
-                for item in items:
-                    try:
-                        label = item.find_element(By.CLASS_NAME, "label-item-left").text.strip()
-                        if "Developer" in label:
-                            developer = item.find_element(By.CLASS_NAME, "label-item-right").text.strip()
-                            detail_data['developer'] = developer
-                            break
-                    except:
-                        continue
-            except:
+                for item in page.locator(".item").all():
+                    label_el = item.locator(".label-item-left").first.text_content()
+                    if label_el and "Developer" in label_el:
+                        detail_data["developer"] = (item.locator(".label-item-right").first.text_content() or "").strip()
+                        break
+            except Exception:
                 pass
-            
-            return {'success': True, 'data': detail_data}
+
+            return {"success": True, "data": detail_data}
 
         except Exception as e:
             logger.debug(f"Failed to scrape {row.get('Name', 'Unknown')}: {e}")
-            # Invalidate broken driver so next estate on this thread gets a fresh one
-            try:
-                thread_local.driver.quit()
-            except Exception:
-                pass
-            thread_local.driver = None
-            return {'success': False, 'name': row.get('Name', 'Unknown'),
-                    'link': row.get('Link', ''), 'error': str(e)}
-    
-    # ── Execute scraping with thread pool ───────────────────────────────
+            return {"success": False, "name": row.get("Name", "Unknown"), "link": row.get("Link", ""), "error": str(e)}
+
     new_details = []
     failed_estates = []
 
-    from tqdm.auto import tqdm
+    logger.info("Scraping estates sequentially (Playwright sync API is single-threaded)")
 
-    with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        future_to_estate = {
-            executor.submit(scrape_single_estate, row): row
-            for _, row in estates_to_scrape.iterrows()
-        }
-        with tqdm(total=len(future_to_estate),
-                  desc=f"Scraping estates ({max_threads} threads)") as pbar:
-            for future in as_completed(future_to_estate):
-                try:
-                    result = future.result()
-                except Exception as exc:
-                    row = future_to_estate[future]
-                    result = {'success': False, 'name': row.get('Name', '?'),
-                              'link': row.get('Link', ''), 'error': str(exc)}
-                if result['success']:
-                    new_details.append(result['data'])
-                else:
-                    failed_estates.append(result)
-                pbar.update(1)
-    
-    # Close all thread-local drivers
-    logger.info("🔒 Closing all thread drivers...")
-    # Note: ThreadPoolExecutor will clean up threads, drivers will be garbage collected
-    
+    with sync_playwright() as playwright:
+        browser = launch_browser(playwright, headless=headless)
+        context = browser.new_context(user_agent=params["global"].get("user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"))
+        page = context.new_page()
+        try:
+            estate_rows = list(estates_to_scrape.iterrows())
+            with tqdm(total=len(estate_rows), desc="Scraping estates") as pbar:
+                for _, row in estate_rows:
+                    try:
+                        result = scrape_single_estate(page, row)
+                    except Exception as exc:
+                        result = {"success": False, "name": row.get("Name", "?"), "link": row.get("Link", ""), "error": str(exc)}
+                    if result["success"]:
+                        new_details.append(result["data"])
+                    else:
+                        failed_estates.append(result)
+                    pbar.update(1)
+        finally:
+            try:
+                context.close()
+            except Exception:
+                pass
+            try:
+                browser.close()
+            except Exception:
+                pass
+
     # Report results
     logger.info(f"✅ Successfully scraped: {len(new_details)} estates")
     if failed_estates:
@@ -1852,48 +1939,6 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
         logger.error(traceback.format_exc())
         return existing_details if not existing_details.empty else pd.DataFrame()
 
-def extract_element_text(driver, xpath: str) -> Optional[str]:
-    """Helper function to safely extract text from elements."""
-    try:
-        element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, xpath))
-        )
-        return element.text.strip()
-    except:
-        return None
-
-
-
-
-# Helper functions
-def extract_element_text(driver, selector: str) -> Optional[str]:
-    try:
-        elem = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-        ) if '.' in selector else WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, selector))
-        )
-        return elem.text.strip()
-    except:
-        return None
-
-def extract_numeric_value(driver, xpath: str) -> Optional[int]:
-    try:
-        text = extract_element_text(driver, xpath)
-        return int(re.search(r'\d+', text).group()) if text else None
-    except:
-        return None
-
-def extract_school_net(driver) -> Optional[str]:
-    try:
-        net_div = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, "//div[contains(.//text(), 'School Net')]"))
-        )
-        primary = net_div.find_element(By.XPATH, ".//a[1]").text
-        secondary = net_div.find_element(By.XPATH, ".//a[2]").text
-        return f"{primary} | {secondary}"
-    except:
-        return None
 
 def update_control_date(params: Dict[str, Any]) -> None:
     try:
@@ -1983,20 +2028,18 @@ def create_same_name_list(estate_details_df: pd.DataFrame) -> pd.DataFrame:
     return same_name_df
 
 
-def match_transaction_to_duplicate_estates(transaction_link: str, estate_codes: list, driver) -> str:
+def match_transaction_to_duplicate_estates(transaction_link: str, estate_codes: list, page: Page) -> str:
     """
     Visit transaction detail page and find which estate code appears in the HTML.
-    Returns the matching estate code or empty string if none found.
+    Returns the matching estate code or empty string if none found. Uses Playwright.
     """
     if not transaction_link or not estate_codes:
-        return ''
-    
+        return ""
+
     try:
-        driver.get(transaction_link)
-        time.sleep(2)  # Wait for page to load
-        
-        # Get page HTML
-        page_html = driver.page_source.lower()
+        page.goto(transaction_link, wait_until="domcontentloaded", timeout=15000)
+        time.sleep(2)
+        page_html = (page.content() or "").lower()
         
         # Check which estate code appears in the HTML
         for code in estate_codes:
@@ -2052,60 +2095,50 @@ def refine_duplicate_estate_matching(
         logger.info("✅ No transactions need refinement")
         return transactions_df
     
-    logger.info(f"🔧 Refining {len(needs_refinement)} transactions with duplicate estate names...")
-    
-    # Initialize driver
-    driver = initialize_driver(params)
+    logger.info(f"Refining {len(needs_refinement)} transactions with duplicate estate names...")
+
     transactions_copy = transactions_df.copy()
-    
-    try:
-        # Group duplicate estates by name for faster lookup
-        duplicate_estates_grouped = same_name_df.groupby('Scraped Estate Name')
-        
-        refined_count = 0
-        from tqdm.auto import tqdm
-        
-        for idx, row in tqdm(needs_refinement.iterrows(), total=len(needs_refinement), desc="Refining duplicates"):
-            estate_name = row['estate_name']
-            
-            # Get all possible estate codes for this name
-            if estate_name in duplicate_estates_grouped.groups:
-                possible_estates = duplicate_estates_grouped.get_group(estate_name)
-                estate_codes = possible_estates['estate_code'].dropna().tolist()
-                
-                if estate_codes:
-                    # Check transaction HTML to find matching estate code
-                    # First, construct transaction detail link if not available
-                    transaction_link = row.get('transaction_detail_link', '')
-                    
-                    if not transaction_link and 'address' in row:
-                        # Transaction links might need to be constructed from transaction data
-                        # This depends on the website structure
-                        logger.debug(f"No transaction detail link available for {estate_name}")
-                        continue
-                    
-                    matched_code = match_transaction_to_duplicate_estates(
-                        transaction_link,
-                        estate_codes,
-                        driver
-                    )
-                    
-                    if matched_code:
-                        transactions_copy.at[idx, 'estate_code'] = matched_code
-                        refined_count += 1
-                        logger.debug(f"Matched {estate_name} to estate code {matched_code}")
-        
-        logger.info(f"✅ Refined {refined_count} transactions with precise estate code matching")
-        
-        return transactions_copy
-        
-    except Exception as e:
-        logger.error(f"Error in duplicate estate refinement: {str(e)}")
-        import traceback
-        logger.error(traceback.format_exc())
-        return transactions_df
-    finally:
-        driver.quit()
+    headless = params.get("global", {}).get("headless", True)
+    from tqdm.auto import tqdm
+
+    with sync_playwright() as playwright:
+        browser = launch_browser(playwright, headless=headless)
+        page = browser.new_page()
+        try:
+            duplicate_estates_grouped = same_name_df.groupby("Scraped Estate Name")
+            refined_count = 0
+
+            for idx, row in tqdm(needs_refinement.iterrows(), total=len(needs_refinement), desc="Refining duplicates"):
+                estate_name = row["estate_name"]
+                if estate_name in duplicate_estates_grouped.groups:
+                    possible_estates = duplicate_estates_grouped.get_group(estate_name)
+                    estate_codes = possible_estates["estate_code"].dropna().tolist()
+                    if estate_codes:
+                        transaction_link = row.get("transaction_detail_link", "")
+                        if not transaction_link and "address" in row:
+                            logger.debug(f"No transaction detail link available for {estate_name}")
+                            continue
+                        matched_code = match_transaction_to_duplicate_estates(
+                            transaction_link, estate_codes, page
+                        )
+                        if matched_code:
+                            transactions_copy.at[idx, "estate_code"] = matched_code
+                            refined_count += 1
+                            logger.debug(f"Matched {estate_name} to estate code {matched_code}")
+
+            logger.info(f"Refined {refined_count} transactions with precise estate code matching")
+            return transactions_copy
+
+        except Exception as e:
+            logger.error(f"Error in duplicate estate refinement: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return transactions_df
+        finally:
+            try:
+                browser.close()
+            except Exception:
+                pass
 
 
 def enrich_estate_data(
@@ -2226,20 +2259,6 @@ def enrich_estate_data(
                 # Extract completion year from Occupation Permit column
                 estate_details_copy = estate_details_df.copy()
                 
-                # Function to extract year from occupation permit string
-                def extract_completion_year(permit_str):
-                    if pd.isna(permit_str) or permit_str == 'None':
-                        return None
-                    try:
-                        # Handle formats like "2004/11", "2000/2", "1986/2"
-                        if '/' in str(permit_str):
-                            year_part = str(permit_str).split('/')[0]
-                            if year_part.isdigit() and len(year_part) == 4:
-                                return int(year_part)
-                    except:
-                        pass
-                    return None
-                
                 # Extract completion year from Occupation Permit
                 estate_details_copy['completion_year'] = estate_details_copy['Occupation Permit'].apply(extract_completion_year)
 
@@ -2276,73 +2295,85 @@ def enrich_estate_data(
                 else:
                     logger.warning("⚠️ No completion year data found in estate details")
                 
-                # TWO-STEP MAPPING: building_code -> name
+                # MULTI-STEP MAPPING: estate_code -> building_code -> exact name -> fuzzy name
                 try:
-                    logger.info(f"🔍 Enriching {len(transactions_copy)} transactions with estate details...")
-                    logger.info(f"   Using two-step matching: building_code (primary) -> name (fallback)")
-                    
-                    # Prepare estate details and create lookup maps
-                    # Extract estate codes from estate listings (level 1)
+                    centa_params = params.get("centaline_res", {})
+                    logger.info(f"Enriching {len(transactions_copy)} transactions with estate details")
+                    logger.info("   Matching: estate_code -> building_code -> name -> fuzzy")
                     estate_listings = pd.DataFrame()
                     try:
-                        estate_file = 'data/01_raw/centaline_estate_lv_1.parquet'
+                        estate_file = centa_params.get("estate_listings_file", "data/01_raw/centaline_estate_lv_1.parquet")
                         if os.path.exists(estate_file):
                             estate_listings = pd.read_parquet(estate_file)
-                            if 'EstateCode' not in estate_listings.columns and 'Link' in estate_listings.columns:
-                                estate_listings['EstateCode'] = estate_listings['Link'].apply(
-                                    lambda x: x.rstrip('/').split('/')[-1] if pd.notna(x) else ''
+                            if "EstateCode" not in estate_listings.columns and "Link" in estate_listings.columns:
+                                estate_listings["EstateCode"] = estate_listings["Link"].apply(
+                                    lambda x: x.rstrip("/").split("/")[-1] if pd.notna(x) else ""
                                 )
                             logger.info(f"   Loaded {len(estate_listings)} estates for matching")
                     except Exception as e:
                         logger.warning(f"Could not load estate listings: {e}")
-                    
-                    # Create building code -> estate mapping
+
+                    estate_code_map = {}
                     building_code_map = {}
-                    if not estate_listings.empty:
-                        for _, estate in estate_listings.iterrows():
-                            code = estate.get('EstateCode', '')
-                            if code:
-                                building_code_map[code] = estate.to_dict()
-                    
-                    # Create name -> estate mapping (fallback)
                     name_map = {}
+                    estate_names_list = []
                     if not estate_listings.empty:
                         for _, estate in estate_listings.iterrows():
-                            name = estate.get('Name', '')
+                            e = estate.to_dict()
+                            ec = str(estate.get("EstateCode", "")).strip() if pd.notna(estate.get("EstateCode")) else ""
+                            if ec:
+                                estate_code_map[ec] = e
+                                building_code_map[ec] = e  # typeCode / building_code may match EstateCode
+                            name = estate.get("Name", "")
                             if name:
                                 if name not in name_map:
                                     name_map[name] = []
-                                name_map[name].append(estate.to_dict())
-                    
-                    logger.info(f"   Building code map: {len(building_code_map)} codes")
-                    logger.info(f"   Name map: {len(name_map)} names")
-                    
-                    # Process each transaction with two-step matching
-                    logger.info("   Starting two-step enrichment...")
-                    
-                    matched_by_code = 0
+                                name_map[name].append(e)
+                                estate_names_list.append(name)
+                    fuzzy_threshold = params.get("centaline_res", {}).get("fuzzy_match_threshold", 85)
+                    try:
+                        from rapidfuzz import fuzz, process as rf_process
+                        has_fuzz = True
+                    except ImportError:
+                        has_fuzz = False
+                    logger.info(f"   estate_code map: {len(estate_code_map)}, building_code: {len(building_code_map)}, name: {len(name_map)}, fuzzy: {has_fuzz}")
+                    matched_by_estate_code = 0
+                    matched_by_building_code = 0
                     matched_by_name = 0
+                    matched_by_fuzzy = 0
                     no_match = 0
-                    
                     from tqdm.auto import tqdm
-                    
                     for idx, row in tqdm(transactions_copy.iterrows(), total=len(transactions_copy), desc="Enriching"):
-                        building_code = row.get('building_code', '')
-                        txn_name = row.get('Name', '')
-                        
                         estate_info = None
-                        
-                        # Step 1: Match by building_code (PRIMARY)
-                        if building_code and building_code in building_code_map:
+                        txn_name = row.get("Name", "") or ""
+                        estate_code = row.get("estate_code")
+                        if estate_code is not None:
+                            estate_code = str(estate_code).strip()
+                        else:
+                            estate_code = ""
+                        building_code = (row.get("building_code") or "").strip() if pd.notna(row.get("building_code")) else ""
+                        if estate_code and estate_code in estate_code_map:
+                            estate_info = estate_code_map[estate_code]
+                            matched_by_estate_code += 1
+                            transactions_copy.at[idx, "match_method"] = "estate_code"
+                        elif building_code and building_code in building_code_map:
                             estate_info = building_code_map[building_code]
-                            matched_by_code += 1
-                            transactions_copy.at[idx, 'match_method'] = 'building_code'
-                        
-                        # Step 2: Fallback to name matching
+                            matched_by_building_code += 1
+                            transactions_copy.at[idx, "match_method"] = "building_code"
                         elif txn_name and txn_name in name_map:
                             estate_info = name_map[txn_name][0]
                             matched_by_name += 1
-                            transactions_copy.at[idx, 'match_method'] = 'name'
+                            transactions_copy.at[idx, "match_method"] = "name"
+                        elif has_fuzz and txn_name and estate_names_list:
+                            match, score, _ = rf_process.extractOne(
+                                txn_name, estate_names_list, scorer=fuzz.token_set_ratio
+                            )
+                            if score >= fuzzy_threshold:
+                                estate_info = name_map[match][0]
+                                matched_by_fuzzy += 1
+                                transactions_copy.at[idx, "match_method"] = f"fuzzy_{score}"
+                            else:
+                                no_match += 1
                         else:
                             no_match += 1
                         
@@ -2368,10 +2399,7 @@ def enrich_estate_data(
                             if 'chinese_name' in estate_info:
                                 transactions_copy.at[idx, 'estate_chinese_name'] = estate_info.get('chinese_name', '')
                     
-                    logger.info(f"\n   📊 Enrichment Statistics:")
-                    logger.info(f"      Matched via building code: {matched_by_code:,} ({matched_by_code/len(transactions_copy)*100:.1f}%)")
-                    logger.info(f"      Matched via name: {matched_by_name:,} ({matched_by_name/len(transactions_copy)*100:.1f}%)")
-                    logger.info(f"      No match (already complete): {no_match:,} ({no_match/len(transactions_copy)*100:.1f}%)")
+                    logger.info(f"   Enrichment: estate_code={matched_by_estate_code}, building_code={matched_by_building_code}, name={matched_by_name}, fuzzy={matched_by_fuzzy}, no_match={no_match}")
                     logger.info("✅ Estate enrichment complete using building_code and name matching")
                     
                 except Exception as e:

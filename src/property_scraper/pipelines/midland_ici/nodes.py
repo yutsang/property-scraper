@@ -6,11 +6,17 @@ from tqdm import tqdm
 import time
 import logging
 import os
-from typing import Dict, List, Optional, Union, Any
-from datetime import datetime, timedelta
+import re
+from typing import Dict, List, Optional, Union, Any, Tuple
+from datetime import datetime, timedelta, date
+from collections import defaultdict
 
 # Import node tracking utilities
 from ...utils.node_tracker import should_run_node, record_node_execution
+from ...utils.building_supplement import (
+    apply_supplemental_matches,
+    load_supplemental_building_master,
+)
 
 def scrape_midland_buildings(
     area_codes: pd.DataFrame,
@@ -460,6 +466,28 @@ def process_buildings(
                     if info['Completion Date Raw']:
                         dt_str = info['Completion Date Raw'].split(' (')[0]  # Remove timezone name
                         info['Completion Date'] = parser.parse(dt_str).isoformat()
+
+                    # District / region hierarchy when exposed in JSON (keys vary by page version)
+                    for i in range(1, 5):
+                        ak, dk, dk_alt = f'area{i}', f'areaDesc{i}', f'areadesc{i}'
+                        if ak in building_data and building_data[ak] is not None:
+                            info[f'area{i}'] = building_data[ak]
+                        if dk in building_data and building_data[dk] is not None:
+                            info[f'area_desc{i}'] = building_data[dk]
+                        elif dk_alt in building_data and building_data[dk_alt] is not None:
+                            info[f'area_desc{i}'] = building_data[dk_alt]
+                    for key in ('district', 'region', 'subDistrict'):
+                        node = building_data.get(key)
+                        if isinstance(node, dict) and node.get('name'):
+                            slot = None
+                            for j in range(1, 5):
+                                if f'area_desc{j}' not in info:
+                                    slot = j
+                                    break
+                            if slot is not None:
+                                code = node.get('code') or node.get('distCode') or node.get('id')
+                                info[f'area{slot}'] = code if code is not None else ''
+                                info[f'area_desc{slot}'] = node.get('name') or ''
                 except Exception as e:
                     logger.error(f"JSON parsing error: {str(e)[:100]}")
 
@@ -543,10 +571,11 @@ def sanitize_parquet_columns(df: pd.DataFrame) -> pd.DataFrame:
     
     # Handle special columns
     if 'floor' in df.columns:
+        # Keep "/" in values (e.g. G/F); strip only control characters
         df['floor'] = (
             df['floor']
             .astype(str)
-            .str.replace(r'[\x00-\x1F\x7F-\x9F/]', '', regex=True)
+            .str.replace(r'[\x00-\x1F\x7F-\x9F]', '', regex=True)
             .str.strip()
         )
     
@@ -556,6 +585,210 @@ def sanitize_parquet_columns(df: pd.DataFrame) -> pd.DataFrame:
     
     return df
 
+
+def _midland_ici_tx_date_to_date(tx_raw: Optional[Any]) -> Optional[date]:
+    """Calendar date for incremental cutoff. Uses HK local date for ISO datetimes."""
+    if tx_raw is None or (isinstance(tx_raw, float) and pd.isna(tx_raw)):
+        return None
+    s = str(tx_raw).strip()
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":
+        prefix = s[:10]
+        try:
+            return datetime.fromisoformat(prefix).date()
+        except ValueError:
+            pass
+    try:
+        ts = pd.to_datetime(s, utc=True, errors="coerce")
+        if pd.isna(ts):
+            return None
+        if getattr(ts, "tz", None) is None:
+            ts = ts.tz_localize("UTC")
+        return ts.tz_convert("Asia/Hong_Kong").date()
+    except Exception:
+        return None
+
+
+def _midland_ici_tx_date_storage(tx_raw: Optional[Any]) -> Optional[str]:
+    """Stored tx_date as yyyy-mm-dd 00:00:00 (HK calendar day for ISO timestamps)."""
+    d = _midland_ici_tx_date_to_date(tx_raw)
+    if d is None:
+        return None
+    return f"{d.isoformat()} 00:00:00"
+
+
+def _strip_midland_ici_floor_label(raw: Optional[Any]) -> Optional[str]:
+    """Normalize API floor strings (e.g. **HIGH** band labels)."""
+    if raw is None or (isinstance(raw, float) and pd.isna(raw)):
+        return None
+    s = str(raw).strip()
+    if s.lower() in ("", "nan", "none"):
+        return None
+    s = s.replace("*", "").strip()
+    return s if s else None
+
+
+def _is_midland_blank(value: Optional[Any]) -> bool:
+    """Treat common empty-like tokens consistently across API and parquet merges."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return True
+    return str(value).strip().lower() in ("", "nan", "none", "null", "n/a")
+
+
+def _clean_midland_text(value: Optional[Any]) -> Optional[str]:
+    """Return stripped text or None when the input is blank-like."""
+    if _is_midland_blank(value):
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _contains_cjk(text: Optional[str]) -> bool:
+    """Detect Chinese characters in fields that should be English-only."""
+    if not text:
+        return False
+    return bool(re.search(r"[\u3400-\u4dbf\u4e00-\u9fff]", text))
+
+
+def _clean_midland_english(value: Optional[Any]) -> Optional[str]:
+    """Discard Chinese fallback text from English output columns."""
+    text = _clean_midland_text(value)
+    if not text or _contains_cjk(text):
+        return None
+    return text
+
+
+def _pick_floor_flat_raw(
+    zh_rec: Dict[str, Any], en_rec: Dict[str, Any]
+) -> Tuple[Optional[str], Optional[str]]:
+    """Prefer zh-hk floor/flat; fall back to English row when zh is blank."""
+    for rec in (zh_rec, en_rec):
+        f = _strip_midland_ici_floor_label(rec.get("floor"))
+        fl = _strip_midland_ici_floor_label(rec.get("flat"))
+        if f or fl:
+            return (rec.get("floor"), rec.get("flat"))
+    return (None, None)
+
+
+def _extract_tx_area_hierarchy(
+    zh_rec: Dict[str, Any], en_rec: Dict[str, Any]
+) -> Dict[str, Any]:
+    """
+    Copy optional split-area fragments from transaction JSON.
+
+    ``search/v1/transaction`` always exposes district separately. Some payloads
+    also include ``area1``..``area4`` / ``areaDesc1``.. (camelCase) inside the
+    nested ``area`` object. Those keys describe split area fragments such as
+    ``800`` + ``G/F 2室`` rather than geographic hierarchy, so we normalize them
+    to ``area1`` / ``area_desc1`` without backfilling district values.
+    """
+    out: Dict[str, Any] = {}
+    zh_area = zh_rec.get("area") if isinstance(zh_rec.get("area"), dict) else {}
+    en_area = en_rec.get("area") if isinstance(en_rec.get("area"), dict) else {}
+    for i in range(1, 5):
+        ak = f"area{i}"
+        dk = f"areaDesc{i}"
+        dk_alt = f"areadesc{i}"
+        code: Any = None
+        desc: Any = None
+        # First non-empty wins (zh-hk before en). Newer API payloads keep area1/2
+        # under the nested ``area`` object rather than top-level record keys.
+        for area_node, rec in ((zh_area, zh_rec), (en_area, en_rec)):
+            if code is None:
+                for source in (area_node, rec):
+                    if isinstance(source, dict) and not _is_midland_blank(source.get(ak)):
+                        code = source.get(ak)
+                        break
+            if desc is None:
+                for source in (area_node, rec):
+                    if not isinstance(source, dict):
+                        continue
+                    for key in (dk, dk_alt):
+                        if not _is_midland_blank(source.get(key)):
+                            desc = source.get(key)
+                            break
+                    if desc is not None:
+                        break
+        out[ak] = code
+        out[f"area_desc{i}"] = desc
+    return out
+
+
+def _derive_floor_flat_from_area_descriptions(
+    tx_hierarchy: Dict[str, Any],
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Some rows encode floor/unit hints inside ``areaDesc`` fragments, e.g.
+    ``G/F D室`` or ``B/F``. Use the first descriptor that looks like a floor or
+    unit token to backfill missing ``floor`` / ``flat`` values.
+    """
+    for idx in range(1, 5):
+        desc = _clean_midland_text(tx_hierarchy.get(f"area_desc{idx}"))
+        if not desc:
+            continue
+        if not re.search(
+            r"室|單位|舖|铺|Flat|flat|Shop|WF|舖位|(?:^|\\s)(?:G|LG|UG|B)\\s*/\\s*F|\\d+\\s*/\\s*F|"
+            r"地下|地舖|全層|高層|中層|低層|天井",
+            desc,
+            flags=re.IGNORECASE,
+        ):
+            continue
+        return _split_floor_flat_ici(desc, None)
+    return (None, None)
+
+
+def _build_tx_match_key(rec: Dict[str, Any]) -> Tuple[Any, ...]:
+    """Create a stable bilingual alignment key that is safer than page index alone."""
+    building = rec.get("building") or {}
+    streets = rec.get("streets") or {}
+    area = rec.get("area") or {}
+    return (
+        rec.get("txDate"),
+        rec.get("txType"),
+        building.get("id"),
+        streets.get("id"),
+        streets.get("streetno"),
+        rec.get("price"),
+        rec.get("rent"),
+        rec.get("ftPrice"),
+        rec.get("ftRent"),
+        area.get("value") if isinstance(area, dict) else area,
+    )
+
+
+def _split_floor_flat_ici(
+    floor: Optional[str], flat: Optional[str]
+) -> Tuple[Optional[str], Optional[str]]:
+    """Split combined floor/flat tokens (e.g. 'G/F D室') when only one field is populated."""
+    def _clean(x: Optional[str]) -> str:
+        if x is None or (isinstance(x, float) and pd.isna(x)):
+            return ""
+        s = str(x).strip()
+        if s.lower() in ("", "nan", "none"):
+            return ""
+        return s.replace("*", "").strip()
+
+    f, fl = _clean(floor), _clean(flat)
+    if f and fl:
+        return (f, fl)
+    combined = f or fl
+    if not combined:
+        return (None, None)
+    # e.g. "G/F D室", "地下 舖位"
+    m = re.match(r"^(.+?/\s*F)\s+(\S.+)$", combined, flags=re.IGNORECASE)
+    if m and re.search(r"室|單位|舖|铺|Flat|flat|Shop|WF", m.group(2)):
+        return (m.group(1).strip(), m.group(2).strip())
+    # Chinese band / level + unit in one token (no "/F")
+    m2 = re.match(
+        r"^(地下|全層|高層|中層|低層|連天台|高|中|低)\s+(\S.+)$",
+        combined,
+    )
+    if m2 and re.search(
+        r"室|單位|舖|铺|Flat|flat|Shop|WF|舖位", m2.group(2), flags=re.IGNORECASE
+    ):
+        return (m2.group(1).strip(), m2.group(2).strip())
+    return (f or None, fl or None)
+
+
 def ml_ici_scrape_trans(
     params: Dict[str, Any]) -> pd.DataFrame:
     """
@@ -564,8 +797,15 @@ def ml_ici_scrape_trans(
     NEW API ENDPOINT (as of Jan 2026):
     - URL: https://data.midlandici.com.hk/search/v1/transaction
     - Requires session cookies from main landing page
-    - Returns current data (2026-01-30)
-    - Different structure: List with type/count/results
+    - Returns: ``[{type, count, results: [{txDate, area: {value, area1, areaDesc1, ...}, floor, flat,
+      streets: {id, name, streetno}, building: {id, name}, district: {distCode, name},
+      ...}]}]``
+      Live payloads (2026) expose district separately from optional split-area
+      fragments such as ``area1`` / ``areaDesc1``. We keep district in
+      ``dist_code`` / ``dist_name_*`` and normalize the camelCase area keys to
+      snake_case ``area_desc*`` columns.
+    - Bilingual: same page is fetched with ``lang=zh-hk`` and ``lang=en``; rows are
+      merged by index for Chinese vs English street/building/district names.
     
     Includes node execution tracking and incremental updates.
     """
@@ -575,7 +815,9 @@ def ml_ici_scrape_trans(
     
     # Date-based decision: check DB max date vs today (no timer needed)
     output_file = "data/01_raw/midland_ici_trans.parquet"
-    all_transactions = []
+    all_transactions: List[Dict[str, Any]] = []
+    pages_processed = 0
+    existing_df: pd.DataFrame = pd.DataFrame()
 
     def map_ics_type(value: str) -> str:
         if not value:
@@ -588,43 +830,68 @@ def ml_ici_scrape_trans(
         }
         return mapping.get(str(value).upper(), str(value).lower())
 
-    def normalize_transaction(record: Dict[str, Any]) -> Dict[str, Any]:
-        area = record.get("area") or {}
-        district = record.get("district") or {}
-        streets = record.get("streets") or {}
-        building = record.get("building") or {}
-        
-        # Normalize date format to match old data (yyyy-mm-dd hh:mm:ss)
-        tx_date_raw = record.get("txDate")
-        tx_date_normalized = tx_date_raw
-        if tx_date_raw and len(str(tx_date_raw)) == 10:  # Date only format 'yyyy-mm-dd'
-            tx_date_normalized = f"{tx_date_raw} 00:00:00"  # Add timestamp to match old format
+    def normalize_transaction(zh_rec: Dict[str, Any], en_rec: Dict[str, Any]) -> Dict[str, Any]:
+        """Merge zh-hk and en API rows (same index) for bilingual street/district/building names."""
+        area = zh_rec.get("area") if isinstance(zh_rec.get("area"), dict) else {}
+        district_zh = zh_rec.get("district") or {}
+        district_en = en_rec.get("district") or {}
+        streets_zh = zh_rec.get("streets") or {}
+        streets_en = en_rec.get("streets") or {}
+        building_zh = zh_rec.get("building") or {}
+        building_en = en_rec.get("building") or {}
+
+        tx_date_normalized = _midland_ici_tx_date_storage(zh_rec.get("txDate"))
+
+        floor_raw, flat_raw = _pick_floor_flat_raw(zh_rec, en_rec)
+        floor_s, flat_s = _split_floor_flat_ici(
+            str(floor_raw) if floor_raw is not None else None,
+            str(flat_raw) if flat_raw is not None else None,
+        )
+
+        dist_code = district_zh.get("distCode") or district_en.get("distCode")
+        dist_name_zh = district_zh.get("name")
+        dist_name_en = _clean_midland_english(district_en.get("name"))
+
+        street_id = streets_zh.get("id") or streets_en.get("id")
+        street_name_zh = _clean_midland_text(streets_zh.get("name"))
+        street_name_en = _clean_midland_english(streets_en.get("name"))
+
+        tx_hierarchy = _extract_tx_area_hierarchy(zh_rec, en_rec)
+        if floor_s is None or flat_s is None:
+            derived_floor, derived_flat = _derive_floor_flat_from_area_descriptions(tx_hierarchy)
+            if floor_s is None:
+                floor_s = derived_floor
+            if flat_s is None:
+                flat_s = derived_flat
 
         return {
-            "tx_date": tx_date_normalized,  # Standardized format
-            "tx_type": record.get("txType"),
+            "tx_date": tx_date_normalized,
+            "tx_type": zh_rec.get("txType"),
             "area": area.get("value"),
-            "flat": str(record.get("flat")) if record.get("flat") else None,  # Ensure string
-            "floor": str(record.get("floor")) if record.get("floor") else None,  # Ensure string
-            "ft_rent": record.get("ftRent"),
-            "ft_sell": record.get("ftPrice"),
-            "rent": record.get("rent"),
-            "sell": record.get("price"),
-            "price": record.get("price"),
-            "price_per_feet": record.get("ftPrice") or record.get("ftRent"),
-            "ics_type": map_ics_type(record.get("sbuOwner")),
-            "sbuOwner": record.get("sbuOwner"),
-            "upload_source": record.get("uploadSource"),
-            "dist_code": district.get("distCode"),
-            "dist_name_en": district.get("name"),
-            "street_name_zh": streets.get("name"),
-            "street_name_en": streets.get("name"),
-            "streetno": str(streets.get("streetno")) if streets.get("streetno") else None,
-            "building_id": str(building.get("id")) if building.get("id") else None,  # Ensure string
-            "eng_name": building.get("name"),
-            "chi_name": building.get("name"),
-            "URL": record.get("propertyListUrl"),
-            "Name": record.get("name"),
+            "flat": flat_s,
+            "floor": floor_s,
+            "ft_rent": zh_rec.get("ftRent"),
+            "ft_sell": zh_rec.get("ftPrice"),
+            "rent": zh_rec.get("rent"),
+            "sell": zh_rec.get("price"),
+            "price": zh_rec.get("price"),
+            "price_per_feet": zh_rec.get("ftPrice") or zh_rec.get("ftRent"),
+            "ics_type": map_ics_type(zh_rec.get("sbuOwner")),
+            "sbuOwner": zh_rec.get("sbuOwner"),
+            "upload_source": zh_rec.get("uploadSource"),
+            "dist_code": dist_code,
+            "dist_name_zh": _clean_midland_text(dist_name_zh),
+            "dist_name_en": dist_name_en,
+            "street_id": str(street_id) if street_id is not None else None,
+            "street_name_zh": street_name_zh,
+            "street_name_en": street_name_en,
+            "streetno": _clean_midland_text(streets_zh.get("streetno") or streets_en.get("streetno")),
+            "building_id": str(building_zh.get("id") or building_en.get("id")) if (building_zh.get("id") or building_en.get("id")) else None,
+            "eng_name": _clean_midland_english(building_en.get("name")),
+            "chi_name": _clean_midland_text(building_zh.get("name") or building_en.get("name")),
+            "URL": zh_rec.get("propertyListUrl") or en_rec.get("propertyListUrl"),
+            "Name": _clean_midland_text(zh_rec.get("name")),
+            **tx_hierarchy,
         }
 
     mici_params = params.get("midland_ici", {})
@@ -639,6 +906,8 @@ def ml_ici_scrape_trans(
     page_size = int(mici_params.get("transaction_page_size", 100))
     api_params["limit"] = page_size
     api_params.setdefault("page", 1)
+    lang_zh = mici_params.get("transaction_lang_zh", api_params.get("lang", "zh-hk"))
+    lang_en = mici_params.get("transaction_lang_en", "en")
 
     # Date-based decision: read DB max date → decide start_date.
     # NOTE: we intentionally do NOT return early here even when max_date >= today.
@@ -702,57 +971,96 @@ def ml_ici_scrape_trans(
                 raise
             time.sleep(2 + attempt)
 
-    def fetch_page(page_num: int) -> tuple[int, list]:
-        """Fetch one page with exponential backoff for 5xx (server overload) errors."""
-        params_copy = dict(api_params)
-        params_copy["page"] = page_num
+    def _fetch_one_lang(params_copy: Dict[str, Any]) -> Optional[list]:
         for attempt in range(1, max_retries + 1):
             try:
-                resp = session.get(api_url, headers=headers_api,
-                                   params=params_copy, timeout=30)
+                resp = session.get(
+                    api_url, headers=headers_api, params=params_copy, timeout=30
+                )
                 resp.raise_for_status()
-                return page_num, resp.json()
+                return resp.json()
             except requests.exceptions.HTTPError as exc:
                 status = exc.response.status_code if exc.response is not None else 0
                 if attempt == max_retries:
-                    logger.warning(f"Page {page_num} failed after {max_retries} attempts: {exc}")
-                    return page_num, None
-                # 502/503/504 = server overloaded → exponential back-off
+                    logger.warning(
+                        f"Page {params_copy.get('page')} lang={params_copy.get('lang')} "
+                        f"failed after {max_retries} attempts: {exc}"
+                    )
+                    return None
                 if status in (502, 503, 504):
-                    wait = (2 ** attempt) * 5   # 10s, 20s, 40s, 80s …
-                    logger.debug(f"Page {page_num}: {status} – waiting {wait}s before retry {attempt+1}")
+                    wait = (2 ** attempt) * 5
+                    logger.debug(
+                        f"Page {params_copy.get('page')}: {status} – waiting {wait}s"
+                    )
                     time.sleep(wait)
                 else:
                     time.sleep(1 + attempt)
             except (requests.exceptions.RequestException, json.JSONDecodeError) as exc:
                 if attempt == max_retries:
-                    logger.warning(f"Page {page_num} failed after {max_retries} attempts: {exc}")
-                    return page_num, None
+                    logger.warning(
+                        f"Page {params_copy.get('page')} lang={params_copy.get('lang')} "
+                        f"failed after {max_retries} attempts: {exc}"
+                    )
+                    return None
                 time.sleep(2 + attempt)
+        return None
 
-    def parse_page(data) -> tuple[list, bool]:
-        """Parse raw API response. Returns (records, stop_flag).
-        stop_flag=True means this page contains records older than start_date."""
-        if not isinstance(data, list) or not data:
+    def fetch_page_bilingual(page_num: int) -> tuple[int, Optional[list], Optional[list]]:
+        """Fetch the same page in zh-hk and en; en is used for English street/building names."""
+        params_zh = dict(api_params)
+        params_zh["page"] = page_num
+        params_zh["lang"] = lang_zh
+        params_en = dict(params_zh)
+        params_en["lang"] = lang_en
+        data_zh = _fetch_one_lang(params_zh)
+        data_en = _fetch_one_lang(params_en)
+        if data_zh is None:
+            return page_num, None, None
+        if data_en is None:
+            logger.warning(
+                f"Page {page_num}: English payload missing — using zh-hk for English name fields"
+            )
+            data_en = data_zh
+        return page_num, data_zh, data_en
+
+    def parse_page(data_zh: Optional[list], data_en: Optional[list]) -> tuple[list, bool]:
+        """Parse raw API responses. Returns (records, stop_flag)."""
+        if not isinstance(data_zh, list) or not data_zh:
             return [], True
-        item = (data[0] or {})
-        results = item.get("results") or []
-        records = []
+        item_zh = data_zh[0] or {}
+        results_zh = item_zh.get("results") or []
+        results_en: List[Dict[str, Any]] = []
+        if isinstance(data_en, list) and data_en and (data_en[0] or {}).get("results"):
+            results_en = (data_en[0] or {}).get("results") or []
+        if len(results_en) != len(results_zh) and results_en:
+            logger.warning(
+                f"zh/en result count mismatch: {len(results_zh)} vs {len(results_en)} — padding en"
+            )
+        en_by_key: Dict[Tuple[Any, ...], List[Dict[str, Any]]] = defaultdict(list)
+        for en_rec in results_en:
+            en_by_key[_build_tx_match_key(en_rec)].append(en_rec)
+        records: List[Dict[str, Any]] = []
         stop = False
-        for record in results:
-            tx_date = record.get("txDate")
-            try:
-                tx_date_obj = datetime.fromisoformat(tx_date).date() if tx_date else None
-            except ValueError:
-                tx_date_obj = None
+        for i, zh_rec in enumerate(results_zh):
+            key = _build_tx_match_key(zh_rec)
+            en_matches = en_by_key.get(key) or []
+            if en_matches:
+                en_rec = en_matches.pop(0)
+            elif i < len(results_en) and _build_tx_match_key(results_en[i]) == key:
+                en_rec = results_en[i]
+            else:
+                en_rec = {}
+            tx_raw = zh_rec.get("txDate")
+            tx_date_obj = _midland_ici_tx_date_to_date(tx_raw)
             if tx_date_obj and tx_date_obj < start_date:
                 stop = True
                 continue
-            records.append(normalize_transaction(record))
+            records.append(normalize_transaction(zh_rec, en_rec))
         return records, stop
 
     # ── Step 2: Pre-fetch page 1 to discover total_count and total_pages ─
-    _, page1_data = fetch_page(1)
+    _, page1_zh, page1_en = fetch_page_bilingual(1)
+    page1_data = page1_zh
     if not page1_data or not isinstance(page1_data, list) or not page1_data[0]:
         logger.error("Could not fetch page 1 — aborting transaction scrape")
         trans_df = pd.DataFrame()
@@ -776,13 +1084,13 @@ def ml_ici_scrape_trans(
             _max_date_is_current = False  # force full scrape even if max_date was today
             # Re-parse page 1 with the updated start_date so records aren't
             # incorrectly filtered out by the old (incremental) cutoff.
-            page1_records, page1_stop = parse_page(page1_data)
+            page1_records, page1_stop = parse_page(page1_zh, page1_en)
         elif _max_date_is_current:
             # Data is genuinely up-to-date and no gap — safe to skip.
             logger.info(f"✅ Midland ICI transactions up-to-date (API={total_count:,} = existing={existing_record_count:,}) — skipping")
             return existing_df if existing_record_count > 0 else pd.DataFrame(all_transactions)
         else:
-            page1_records, page1_stop = parse_page(page1_data)
+            page1_records, page1_stop = parse_page(page1_zh, page1_en)
 
         all_transactions.extend(page1_records)
 
@@ -811,19 +1119,21 @@ def ml_ici_scrape_trans(
                     batch = page_list[batch_start: batch_start + batch_size]
 
                     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                        futures = {executor.submit(fetch_page, p): p for p in batch}
-                        batch_results: dict[int, list] = {}
+                        futures = {
+                            executor.submit(fetch_page_bilingual, p): p for p in batch
+                        }
+                        batch_results: Dict[int, Tuple[Optional[list], Optional[list]]] = {}
                         for future in as_completed(futures):
-                            page_num, data = future.result()
-                            batch_results[page_num] = data
+                            page_num, data_zh, data_en = future.result()
+                            batch_results[page_num] = (data_zh, data_en)
 
                     # Process batch in page order so date-cutoff logic stays correct
                     for page_num in sorted(batch_results):
-                        data = batch_results[page_num]
-                        if data is None:
+                        data_zh, data_en = batch_results[page_num]
+                        if data_zh is None:
                             pbar.update(1)
                             continue
-                        records, stop = parse_page(data)
+                        records, stop = parse_page(data_zh, data_en)
                         all_transactions.extend(records)
                         if stop:
                             stop_fetching = True
@@ -889,7 +1199,7 @@ def ml_ici_scrape_trans(
                     # Fix data types before concatenation
                     for col in all_cols:
                         # Ensure string columns stay as strings
-                        if col in ['building_id', 'dist_code', 'floor', 'flat', 'streetno']:
+                        if col in ['building_id', 'dist_code', 'floor', 'flat', 'streetno', 'street_id']:
                             existing_df[col] = existing_df[col].astype(str).replace('nan', pd.NA).replace('None', pd.NA)
                             trans_df[col] = trans_df[col].astype(str).replace('nan', pd.NA).replace('None', pd.NA)
                     
@@ -971,6 +1281,11 @@ def midland_ici_join(
     left_on = join_params.get('join_left_on', 'building_id')
     right_on = join_params.get('join_right_on', 'id')
     join_type = join_params.get('join_type', 'left')
+    supplemental_master = load_supplemental_building_master(
+        params,
+        domain="commercial",
+        source_system="midland_ici",
+    )
     
     logger.info(f"Joining {len(transactions)} transactions with {len(building_details)} buildings")
     logger.info(f"Join configuration: {join_type} join with transactions.{left_on} and buildings.{right_on}")
@@ -1007,11 +1322,97 @@ def midland_ici_join(
         how=join_type,
         suffixes=('', '_building')
     )
+
+    # Prefer building-details hierarchy when both sides have area columns (suffix _building).
+    for i in range(1, 5):
+        for col in (f"area{i}", f"area_desc{i}"):
+            bcol = f"{col}_building"
+            if bcol in joined_df.columns:
+                joined_df[bcol] = joined_df[bcol].replace(["", " ", "None", "nan", "NaN", "null"], pd.NA)
+                if col in joined_df.columns:
+                    joined_df[col] = joined_df[col].replace(["", " ", "None", "nan", "NaN", "null"], pd.NA)
+                    joined_df[col] = joined_df[bcol].combine_first(joined_df[col])
+                else:
+                    joined_df[col] = joined_df[bcol]
+                joined_df = joined_df.drop(columns=[bcol])
     
     logger.info(f"Join completed. Result has {len(joined_df)} rows")
     
     # Add a flag to indicate if a transaction has matched building details
     joined_df['has_building_match'] = joined_df[right_on].notnull()
+    joined_df['building_match_method'] = joined_df['has_building_match'].map(
+        {True: 'native_building_id', False: 'unmatched'}
+    )
+    joined_df['matched_building_name'] = pd.NA
+    if 'Building Name' in joined_df.columns:
+        joined_df['matched_building_name'] = joined_df['Building Name'].where(
+            joined_df['has_building_match'],
+            pd.NA,
+        )
+
+    if not supplemental_master.empty:
+        unmatched_mask = ~joined_df['has_building_match']
+        supplemental_matched, supplemental_unmatched = apply_supplemental_matches(
+            unmatched_df=joined_df.loc[unmatched_mask].copy(),
+            supplemental_master=supplemental_master,
+            source_system="midland_ici",
+            domain="commercial",
+            join_key_col=left_on if left_on in joined_df.columns else None,
+            source_name_col='eng_name' if 'eng_name' in joined_df.columns else 'chi_name',
+            district_name_col='dist_name_en' if 'dist_name_en' in joined_df.columns else None,
+            zone_col=None,
+            output_match_method_col='building_match_method',
+        )
+        if not supplemental_matched.empty:
+            supplemental_matched['has_building_match'] = True
+            supplemental_matched[right_on] = supplemental_matched.get(
+                right_on,
+                supplemental_matched.get(left_on),
+            )
+            if 'completion_year' in supplemental_matched.columns:
+                supplemental_matched['Completion'] = supplemental_matched.get(
+                    'Completion',
+                    pd.Series(pd.NA, index=supplemental_matched.index),
+                ).where(
+                    supplemental_matched.get(
+                        'Completion',
+                        pd.Series(pd.NA, index=supplemental_matched.index),
+                    ).notna(),
+                    supplemental_matched['completion_year'],
+                )
+            if 'management_company' in supplemental_matched.columns:
+                supplemental_matched['Management Company'] = supplemental_matched.get(
+                    'Management Company',
+                    pd.Series(pd.NA, index=supplemental_matched.index),
+                ).where(
+                    supplemental_matched.get(
+                        'Management Company',
+                        pd.Series(pd.NA, index=supplemental_matched.index),
+                    ).notna(),
+                    supplemental_matched['management_company'],
+                )
+            if 'url' in supplemental_matched.columns:
+                supplemental_matched['URL'] = supplemental_matched.get(
+                    'URL',
+                    pd.Series(pd.NA, index=supplemental_matched.index),
+                ).where(
+                    supplemental_matched.get(
+                        'URL',
+                        pd.Series(pd.NA, index=supplemental_matched.index),
+                    ).notna(),
+                    supplemental_matched['url'],
+                )
+            matched_names = supplemental_matched.get('matched_building_name')
+            if matched_names is not None and 'Building Name' in supplemental_matched.columns:
+                supplemental_matched['Building Name'] = supplemental_matched['Building Name'].where(
+                    supplemental_matched['Building Name'].notna(),
+                    matched_names,
+                )
+
+            joined_df = pd.concat(
+                [joined_df.loc[~unmatched_mask], supplemental_matched, supplemental_unmatched],
+                ignore_index=True,
+            )
     
     logger.info(f"Transactions with matching building details: {joined_df['has_building_match'].sum()}")
     

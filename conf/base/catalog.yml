@@ -275,6 +275,30 @@ manual_review_list:
     index: False
     engine: pyarrow
 
+manual_building_supplement_workbook:
+  type: pandas.ExcelDataset
+  filepath: data/02_intermediate/buildings.xlsx
+
+supplemental_building_review_queue:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/manual_review_list.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
+building_match_audit_summary:
+  type: pandas.CSVDataset
+  filepath: data/08_reporting/building_match_audit_summary.csv
+  save_args:
+    index: False
+
+consolidated_commercial_building_master:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/consolidated_commercial_building_master.parquet
+  save_args:
+    index: False
+    engine: pyarrow
+
 final_consolidated_commercial_db:
   type: pandas.ParquetDataset
   filepath: data/03_primary/final_consolidated_commercial_db.parquet

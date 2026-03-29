@@ -1,0 +1,293 @@
+# .cursorrules — Property Scraper (Kedro)
+
+## 0. Purpose of this file
+
+- This repository implements a Kedro-based property data scraping and processing pipeline ("Property Scraper") for Hong Kong property transactions.
+- Use these rules to:
+  - Generate and modify code that fits the existing Kedro project structure.
+  - Keep scraping logic consistent across Centaline / Midland and RES / OIR / ICI domains.
+  - Maintain clean, testable data pipelines with clear separation between scraping, processing, and export.
+  - Help the user track implementation progress and technical debt.
+
+When in doubt, ask clarifying questions before generating code.
+
+---
+
+## 1. High-level architecture
+
+- This is a **Python + Kedro** project.
+- Core path prefix for source code: `src/property_scraper/`.
+- Pipelines live under `src/property_scraper/pipelines/`.
+- Configuration lives under `conf/base/` (especially `conf/base/parameters.yml` and catalog files).
+- Data folders follow the Kedro convention:
+  - `data/01_raw/` — raw scraped data, as close to source as practical.
+  - `data/02_intermediate/` — joined / enriched but not yet fully cleaned.
+  - `data/03_primary/` — cleaned, standardized, analysis-ready datasets and Excel exports.
+
+When creating new functionality, integrate it as a **Kedro node inside an existing or new pipeline**, not as a standalone ad‑hoc script (except when explicitly requested for quick debugging or reset utilities).
+
+---
+
+## 2. Pipelines and data sources
+
+### 2.1 Existing pipeline folders
+
+- Use this folder structure as the canonical pattern:
+  - `src/property_scraper/pipelines/centaline_res/`
+  - `src/property_scraper/pipelines/centaline_oir/`
+  - `src/property_scraper/pipelines/midland_res/`
+  - `src/property_scraper/pipelines/midland_ici/`
+  - `src/property_scraper/pipelines/data_process/`
+
+Rules:
+
+- New scraping or processing functionality for a given source **must** be added inside the corresponding pipeline package.
+- Do not mix responsibilities:
+  - Source-specific scraping logic (HTTP, HTML parsing, pagination) stays in the corresponding source pipeline or a shared `sources`/`clients` module.
+  - Cross-source data cleaning and harmonization lives in `data_process`.
+- Prefer small, composable Kedro nodes over monolithic nodes:
+  - One node should have a single responsibility (e.g., "scrape listing pages", "transform raw transactions", "join to estate master", "apply fuzzy estate matching", "export to Excel").
+
+### 2.2 Running pipelines
+
+- Default full run: `kedro run`.
+- Pipeline‑specific runs: `kedro run --pipeline=<pipeline_name>` where `<pipeline_name>` matches the pipeline registration.
+- When adding or modifying nodes or pipelines, ensure they are correctly registered in:
+  - `src/property_scraper/pipeline_registry.py` (or the project's equivalent registry module).
+  - Any relevant catalog entries in `conf/base/catalog.yml`.
+
+When generating Kedro nodes or pipelines, always:
+- Include type hints on node functions.
+- Use explicit input and output dataset names that reflect their semantics (not just generic names like `"data"`).
+
+---
+
+## 3. Node tracking and incremental scraping
+
+### 3.1 Node tracking behavior
+
+The project uses **node tracking** to avoid redundant scraping.
+
+- When working on scraping nodes, always:
+  - Respect existing node‑tracking utilities and data structures.
+  - Prefer live website freshness checks (e.g. sitemap `lastmod`, page-1 totals, lightweight probe fingerprints) over fixed day-based skip rules when practical.
+  - Reuse any existing node‑tracking patterns instead of inventing a new mechanism.
+- When you need to extend node tracking:
+  - Implement a small, well‑documented utility (for example in a `utils/node_tracker.py` module or similar).
+  - Keep the abstraction simple: "what does the website state look like now?", "is the local dataset valid?", and "should we scrape this entity now?".
+
+### 3.2 Reset and forced re-scraping
+
+- Prefer the existing node tracker utilities (`reset_node`, `reset_all_nodes`) or dedicated scripts under `scripts/` over inventing new ad-hoc reset entry points.
+- When modifying node tracking or adding new reset functionality:
+  - Make it explicit which node types or sources will be reset.
+  - Log clearly what is being reset to avoid surprises in production runs.
+
+---
+
+## 4. Scraping rules per source
+
+### 4.1 General scraping principles
+
+- All scrapers must:
+  - Handle pagination, rate limiting, and transient failures robustly.
+  - Use configurable parameters (e.g., delays, retries, concurrency) from `conf/base/parameters.yml` instead of hardcoding values.
+  - Log meaningful events using Python's `logging` module (not `print`), especially for:
+    - Start and end of a scrape batch.
+    - Pagination progress.
+    - Exceptions and retry attempts.
+
+- Prefer Playwright for pages where the source site is strongly JavaScript-driven or where lightweight DOM probes are needed before deciding whether to do a full scrape.
+
+- Scraping functions must be pure with respect to business logic:
+  - No global state.
+  - No hidden I/O except for structured logging, node-tracker metadata, backup/recovery safeguards, and well-defined dataset writes through Kedro.
+
+### 4.2 Centaline Residential & OIR
+
+- Centaline pipelines should:
+  - Keep **residential** and **OIR (Office / Industrial / Retail)** logic in separate modules.
+  - Share common helper functions only if they are truly generic (e.g., HTTP client, generic HTML parsing helpers).
+  - Capture both listing and transaction data where applicable, then join these within `data_process`.
+
+### 4.3 Midland Residential & ICI
+
+- Midland pipelines should:
+  - Separate **Residential** and **ICI (Industrial / Commercial / Investment)** logic similarly.
+  - Use consistent patterns with the Centaline pipelines where possible (naming, structure, error handling), but do not force identical interfaces if the source sites behave differently.
+  - Implement incremental scraping based on time ranges, page indices, or IDs, following the existing node tracking patterns.
+
+When modifying or generating scrapers, **never** hardcode environment‑specific values (e.g., absolute file paths, machine‑specific settings). All such parameters go into configuration.
+
+---
+
+## 5. Data model, cleaning, and enrichment
+
+### 5.1 Column naming and schema
+
+- Use **snake_case** for all column names in internal DataFrames.
+- Prefer explicit, descriptive names, for example:
+  - `transaction_date`, `record_date`
+  - `estate_name`, `building_name`, `phase_name`
+  - `flat`, `floor`, `block`
+  - `gross_area_sqft`, `saleable_area_sqft`
+  - `price_hkd`, `price_per_sqft_gross`, `price_per_sqft_saleable`
+- When generating or modifying schemas:
+  - Keep a single, canonical schema for **final standardized datasets** in the data processing pipeline.
+  - If you need new columns, update:
+    - The transformation node(s) in `data_process`.
+    - Any downstream Excel export logic that relies on a fixed column set.
+
+### 5.2 Fuzzy estate matching
+
+- Estate name matching must:
+  - Use a dedicated matching step (e.g., in `data_process`) that performs fuzzy string matching between transaction/estate names and a master estate list.
+  - Be deterministic for the same input (i.e., no random seeds in normal runs).
+  - Log matching quality (e.g., score thresholds) when appropriate.
+
+- When generating new fuzzy matching logic:
+  - Keep the algorithm configurable (e.g., threshold values) via `parameters.yml`.
+  - Avoid overfitting to a single source; it should support both Centaline and Midland naming quirks.
+
+### 5.3 Data cleansing
+
+- The data cleansing nodes should:
+  - Handle type conversion (dates, numeric fields).
+  - Normalize categorical values (e.g., property types, usage categories).
+  - Drop or rename columns to produce a **clean, analysis-ready** dataset.
+- Always separate:
+  - "Raw to intermediate" transformations that are source‑specific.
+  - "Intermediate to primary" transformations that standardize and join across sources.
+
+When in doubt, prefer adding a small, focused node over expanding an existing large node.
+
+---
+
+## 6. Excel exports and date-range splitting
+
+- Final Excel exports live in `data/03_primary/` and include at least:
+  - `Combined_Dateset_2020_2022.xlsx`
+  - `Combined_Dateset_2023_2025.xlsx` (and extended ranges as needed).
+
+Rules:
+
+- Date range boundaries must be parameterized (via `parameters.yml`) rather than hardcoded in node functions.
+- When changing export structure:
+  - Keep file naming predictable and stable.
+  - Ensure that date filters exactly match the intended ranges and do not overlap.
+- Exports should always be generated from the **final standardized DataFrame** (not from a partially processed dataset).
+
+When generating or modifying Excel export code, always:
+- Use `pandas` operations that preserve data types where possible.
+- Avoid using Excel-only formatting features in the core pipeline; keep those for post-processing if truly needed.
+
+---
+
+## 7. Configuration and parameters
+
+- Treat `conf/base/parameters.yml` as the **single source of truth** for:
+  - Scraping parameters: delays, retries, concurrency, pagination limits.
+  - Node tracking intervals or thresholds.
+  - Fuzzy matching thresholds.
+  - Date ranges for exports.
+- Do not introduce "magic numbers" or hardcoded constants in node functions if they can be expressed as parameters.
+
+When you need a new parameter:
+- Add it explicitly to `parameters.yml` with a clear name and comment.
+- Pass it into Kedro nodes via the standard parameters mechanism (e.g., `params:some_parameter` in the catalog or pipeline definitions).
+
+---
+
+## 8. Logging, debugging, and test utilities
+
+- Use Python's `logging` module with module‑level loggers (`logger = logging.getLogger(__name__)`).
+- Log at appropriate levels:
+  - `info` for high‑level pipeline steps.
+  - `debug` for detailed data or progress information.
+  - `warning` or `error` for problems that require attention.
+
+- Relevant debug / operational helpers currently include:
+  - `scripts/backup_centaline_res_once.py`
+  - `scripts/backup_and_rescrape_centaline_transactions.py`
+  - `notebooks/centaline_playwright_test.py`
+
+When updating or creating new debug scripts:
+- Keep them small and focused on a single concern.
+- Avoid duplicating business logic from nodes; instead, reuse node functions or shared helpers where practical.
+
+---
+
+## 9. Coding style and quality
+
+- Follow **PEP 8** for Python style and use type hints consistently.
+- Prefer:
+  - Small, single‑purpose functions.
+  - Pure transformations (functions that take inputs and return outputs without side effects) for data processing nodes.
+  - Clear, explicit names over abbreviations.
+
+- Do **not**:
+  - Introduce unnecessary abstractions (e.g., generic base classes) unless clearly justified.
+  - Perform large‑scale refactors of existing code unless the user explicitly requests it.
+
+When modifying existing code:
+- Match the existing patterns and style in that file.
+- Minimize unrelated changes (no drive‑by formatting edits unless asked).
+
+---
+
+## 10. Interaction with the user and progress tracking
+
+### 10.1 Communication style
+
+- When requirements are ambiguous, ask concise, targeted clarification questions before making structural decisions.
+- For substantial changes (e.g., new pipelines, schema changes), briefly summarize:
+  - What will be added or changed.
+  - How it integrates with existing pipelines and data flow.
+
+### 10.2 Progress logging
+
+- Treat a file like `docs/DEVLOG.md` (or an equivalent dev log file if it exists) as the **canonical progress log**.
+- When the user asks to "record progress" or "update the devlog":
+  - Append a new dated section summarizing:
+    - Completed tasks (nodes, pipelines, scripts modified).
+    - Open TODOs and known issues.
+- Use short, action‑oriented bullet points rather than essays.
+
+If `docs/DEVLOG.md` does not yet exist and the user requests progress tracking, create it and seed it with a brief project overview and an initial dated session section.
+
+### 10.3 TODOs and technical debt
+
+- When you see opportunities for improvement or necessary follow‑ups:
+  - Add TODO comments in the relevant code using the format: `# TODO: <short description>`.
+  - Optionally mirror important TODOs in `docs/DEVLOG.md` under an "Open TODOs" list when requested.
+
+---
+
+## 11. Safety, robustness, and ethics
+
+- Scrapers must include:
+  - Configurable rate limiting and backoff strategies.
+  - Robust error handling for network issues and unexpected HTML changes.
+- Avoid:
+  - Hardcoding personal data or sensitive information.
+  - Logging raw credentials, tokens, or full URLs that might contain secrets.
+
+When integrating third‑party services (e.g., proxies or scraping APIs), read parameters and credentials from configuration or environment variables, never from hardcoded literals.
+
+---
+
+## 12. How to extend this project
+
+When the user asks to add a new feature, follow this order of operations:
+
+1. Clarify the feature requirements and how it fits into the existing pipelines.
+2. Identify the correct pipeline package (or create a new one if necessary) under `src/property_scraper/pipelines/`.
+3. Design node functions with clear inputs/outputs and update:
+   - Pipeline registration.
+   - Catalog entries.
+   - Parameters, if needed.
+4. Implement the nodes and wire them into the pipeline.
+5. Add or update tests and any relevant debug scripts.
+6. Update `docs/DEVLOG.md` if the user has requested ongoing progress tracking.
+
+Always keep the Kedro pipeline model coherent: clean separation between scraping, processing, enrichment, and export.
