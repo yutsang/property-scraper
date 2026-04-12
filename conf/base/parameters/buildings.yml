@@ -53,22 +53,22 @@ name_cleaning:
 # Source priority settings
 source_priority:
   residential:
-    - centaline_res
-    - midland_res
+    - source_a_res
+    - source_b_res
   commercial:
-    - leasinghub
-    - centaline_oir
-    - midland_ici
+    - source_c
+    - source_a_commercial
+    - source_b_commercial
 
 # District priority settings
 district_priority:
   residential:
-    - centaline_res
-    - midland_res
+    - source_a_res
+    - source_b_res
   commercial:
-    - leasinghub
-    - centaline_oir
-    - midland_ici
+    - source_c
+    - source_a_commercial
+    - source_b_commercial
 
 # Hong Kong territory bounds
 hong_kong_bounds:

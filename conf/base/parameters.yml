@@ -1,4 +1,4 @@
-# Parameters for Centaline Residential Pipeline # Purely Based on Control-Date
+# Parameters for Source A Residential Pipeline # Purely Based on Control-Date
 webscraper:
   global:
     use_edge: False  # Deprecated: now using Playwright
@@ -10,7 +10,7 @@ webscraper:
     max_threads: 8  # Multithreading for Playwright (transactions + estates)
     page_load_timeout: 35  # Fast fail; retries handle slow districts (was 60)
     start_date: "2000-01-01"
-    end_date: "2025-06-17"
+    end_date: "2026-04-10"
     page_size: 10000
     retry_count: 3
     timeout: 30
@@ -26,7 +26,7 @@ webscraper:
     building_skip_days: 28     # Skip building nodes if run within 28 days
     default_skip_days: 0       # Default nodes always run (0 = no skip)
   
-  centaline_res:
+  source_a_res:
     area_code_path: data/01_raw/Centanet_Res_Area_Code.csv
     res_trans_path: data/01_raw/centaline_res_trans_lv_0.parquet
     max_pages_per_area: 999
@@ -41,12 +41,19 @@ webscraper:
     full_rerun: false
     estate_full_rerun: false  # When true: rescrape all estate districts (gets ~19k to match website)
     fuzzy_match_threshold: 85  # For enrich fallback when no direct code match
+    site:
+      sitemap_index_url: ""
+      request_headers: {}
+      transaction_list_url: ""
+      estate_list_url_template: ""
+      estate_base_url: ""
   
-  centaline_oir:
-    transaction_api_url: "https://oir.centanet.com/api/Transaction/GetTransactionList"
-    property_api_url: "https://oir.centanet.com/api/Property/GetPropertyList"
-    cl_oir_building_listings_file: 'data/01_raw/centanet_oir_buildings.parquet'
-    cl_oir_transaction_file: 'data/01_raw/centaline_oir_trans_lv_0.parquet'
+  source_a_commercial:
+    transaction_api_url: ""
+    property_api_url: ""
+    building_listings_file: "data/01_raw/centanet_oir_buildings.parquet"
+    transaction_file: "data/01_raw/centaline_oir_trans_lv_0.parquet"
+    building_details_file: "data/02_intermediate/centanet_oir_details.parquet"
     page_size: 10000
     headers:
       User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -64,16 +71,30 @@ webscraper:
       type: "left"
       cast_join_keys: true
       validate: "one_to_many"
-    cookies: {"gr_user_id": "24005ea2-e47e-4e55-baed-171d8f324a03"}
+    cookies: {}
+    site:
+      landing_url: ""
+      search_url: ""
+      detail_base_url: ""
+      origin: ""
+      referer: ""
   
-  midland_res:
+  source_b_res:
     res_trans_path: "data/01_raw/midland_res_trans_lv_0.parquet"
+    estate_output_path: "data/01_raw/midland_res_estates.parquet"
     request_delay_min: 1.0
     request_delay_max: 3.0
     max_retries: 3
     timeout: 30
+    site:
+      districts_url: ""
+      district_headers: {}
+      estate_search_url: ""
+      estate_headers: {}
+      transaction_search_url: ""
+      transaction_headers: {}
   
-  midland_ici:
+  source_b_commercial:
     save_incremental: True
     incremental_save_frequency: 5
     max_page_size: 20000
@@ -81,17 +102,17 @@ webscraper:
     resume_from_existing: True
     max_retries: 3
     request_delay: 0.5
-    midland_ici_building_listings: 'data/01_raw/midland_ici_buildings.parquet'
-    midland_ici_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
-    buildings_url: "https://service.midlandici.com/building/graphql"
-    transaction_url: "https://data.midlandici.com.hk/search/v1/transaction"
-    transaction_landing_url: "https://www.midlandici.com.hk/zh-hk/listing/transaction/ics"
+    source_b_commercial_building_listings: 'data/01_raw/midland_ici_buildings.parquet'
+    source_b_commercial_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
+    buildings_url: ""
+    transaction_url: ""
+    transaction_landing_url: ""
     transaction_api_params:
       currency: "HKD"
       lang: "zh-hk"
       sort: "txDate-desc"
       unit: "feet"
-    # Bilingual fetch: zh-hk row + en row merged per record (see ml_ici_scrape_trans)
+    # Bilingual fetch: zh-hk row + en row merged per record (see source_b_commercial_scrape_trans)
     transaction_lang_zh: "zh-hk"
     transaction_lang_en: "en"
     transaction_headers_main:
@@ -101,13 +122,15 @@ webscraper:
       User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
       Accept: "application/json, text/plain, */*"
       Accept-Language: "zh-HK,zh;q=0.9,en;q=0.8"
-      Referer: "https://www.midlandici.com.hk/zh-hk/listing/transaction/ics"
+      Referer: ""
     headers:
       Content-Type: "application/json"
       Accept: "*/*"
-      Origin: "https://www.midlandici.com.hk"
-      Referer: "https://www.midlandici.com.hk/"
+      Origin: ""
+      Referer: ""
       User-Agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+    site:
+      detail_base_url: ""
     join:
       join_left_on: building_id
       join_right_on: id
@@ -135,16 +158,16 @@ webscraper:
                 'Podium', 'PODIUM', 'U/G', 'P7', 'P4', 'UG1']
     flat_keywords: ['Flat', 'Apartment', 'Duplex']
 
-# Parameters for Buildings Pipeline (LeasingHub)
+# Parameters for Buildings Pipeline (Source C)
 buildings:
   property_types: ['office', 'shop', 'industrial']
   max_pages: 200
   start_idx: 0
   batch_size: null
   base_urls:
-    office: "https://www.leasinghub.com/office/buildings"
-    shop: "https://www.leasinghub.com/shop/buildings"
-    industrial: "https://www.leasinghub.com/industrial/buildings"
+    office: "https://www.source_c.com/office/buildings"
+    shop: "https://www.source_c.com/shop/buildings"
+    industrial: "https://www.source_c.com/industrial/buildings"
   # Fuzzy matching parameters
   fuzzy_matching:
     residential_threshold: 90  # Threshold for residential building matching
@@ -153,10 +176,10 @@ buildings:
     enable_fuzzy_matching: true
   # Building name extraction parameters
   name_extraction:
-    centaline_res_columns: ['extracted_estate_name', 'matched_estate_name', 'Name', 'scraped_estate_name']
-    centaline_oir_columns: ['propertyNameEn', 'propertyNameCn']
-    midland_res_columns: ['estate', 'building', 'name']
-    midland_ici_columns: ['Building Name', 'building_name_zh', 'building_name_en']
+    source_a_res_columns: ['extracted_estate_name', 'matched_estate_name', 'Name', 'scraped_estate_name']
+    source_a_commercial_columns: ['propertyNameEn', 'propertyNameCn']
+    source_b_res_columns: ['estate', 'building', 'name']
+    source_b_commercial_columns: ['Building Name', 'building_name_zh', 'building_name_en']
     min_frequency: 1          # Minimum frequency for name inclusion
   # Node execution tracking configuration
   node_tracking:

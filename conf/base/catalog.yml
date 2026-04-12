@@ -1,5 +1,5 @@
-# Data Catalog for Midland Residential Pipeline
-midland_res_area_code:
+# Data Catalog for Source B Residential Pipeline
+source_b_res_area_code:
   type: pandas.CSVDataset
   filepath: data/01_raw/midland_res_area_code.csv
   load_args:
@@ -20,13 +20,13 @@ raw_estate_data:
         orient: records
         lines: True
 
-midland_res_transactions:
+source_b_res_transactions:
   type: pandas.ParquetDataset
   filepath: data/01_raw/midland_res_trans_lv_0.parquet
   save_args:
     index: False
 
-midland_res_estates:
+source_b_res_estates:
   type: pandas.ParquetDataset
   filepath: data/01_raw/midland_res_estates.parquet
   save_args:
@@ -38,38 +38,36 @@ merged_property_data:
   save_args:
     index: False
 
-midland_res_base:
+source_b_res_base:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/midland_res_base.parquet
   save_args:
     index: False
 
-midland_res:
+source_b_res:
   type: pandas.ParquetDataset
   filepath: data/03_primary/midland_res.parquet
   save_args:
-    index: False 
+    index: False
 
 ##################################################################
 
-# Data Catalog for Centaline Residential Pipeline
+# Data Catalog for Source A Residential Pipeline
 
 # Raw Data
 area_codes:
   type: pandas.CSVDataset  # Changed from ExcelDataSet
-  filepath: data/01_raw/Centanet_Res_Area_Code.csv  # Changed extension
+  filepath: data/01_raw/Centanet_Res_Area_Code.csv
   load_args:
     encoding: utf-8-sig
 
 # Rest of the catalog remains the same
 raw_estate_listings:
   type: pandas.ParquetDataset
-  #filepath: data/02_intermediate/estate_listings.parquet
   filepath: data/01_raw/centaline_estate_lv_1.parquet
 
 estate_details_raw:
   type: pandas.ParquetDataset
-  #filepath: data/02_intermediate/estate_details_raw.parquet
   filepath: data/01_raw/centaline_estate_lv_2.parquet
 
 raw_transaction_data:
@@ -81,21 +79,21 @@ processed_transactions:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/centaline_res_trans_lv_1.parquet
 
-centaline_res_base:
+source_a_res_base:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/centaline_res_base.parquet
   save_args:
     index: False
 
-centaline_res:
+source_a_res:
   type: pandas.ParquetDataset
   filepath: data/03_primary/centaline_res.parquet
 
 ##################################################################
 
-# Data Catalog for Midland ICI Pipeline
+# Data Catalog for Source B Commercial Pipeline
 
-ml_ici_area_code:
+source_b_commercial_area_code:
   type: pandas.CSVDataset
   filepath: data/01_raw/midland_ici_area_code.csv
   load_args:
@@ -103,36 +101,36 @@ ml_ici_area_code:
   save_args:
     index: False
 
-midland_ici_building_listings:
+source_b_commercial_building_listings:
   type: pandas.ParquetDataset
   filepath: data/01_raw/midland_ici_buildings.parquet
 
-midland_ici_trans:
+source_b_commercial_trans:
   type: pandas.ParquetDataset
   filepath: data/01_raw/midland_ici_trans.parquet
   save_args:
     index: False
     engine: pyarrow
 
-midland_ici_building_details: 
-  type: pandas.ParquetDataset 
+source_b_commercial_building_details:
+  type: pandas.ParquetDataset
   filepath: data/02_intermediate/midland_ici_building_details.parquet
 
-midland_ici_base:
+source_b_commercial_base:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/midland_ici_base.parquet
 
-midland_ici:
+source_b_commercial:
   type: pandas.ParquetDataset
   filepath: data/03_primary/midland_ici.parquet
 
 
 ##################################################################
 
-# Data Catalog for Centaline OIR Pipeline
+# Data Catalog for Source A Commercial Pipeline
 
 # Input data
-cl_oir_area_code:
+source_a_commercial_area_code:
   type: pandas.CSVDataset
   filepath: data/01_raw/centanet_oir_area_code.csv
   load_args:
@@ -141,19 +139,19 @@ cl_oir_area_code:
   save_args:
     index: False
 
-centanet_oir_buildings_listing:
+source_a_commercial_buildings_listing:
   type: pandas.ParquetDataset
   filepath: data/01_raw/centanet_oir_buildings.parquet
 
-centaline_oir_trans_lv_0:
+source_a_commercial_trans_lv_0:
   type: pandas.ParquetDataset
   filepath: data/01_raw/centaline_oir_trans_lv_0.parquet
 
-centanet_oir_buildings_details:
+source_a_commercial_buildings_details:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/centanet_oir_details.parquet
 
-centaline_oir_base:
+source_a_commercial_base:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/centaline_oir_base.parquet
   save_args:
@@ -161,7 +159,7 @@ centaline_oir_base:
     engine: pyarrow
     compression: snappy
 
-centaline_oir:
+source_a_commercial:
   type: pandas.ParquetDataset
   filepath: data/03_primary/centaline_oir.parquet
   save_args:
@@ -201,13 +199,6 @@ output_commercial_2024_current:
 # Data Catalog for Centralized Buildings Pipeline
 
 # Raw building data from all sources
-leasinghub_building_listings:
-  type: pandas.ParquetDataset
-  filepath: data/01_raw/leasinghub_building_listings.parquet
-  save_args:
-    index: False
-    engine: pyarrow
-
 commercial_buildings_raw:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/commercial_buildings_raw.parquet

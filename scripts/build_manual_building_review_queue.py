@@ -45,13 +45,9 @@ def load_optional_frame(path: Path, *, parquet: bool = True) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def load_leasinghub_frames() -> list[pd.DataFrame]:
-    parquet_path = ROOT / "data/01_raw/leasinghub_building_listings.parquet"
-    if parquet_path.exists():
-        return [pd.read_parquet(parquet_path)]
-
+def load_source_c_frames() -> list[pd.DataFrame]:
     frames: list[pd.DataFrame] = []
-    for path in sorted((ROOT / "notebooks").glob("leasinghub*.csv")):
+    for path in sorted((ROOT / "notebooks").glob("source_c*.csv")):
         try:
             frames.append(pd.read_csv(path))
         except Exception:
@@ -77,22 +73,22 @@ def main() -> None:
         else int(supplement_params.get("default_limit", 0))
     )
 
-    centaline_oir = load_optional_frame(ROOT / "data/03_primary/centaline_oir.parquet")
-    midland_ici_base = load_optional_frame(ROOT / "data/02_intermediate/midland_ici_base.parquet")
-    midland_ici_primary = load_optional_frame(ROOT / "data/03_primary/midland_ici.parquet")
-    centaline_res = load_optional_frame(ROOT / "data/03_primary/centaline_res.parquet")
-    midland_res = load_optional_frame(ROOT / "data/03_primary/midland_res.parquet")
-    leasinghub_frames = load_leasinghub_frames()
+    source_a_commercial = load_optional_frame(ROOT / "data/03_primary/centaline_oir.parquet")
+    source_b_commercial_base = load_optional_frame(ROOT / "data/02_intermediate/midland_ici_base.parquet")
+    source_b_commercial_primary = load_optional_frame(ROOT / "data/03_primary/midland_ici.parquet")
+    source_a_res = load_optional_frame(ROOT / "data/03_primary/centaline_res.parquet")
+    source_b_res = load_optional_frame(ROOT / "data/03_primary/midland_res.parquet")
+    source_c_frames = load_source_c_frames()
     centaline_buildings = load_optional_frame(
         ROOT / "data/02_intermediate/centanet_oir_details.parquet"
     )
     midland_buildings = load_optional_frame(
         ROOT / "data/02_intermediate/midland_ici_building_details.parquet"
     )
-    centaline_res_buildings = load_optional_frame(
+    source_a_res_buildings = load_optional_frame(
         ROOT / "data/01_raw/centaline_estate_lv_2.parquet"
     )
-    midland_res_buildings = load_optional_frame(
+    source_b_res_buildings = load_optional_frame(
         ROOT / "data/01_raw/midland_res_estates.parquet"
     )
 
@@ -100,43 +96,43 @@ def main() -> None:
     consolidated_master_path = ROOT / supplement_params["consolidated_master_file"]
 
     workbook_sheets, approved_master, consolidated_master = build_mega_building_workbook(
-        centaline_oir=centaline_oir,
-        midland_ici_base=midland_ici_base,
-        midland_ici_primary=midland_ici_primary,
-        centaline_res=centaline_res,
-        midland_res=midland_res,
-        centaline_oir_buildings=centaline_buildings,
-        midland_ici_buildings=midland_buildings,
-        centaline_res_buildings=centaline_res_buildings,
-        midland_res_buildings=midland_res_buildings,
-        leasinghub_frames=leasinghub_frames,
+        source_a_commercial=source_a_commercial,
+        source_b_commercial_base=source_b_commercial_base,
+        source_b_commercial_primary=source_b_commercial_primary,
+        source_a_res=source_a_res,
+        source_b_res=source_b_res,
+        source_a_commercial_buildings=centaline_buildings,
+        source_b_commercial_buildings=midland_buildings,
+        source_a_res_buildings=source_a_res_buildings,
+        source_b_res_buildings=source_b_res_buildings,
+        source_c_frames=source_c_frames,
         workbook_path=workbook_path,
         include_limit=include_limit,
     )
     updated_source_frames = merge_manual_rows_into_source_buildings(
         approved_master=approved_master,
-        centaline_oir_buildings=centaline_buildings,
-        midland_ici_buildings=midland_buildings,
-        centaline_res_buildings=centaline_res_buildings,
-        midland_res_buildings=midland_res_buildings,
+        source_a_commercial_buildings=centaline_buildings,
+        source_b_commercial_buildings=midland_buildings,
+        source_a_res_buildings=source_a_res_buildings,
+        source_b_res_buildings=source_b_res_buildings,
     )
 
     consolidated_master_path.parent.mkdir(parents=True, exist_ok=True)
 
     write_mega_building_workbook(workbook_path, workbook_sheets)
-    updated_source_frames["centaline_oir"].to_parquet(
+    updated_source_frames["source_a_commercial"].to_parquet(
         ROOT / "data/02_intermediate/centanet_oir_details.parquet",
         index=False,
     )
-    updated_source_frames["midland_ici"].to_parquet(
+    updated_source_frames["source_b_commercial"].to_parquet(
         ROOT / "data/02_intermediate/midland_ici_building_details.parquet",
         index=False,
     )
-    updated_source_frames["centaline_res"].to_parquet(
+    updated_source_frames["source_a_res"].to_parquet(
         ROOT / "data/01_raw/centaline_estate_lv_2.parquet",
         index=False,
     )
-    updated_source_frames["midland_res"].to_parquet(
+    updated_source_frames["source_b_res"].to_parquet(
         ROOT / "data/01_raw/midland_res_estates.parquet",
         index=False,
     )

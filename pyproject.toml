@@ -9,6 +9,7 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "ipython>=8.10",
+    "playwright>=1.40",
     "jupyterlab>=3.0",
     "notebook",
     "kedro[jupyter]~=0.19.11",

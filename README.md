@@ -1,22 +1,23 @@
 # Property Scraper
 
-A comprehensive property data scraping and processing pipeline built with Kedro framework. This project scrapes property transaction data from multiple sources including Centaline and Midland, processes and enriches the data, and outputs standardized datasets for analysis.
+A comprehensive property data scraping and processing pipeline built with Kedro framework. This project scrapes property transaction data from multiple sources including Source A and Source B, processes and enriches the data, and outputs standardized datasets for analysis.
 
 ## Features
 
-- **Multi-source Data Collection**: Scrapes from Centaline (Residential & OIR) and Midland (Residential & ICI)
+- **Multi-source Data Collection**: Scrapes from Source A and Source B across residential and commercial domains
 - **Intelligent Node Tracking**: Prevents redundant scraping with configurable execution intervals
 - **Data Enrichment**: Estate name matching using fuzzy string matching
 - **Data Cleansing**: Comprehensive cleaning and standardization of property data
 - **Incremental Processing**: Efficient handling of large datasets with incremental updates
+- **Live Freshness Checks**: Source A RES can compare lightweight website signals before deciding whether to scrape
 - **Excel Export**: Automated generation of Excel reports with date-range splitting
 
 ## Data Sources
 
-- **Centaline Residential**: Property listings and transaction data
-- **Centaline OIR**: Office, Industrial, and Retail property data
-- **Midland Residential**: Residential property transactions and estate details
-- **Midland ICI**: Industrial, Commercial, and Investment property data
+- **Source A Residential**: Property listings and transaction data
+- **Source A Commercial**: Office, industrial, and retail property data
+- **Source B Residential**: Residential property transactions and estate details
+- **Source B Commercial**: Industrial, commercial, and investment property data
 
 ## Pipeline Structure
 
@@ -24,12 +25,24 @@ The project follows a modular pipeline structure:
 
 ```
 src/property_scraper/pipelines/
-├── centaline_res/     # Centaline residential data
-├── centaline_oir/     # Centaline OIR data
-├── midland_res/       # Midland residential data
-├── midland_ici/       # Midland ICI data
+├── source_a_res/     # Source A residential data
+├── source_a_commercial/     # Source A commercial data
+├── source_b_res/       # Source B residential data
+├── source_b_commercial/       # Source B commercial data
 └── data_process/      # Data cleaning and processing
 ```
+
+## Current Status
+
+- **Source A residential** now uses Playwright for the JS-heavy estate and transaction paths.
+- **Live website checks** are used to avoid unnecessary reruns when upstream state has not changed.
+- **Backup-aware recovery** is available for corrupt Source A RES transaction parquet files so a broken incremental file does not silently trigger a huge historical rescrape.
+
+## Documentation
+
+- [Source A rescraping guide](docs/source_a_res_rescraping.md)
+- [Node tracking and live freshness checks](docs/node_tracking.md)
+- [Development log / current progress](docs/DEVLOG.md)
 
 ## Setup
 
@@ -38,10 +51,15 @@ src/property_scraper/pipelines/
    pip install -r requirements.txt
    ```
 
-2. **Configure Parameters**:
+2. **Install Playwright browsers** (required for Source A residential scraping; the PyPI package alone does not ship Chromium):
+   ```bash
+   python -m playwright install chromium
+   ```
+
+3. **Configure Parameters**:
    Edit `conf/base/parameters.yml` to customize scraping behavior, node tracking intervals, and data processing options.
 
-3. **Run the Pipeline**:
+4. **Run the Pipeline**:
    ```bash
    kedro run
    ```
@@ -55,15 +73,15 @@ kedro run
 
 ### Run Specific Pipeline
 ```bash
-kedro run --pipeline=centaline_res
-kedro run --pipeline=midland_ici
+kedro run --pipeline=source_a_res
+kedro run --pipeline=source_b_commercial
 ```
 
 ### Reset Node Tracking
-To force re-scraping of specific data sources:
+To reset a tracked node or all tracked nodes, use the node tracker utility instead of the old reset script references:
 ```bash
-python reset_midland_ici_nodes.py
-python reset_all_midland_nodes.py
+python -c "from property_scraper.utils.node_tracker import get_node_tracker; get_node_tracker().reset_node('transaction_data_scraper')"
+python -c "from property_scraper.utils.node_tracker import get_node_tracker; get_node_tracker().reset_all_nodes()"
 ```
 
 ## Data Flow
@@ -91,15 +109,16 @@ Key configuration options in `conf/base/parameters.yml`:
 
 ## Troubleshooting
 
-1. **Empty Transaction Data**: Use reset scripts to force re-scraping
-2. **Rate Limiting**: Adjust request delays in configuration
-3. **Memory Issues**: Enable incremental processing for large datasets
+1. **Corrupt Source A RES transaction parquet**: restore the latest backup or use the built-in recovery path instead of forcing a full historical rerun.
+2. **Rate Limiting / Slow Runs**: adjust Playwright worker count, delays, and page limits in `conf/base/parameters.yml`.
+3. **Live probe failures**: if sitemap or page probes fail, check connectivity/TLS first before forcing a full rescrape.
+4. **`BrowserType.launch: Executable doesn't exist` / missing `headless_shell`**: install Playwright’s bundled browser in the same environment you use for `kedro run` (`python -m playwright install chromium`).
 
 ### Debug Scripts
 
-- `debug_estate_columns.py`: Check estate DataFrame structure
-- `test_estate_scraping.py`: Test estate data fetching
-- `test_node_tracker.py`: Verify node tracking functionality
+- `scripts/backup_source_a_res_once.py`: one-time backup of Source A residential outputs before rerun
+- `scripts/backup_and_rescrape_source_a_transactions.py`: backup helper for Source A residential transaction rescrapes
+- `notebooks/source_a_playwright_test.py`: exploratory Playwright checks for Source A pages
 
 ## License
 
@@ -111,11 +130,7 @@ For licensing inquiries, please contact me.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+This repository is currently maintained as a proprietary project. Internal contributors should work through normal branch / PR review, but public fork-and-PR workflow is not the intended default.
 
 ## Support
 

@@ -13,6 +13,17 @@ PIPELINE_AUTO_DISCOVERY_FLAG = True
 CONF_SOURCE = "conf"
 ENV = "local"
 
+# Kedro loads conf/base first, then deep-merges conf/local on top so secrets
+# (API tokens, etc.) in conf/local can patch onto base without wiping sibling
+# parameters.
+CONFIG_LOADER_ARGS = {
+    "base_env": "base",
+    "default_run_env": "local",
+    "merge_strategy": {
+        "parameters": "soft",
+    },
+}
+
 # Disable telemetry
 KEDRO_DISABLE_TELEMETRY = True
 

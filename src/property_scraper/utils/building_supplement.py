@@ -39,10 +39,10 @@ REVIEW_QUEUE_COLUMNS = [
 ]
 
 MEGA_WORKBOOK_TABS = {
-    "centaline_res": "centaline_res",
-    "centaline_oir": "centaline_oir",
-    "midland_res": "midland_res",
-    "midland_ici": "midland_ici",
+    "source_a_res": "source_a_res",
+    "source_a_commercial": "source_a_commercial",
+    "source_b_res": "source_b_res",
+    "source_b_commercial": "source_b_commercial",
 }
 
 MEGA_BASE_COLUMNS = [
@@ -73,26 +73,26 @@ MEGA_BASE_COLUMNS = [
 ]
 
 MEGA_SHEET_COLUMNS = {
-    "centaline_res": [
+    "source_a_res": [
         *MEGA_BASE_COLUMNS,
         "native_developer",
         "native_blocks",
         "native_link",
     ],
-    "centaline_oir": [
+    "source_a_commercial": [
         *MEGA_BASE_COLUMNS,
         "native_grade",
         "native_usage",
         "native_property_type",
         "native_developers",
     ],
-    "midland_res": [
+    "source_b_res": [
         *MEGA_BASE_COLUMNS,
         "native_developer",
         "native_total_unit_count",
         "native_total_block_count",
     ],
-    "midland_ici": [
+    "source_b_commercial": [
         *MEGA_BASE_COLUMNS,
         "native_type",
         "native_title",
@@ -181,43 +181,43 @@ def load_excel_supplemental_master(
 
 def build_mega_building_workbook(
     *,
-    centaline_oir: pd.DataFrame,
-    midland_ici_base: pd.DataFrame,
-    midland_ici_primary: pd.DataFrame,
-    centaline_res: pd.DataFrame,
-    midland_res: pd.DataFrame,
-    centaline_oir_buildings: pd.DataFrame,
-    midland_ici_buildings: pd.DataFrame,
-    centaline_res_buildings: pd.DataFrame,
-    midland_res_buildings: pd.DataFrame,
+    source_a_commercial: pd.DataFrame,
+    source_b_commercial_base: pd.DataFrame,
+    source_b_commercial_primary: pd.DataFrame,
+    source_a_res: pd.DataFrame,
+    source_b_res: pd.DataFrame,
+    source_a_commercial_buildings: pd.DataFrame,
+    source_b_commercial_buildings: pd.DataFrame,
+    source_a_res_buildings: pd.DataFrame,
+    source_b_res_buildings: pd.DataFrame,
     workbook_path: Path,
     include_limit: int,
-    leasinghub_frames: Iterable[pd.DataFrame],
+    source_c_frames: Iterable[pd.DataFrame],
 ) -> tuple[dict[str, pd.DataFrame], pd.DataFrame, pd.DataFrame]:
     """Build one combined workbook tab per source and extract approved manual rows."""
     candidate_lookup = _build_candidate_lookup(
-        midland_ici_primary=midland_ici_primary,
-        leasinghub_frames=leasinghub_frames,
+        source_b_commercial_primary=source_b_commercial_primary,
+        source_c_frames=source_c_frames,
     )
     existing_tabs = load_existing_mega_workbook_tabs(workbook_path)
 
     fresh_candidates = {
-        "centaline_res": _build_centaline_res_candidate_rows(centaline_res),
-        "centaline_oir": _build_mega_centaline_oir_candidates(
-            centaline_oir,
+        "source_a_res": _build_source_a_res_candidate_rows(source_a_res),
+        "source_a_commercial": _build_mega_source_a_commercial_candidates(
+            source_a_commercial,
             candidate_lookup,
         ),
-        "midland_res": _build_midland_res_candidate_rows(midland_res),
-        "midland_ici": _build_mega_midland_ici_candidates(
-            midland_ici_base,
+        "source_b_res": _build_source_b_res_candidate_rows(source_b_res),
+        "source_b_commercial": _build_mega_source_b_commercial_candidates(
+            source_b_commercial_base,
             candidate_lookup,
         ),
     }
     native_rows = {
-        "centaline_res": _build_centaline_res_native_rows(centaline_res_buildings),
-        "centaline_oir": _build_centaline_oir_native_rows(centaline_oir_buildings),
-        "midland_res": _build_midland_res_native_rows(midland_res_buildings),
-        "midland_ici": _build_midland_ici_native_rows(midland_ici_buildings),
+        "source_a_res": _build_source_a_res_native_rows(source_a_res_buildings),
+        "source_a_commercial": _build_source_a_commercial_native_rows(source_a_commercial_buildings),
+        "source_b_res": _build_source_b_res_native_rows(source_b_res_buildings),
+        "source_b_commercial": _build_source_b_commercial_native_rows(source_b_commercial_buildings),
     }
 
     workbook_sheets: dict[str, pd.DataFrame] = {}
@@ -246,8 +246,8 @@ def build_mega_building_workbook(
 
     supplement_cache = extract_approved_rows_from_mega_workbook(workbook_sheets)
     consolidated_commercial = build_consolidated_commercial_master(
-        centaline_buildings=centaline_oir_buildings,
-        midland_buildings=midland_ici_buildings,
+        source_a_buildings=source_a_commercial_buildings,
+        source_b_buildings=source_b_commercial_buildings,
         manual_master=supplement_cache[supplement_cache["domain"] == "commercial"].copy()
         if not supplement_cache.empty
         else pd.DataFrame(columns=SUPPLEMENTAL_MASTER_COLUMNS),
@@ -305,7 +305,7 @@ def extract_approved_rows_from_mega_workbook(
             pd.DataFrame(
                 {
                     "domain": approved["domain"].fillna(
-                        "commercial" if source_system in {"centaline_oir", "midland_ici"} else "residential"
+                        "commercial" if source_system in {"source_a_commercial", "source_b_commercial"} else "residential"
                     ),
                     "source_system": source_system,
                     "source_join_key": approved["source_join_key"].map(_clean_key),
@@ -341,48 +341,48 @@ def extract_approved_rows_from_mega_workbook(
 def merge_manual_rows_into_source_buildings(
     *,
     approved_master: pd.DataFrame,
-    centaline_oir_buildings: pd.DataFrame,
-    midland_ici_buildings: pd.DataFrame,
-    centaline_res_buildings: pd.DataFrame,
-    midland_res_buildings: pd.DataFrame,
+    source_a_commercial_buildings: pd.DataFrame,
+    source_b_commercial_buildings: pd.DataFrame,
+    source_a_res_buildings: pd.DataFrame,
+    source_b_res_buildings: pd.DataFrame,
 ) -> dict[str, pd.DataFrame]:
     """Rewrite source building tables so workbook-approved manual rows become authoritative."""
     prepared_master = _ensure_columns(approved_master.copy(), SUPPLEMENTAL_MASTER_COLUMNS)
     return {
-        "centaline_oir": _merge_manual_rows_for_source(
-            base_frame=centaline_oir_buildings,
-            manual_rows=_build_centaline_oir_manual_rows(prepared_master),
-            row_key_builder=_centaline_oir_building_key,
+        "source_a_commercial": _merge_manual_rows_for_source(
+            base_frame=source_a_commercial_buildings,
+            manual_rows=_build_source_a_commercial_manual_rows(prepared_master),
+            row_key_builder=_source_a_commercial_building_key,
         ),
-        "midland_ici": _merge_manual_rows_for_source(
-            base_frame=midland_ici_buildings,
-            manual_rows=_build_midland_ici_manual_rows(prepared_master),
-            row_key_builder=_midland_ici_building_key,
+        "source_b_commercial": _merge_manual_rows_for_source(
+            base_frame=source_b_commercial_buildings,
+            manual_rows=_build_source_b_commercial_manual_rows(prepared_master),
+            row_key_builder=_source_b_commercial_building_key,
         ),
-        "centaline_res": _merge_manual_rows_for_source(
-            base_frame=centaline_res_buildings,
-            manual_rows=_build_centaline_res_manual_rows(prepared_master),
-            row_key_builder=_centaline_res_building_key,
+        "source_a_res": _merge_manual_rows_for_source(
+            base_frame=source_a_res_buildings,
+            manual_rows=_build_source_a_res_manual_rows(prepared_master),
+            row_key_builder=_source_a_res_building_key,
         ),
-        "midland_res": _merge_manual_rows_for_source(
-            base_frame=midland_res_buildings,
-            manual_rows=_build_midland_res_manual_rows(prepared_master),
-            row_key_builder=_midland_res_building_key,
+        "source_b_res": _merge_manual_rows_for_source(
+            base_frame=source_b_res_buildings,
+            manual_rows=_build_source_b_res_manual_rows(prepared_master),
+            row_key_builder=_source_b_res_building_key,
         ),
     }
 
 
 def build_consolidated_commercial_master(
     *,
-    centaline_buildings: pd.DataFrame,
-    midland_buildings: pd.DataFrame,
+    source_a_buildings: pd.DataFrame,
+    source_b_buildings: pd.DataFrame,
     manual_master: pd.DataFrame,
 ) -> pd.DataFrame:
     """Build a future-facing combined commercial building dictionary."""
     native_rows: list[dict[str, Any]] = []
 
-    if not centaline_buildings.empty:
-        for row in centaline_buildings.itertuples(index=False):
+    if not source_a_buildings.empty:
+        for row in source_a_buildings.itertuples(index=False):
             building_name = getattr(row, "building_name", None)
             normalized = normalize_building_name(building_name)
             if not normalized:
@@ -393,7 +393,7 @@ def build_consolidated_commercial_master(
                     "normalized_name": normalized,
                     "district_name_en": getattr(row, "district", None),
                     "zone_en": getattr(row, "zone", None),
-                    "source_system": "centaline_oir",
+                    "source_system": "source_a_commercial",
                     "address": getattr(row, "full_address", None),
                     "completion_year": getattr(row, "completion_year", None),
                     "management_company": getattr(row, "management_company", None),
@@ -401,8 +401,8 @@ def build_consolidated_commercial_master(
                 }
             )
 
-    if not midland_buildings.empty:
-        for _, row in midland_buildings.iterrows():
+    if not source_b_buildings.empty:
+        for _, row in source_b_buildings.iterrows():
             building_name = row.get("Building Name")
             normalized = normalize_building_name(building_name)
             if not normalized:
@@ -413,7 +413,7 @@ def build_consolidated_commercial_master(
                     "normalized_name": normalized,
                     "district_name_en": None,
                     "zone_en": None,
-                    "source_system": "midland_ici",
+                    "source_system": "source_b_commercial",
                     "address": None,
                     "completion_year": row.get("Completion"),
                     "management_company": row.get("Management Company"),
@@ -707,21 +707,21 @@ def apply_supplemental_matches(
 
 def build_supplemental_review_queue(
     *,
-    centaline_oir: pd.DataFrame,
-    midland_ici_base: pd.DataFrame,
-    midland_ici_primary: pd.DataFrame,
-    centaline_res: Optional[pd.DataFrame] = None,
-    midland_res: Optional[pd.DataFrame] = None,
-    leasinghub_frames: Optional[Iterable[pd.DataFrame]] = None,
+    source_a_commercial: pd.DataFrame,
+    source_b_commercial_base: pd.DataFrame,
+    source_b_commercial_primary: pd.DataFrame,
+    source_a_res: Optional[pd.DataFrame] = None,
+    source_b_res: Optional[pd.DataFrame] = None,
+    source_c_frames: Optional[Iterable[pd.DataFrame]] = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build a prioritized manual review queue and a lightweight audit summary."""
     candidate_lookup = _build_candidate_lookup(
-        midland_ici_primary=midland_ici_primary,
-        leasinghub_frames=leasinghub_frames or [],
+        source_b_commercial_primary=source_b_commercial_primary,
+        source_c_frames=source_c_frames or [],
     )
     queue_frames = [
-        _build_centaline_queue(centaline_oir, candidate_lookup),
-        _build_midland_queue(midland_ici_base, candidate_lookup),
+        _build_source_a_queue(source_a_commercial, candidate_lookup),
+        _build_source_b_queue(source_b_commercial_base, candidate_lookup),
     ]
     non_empty_queue_frames = [frame for frame in queue_frames if not frame.empty]
     if not non_empty_queue_frames:
@@ -748,8 +748,8 @@ def build_supplemental_review_queue(
         ).reset_index(drop=True)
 
     audit_frames = [
-        _commercial_audit_summary(centaline_oir, midland_ici_base),
-        _residential_audit_summary(centaline_res, midland_res),
+        _commercial_audit_summary(source_a_commercial, source_b_commercial_base),
+        _residential_audit_summary(source_a_res, source_b_res),
     ]
     non_empty_audit_frames = [frame for frame in audit_frames if not frame.empty]
     if not non_empty_audit_frames:
@@ -762,18 +762,18 @@ def build_supplemental_review_queue(
 
 def _build_candidate_lookup(
     *,
-    midland_ici_primary: pd.DataFrame,
-    leasinghub_frames: Iterable[pd.DataFrame],
+    source_b_commercial_primary: pd.DataFrame,
+    source_c_frames: Iterable[pd.DataFrame],
 ) -> dict[str, tuple[str, str]]:
     lookup: dict[str, tuple[str, str]] = {}
 
-    if "eng_name" in midland_ici_primary.columns:
-        for name in midland_ici_primary["eng_name"].dropna():
+    if "eng_name" in source_b_commercial_primary.columns:
+        for name in source_b_commercial_primary["eng_name"].dropna():
             normalized = normalize_building_name(name)
             if normalized and normalized not in lookup:
-                lookup[normalized] = (str(name).upper().strip(), "midland_ici_primary")
+                lookup[normalized] = (str(name).upper().strip(), "source_b_commercial_primary")
 
-    for frame in leasinghub_frames:
+    for frame in source_c_frames:
         name_col = next(
             (
                 column
@@ -787,20 +787,20 @@ def _build_candidate_lookup(
         for name in frame[name_col].dropna():
             normalized = normalize_building_name(name)
             if normalized and normalized not in lookup:
-                lookup[normalized] = (str(name).upper().strip(), "leasinghub")
+                lookup[normalized] = (str(name).upper().strip(), "source_c")
 
     return lookup
 
 
-def _build_centaline_res_candidate_rows(centaline_res: pd.DataFrame) -> pd.DataFrame:
-    if centaline_res.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["centaline_res"])
+def _build_source_a_res_candidate_rows(source_a_res: pd.DataFrame) -> pd.DataFrame:
+    if source_a_res.empty:
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_a_res"])
 
-    building_code = centaline_res.get("building_code", pd.Series(pd.NA, index=centaline_res.index))
+    building_code = source_a_res.get("building_code", pd.Series(pd.NA, index=source_a_res.index))
     unmatched_mask = _is_blank_series(building_code)
-    unmatched = centaline_res.loc[unmatched_mask].copy()
+    unmatched = source_a_res.loc[unmatched_mask].copy()
     if unmatched.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["centaline_res"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_a_res"])
 
     source_name = unmatched.get("Tower")
     if source_name is None:
@@ -827,10 +827,10 @@ def _build_centaline_res_candidate_rows(centaline_res: pd.DataFrame) -> pd.DataF
         & ~grouped["normalized_name"].isin(_BLANK_VALUES)
     ].copy()
     if grouped.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["centaline_res"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_a_res"])
     grouped["row_kind"] = "unmatched_candidate"
     grouped["domain"] = "residential"
-    grouped["source_system"] = "centaline_res"
+    grouped["source_system"] = "source_a_res"
     grouped["district_code"] = pd.NA
     grouped["candidate_building_name"] = pd.NA
     grouped["candidate_source"] = pd.NA
@@ -849,18 +849,18 @@ def _build_centaline_res_candidate_rows(centaline_res: pd.DataFrame) -> pd.DataF
     grouped["native_developer"] = pd.NA
     grouped["native_blocks"] = pd.NA
     grouped["native_link"] = pd.NA
-    return _ensure_columns(grouped, MEGA_SHEET_COLUMNS["centaline_res"])[
-        MEGA_SHEET_COLUMNS["centaline_res"]
+    return _ensure_columns(grouped, MEGA_SHEET_COLUMNS["source_a_res"])[
+        MEGA_SHEET_COLUMNS["source_a_res"]
     ]
 
 
-def _build_mega_centaline_oir_candidates(
-    centaline_oir: pd.DataFrame,
+def _build_mega_source_a_commercial_candidates(
+    source_a_commercial: pd.DataFrame,
     candidate_lookup: dict[str, tuple[str, str]],
 ) -> pd.DataFrame:
-    review_queue = _build_centaline_queue(centaline_oir, candidate_lookup)
+    review_queue = _build_source_a_queue(source_a_commercial, candidate_lookup)
     if review_queue.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["centaline_oir"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_a_commercial"])
     frame = pd.DataFrame(
         {
             "row_kind": "unmatched_candidate",
@@ -893,20 +893,20 @@ def _build_mega_centaline_oir_candidates(
             "native_developers": pd.NA,
         }
     )
-    return _ensure_columns(frame, MEGA_SHEET_COLUMNS["centaline_oir"])[
-        MEGA_SHEET_COLUMNS["centaline_oir"]
+    return _ensure_columns(frame, MEGA_SHEET_COLUMNS["source_a_commercial"])[
+        MEGA_SHEET_COLUMNS["source_a_commercial"]
     ]
 
 
-def _build_midland_res_candidate_rows(midland_res: pd.DataFrame) -> pd.DataFrame:
-    if midland_res.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["midland_res"])
+def _build_source_b_res_candidate_rows(source_b_res: pd.DataFrame) -> pd.DataFrame:
+    if source_b_res.empty:
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_b_res"])
 
-    building = midland_res.get("building", pd.Series(pd.NA, index=midland_res.index))
+    building = source_b_res.get("building", pd.Series(pd.NA, index=source_b_res.index))
     unmatched_mask = _is_blank_series(building)
-    unmatched = midland_res.loc[unmatched_mask].copy()
+    unmatched = source_b_res.loc[unmatched_mask].copy()
     if unmatched.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["midland_res"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_b_res"])
 
     source_name = building.where(building.astype("string").str.strip().ne(""), unmatched.get("estate"))
     grouped = (
@@ -929,10 +929,10 @@ def _build_midland_res_candidate_rows(midland_res: pd.DataFrame) -> pd.DataFrame
         & ~grouped["normalized_name"].isin(_BLANK_VALUES)
     ].copy()
     if grouped.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["midland_res"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_b_res"])
     grouped["row_kind"] = "unmatched_candidate"
     grouped["domain"] = "residential"
-    grouped["source_system"] = "midland_res"
+    grouped["source_system"] = "source_b_res"
     grouped["district_code"] = pd.NA
     grouped["candidate_building_name"] = pd.NA
     grouped["candidate_source"] = pd.NA
@@ -951,18 +951,18 @@ def _build_midland_res_candidate_rows(midland_res: pd.DataFrame) -> pd.DataFrame
     grouped["native_developer"] = pd.NA
     grouped["native_total_unit_count"] = pd.NA
     grouped["native_total_block_count"] = pd.NA
-    return _ensure_columns(grouped, MEGA_SHEET_COLUMNS["midland_res"])[
-        MEGA_SHEET_COLUMNS["midland_res"]
+    return _ensure_columns(grouped, MEGA_SHEET_COLUMNS["source_b_res"])[
+        MEGA_SHEET_COLUMNS["source_b_res"]
     ]
 
 
-def _build_mega_midland_ici_candidates(
-    midland_ici_base: pd.DataFrame,
+def _build_mega_source_b_commercial_candidates(
+    source_b_commercial_base: pd.DataFrame,
     candidate_lookup: dict[str, tuple[str, str]],
 ) -> pd.DataFrame:
-    review_queue = _build_midland_queue(midland_ici_base, candidate_lookup)
+    review_queue = _build_source_b_queue(source_b_commercial_base, candidate_lookup)
     if review_queue.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["midland_ici"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_b_commercial"])
     frame = pd.DataFrame(
         {
             "row_kind": "unmatched_candidate",
@@ -994,20 +994,20 @@ def _build_mega_midland_ici_candidates(
             "native_total_area": pd.NA,
         }
     )
-    return _ensure_columns(frame, MEGA_SHEET_COLUMNS["midland_ici"])[
-        MEGA_SHEET_COLUMNS["midland_ici"]
+    return _ensure_columns(frame, MEGA_SHEET_COLUMNS["source_b_commercial"])[
+        MEGA_SHEET_COLUMNS["source_b_commercial"]
     ]
 
 
-def _build_centaline_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
+def _build_source_a_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
     frame = _exclude_manual_writeback_rows(frame)
     if frame.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["centaline_res"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_a_res"])
     native = pd.DataFrame(
         {
             "row_kind": "native",
             "domain": "residential",
-            "source_system": "centaline_res",
+            "source_system": "source_a_res",
             "source_join_key": frame.get("estate_code", pd.Series(pd.NA, index=frame.index)),
             "source_name_raw": frame.get("Name", pd.Series(pd.NA, index=frame.index)),
             "normalized_name": frame.get("Name", pd.Series(pd.NA, index=frame.index)).map(normalize_building_name),
@@ -1021,7 +1021,7 @@ def _build_centaline_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_completion_year": frame.get("occupation_permit", pd.Series(pd.NA, index=frame.index)),
             "native_management_company": pd.NA,
             "native_url": frame.get("Link", pd.Series(pd.NA, index=frame.index)),
-            "native_detail_source": "centaline_res_buildings",
+            "native_detail_source": "source_a_res_buildings",
             "manual_canonical_name": pd.NA,
             "manual_address": pd.NA,
             "manual_completion_year": pd.NA,
@@ -1034,20 +1034,20 @@ def _build_centaline_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_link": frame.get("Link", pd.Series(pd.NA, index=frame.index)),
         }
     )
-    return _ensure_columns(native, MEGA_SHEET_COLUMNS["centaline_res"])[
-        MEGA_SHEET_COLUMNS["centaline_res"]
+    return _ensure_columns(native, MEGA_SHEET_COLUMNS["source_a_res"])[
+        MEGA_SHEET_COLUMNS["source_a_res"]
     ]
 
 
-def _build_centaline_oir_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
+def _build_source_a_commercial_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
     frame = _exclude_manual_writeback_rows(frame)
     if frame.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["centaline_oir"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_a_commercial"])
     native = pd.DataFrame(
         {
             "row_kind": "native",
             "domain": "commercial",
-            "source_system": "centaline_oir",
+            "source_system": "source_a_commercial",
             "source_join_key": frame.get("property_id", pd.Series(pd.NA, index=frame.index)),
             "source_name_raw": frame.get("building_name", pd.Series(pd.NA, index=frame.index)),
             "normalized_name": frame.get("building_name", pd.Series(pd.NA, index=frame.index)).map(normalize_building_name),
@@ -1061,7 +1061,7 @@ def _build_centaline_oir_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_completion_year": frame.get("completion_year", pd.Series(pd.NA, index=frame.index)),
             "native_management_company": frame.get("management_company", pd.Series(pd.NA, index=frame.index)),
             "native_url": frame.get("source_url", pd.Series(pd.NA, index=frame.index)),
-            "native_detail_source": "centaline_oir_buildings",
+            "native_detail_source": "source_a_commercial_buildings",
             "manual_canonical_name": pd.NA,
             "manual_address": pd.NA,
             "manual_completion_year": pd.NA,
@@ -1075,20 +1075,20 @@ def _build_centaline_oir_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_developers": frame.get("developers", pd.Series(pd.NA, index=frame.index)),
         }
     )
-    return _ensure_columns(native, MEGA_SHEET_COLUMNS["centaline_oir"])[
-        MEGA_SHEET_COLUMNS["centaline_oir"]
+    return _ensure_columns(native, MEGA_SHEET_COLUMNS["source_a_commercial"])[
+        MEGA_SHEET_COLUMNS["source_a_commercial"]
     ]
 
 
-def _build_midland_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
+def _build_source_b_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
     frame = _exclude_manual_writeback_rows(frame)
     if frame.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["midland_res"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_b_res"])
     native = pd.DataFrame(
         {
             "row_kind": "native",
             "domain": "residential",
-            "source_system": "midland_res",
+            "source_system": "source_b_res",
             "source_join_key": frame.get("id", pd.Series(pd.NA, index=frame.index)),
             "source_name_raw": frame.get("name", pd.Series(pd.NA, index=frame.index)),
             "normalized_name": frame.get("name", pd.Series(pd.NA, index=frame.index)).map(normalize_building_name),
@@ -1102,7 +1102,7 @@ def _build_midland_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_completion_year": frame.get("first_op_date", pd.Series(pd.NA, index=frame.index)),
             "native_management_company": pd.NA,
             "native_url": frame.get("url_desc", pd.Series(pd.NA, index=frame.index)),
-            "native_detail_source": "midland_res_buildings",
+            "native_detail_source": "source_b_res_buildings",
             "manual_canonical_name": pd.NA,
             "manual_address": pd.NA,
             "manual_completion_year": pd.NA,
@@ -1115,20 +1115,20 @@ def _build_midland_res_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_total_block_count": frame.get("total_block_count", pd.Series(pd.NA, index=frame.index)),
         }
     )
-    return _ensure_columns(native, MEGA_SHEET_COLUMNS["midland_res"])[
-        MEGA_SHEET_COLUMNS["midland_res"]
+    return _ensure_columns(native, MEGA_SHEET_COLUMNS["source_b_res"])[
+        MEGA_SHEET_COLUMNS["source_b_res"]
     ]
 
 
-def _build_midland_ici_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
+def _build_source_b_commercial_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
     frame = _exclude_manual_writeback_rows(frame)
     if frame.empty:
-        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["midland_ici"])
+        return pd.DataFrame(columns=MEGA_SHEET_COLUMNS["source_b_commercial"])
     native = pd.DataFrame(
         {
             "row_kind": "native",
             "domain": "commercial",
-            "source_system": "midland_ici",
+            "source_system": "source_b_commercial",
             "source_join_key": frame.get("id", pd.Series(pd.NA, index=frame.index)),
             "source_name_raw": frame.get("Building Name", pd.Series(pd.NA, index=frame.index)),
             "normalized_name": frame.get("Building Name", pd.Series(pd.NA, index=frame.index)).map(normalize_building_name),
@@ -1142,7 +1142,7 @@ def _build_midland_ici_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_completion_year": frame.get("Completion", pd.Series(pd.NA, index=frame.index)),
             "native_management_company": frame.get("Management Company", pd.Series(pd.NA, index=frame.index)),
             "native_url": frame.get("URL", pd.Series(pd.NA, index=frame.index)),
-            "native_detail_source": "midland_ici_buildings",
+            "native_detail_source": "source_b_commercial_buildings",
             "manual_canonical_name": pd.NA,
             "manual_address": pd.NA,
             "manual_completion_year": pd.NA,
@@ -1155,19 +1155,19 @@ def _build_midland_ici_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "native_total_area": frame.get("Total Area", pd.Series(pd.NA, index=frame.index)),
         }
     )
-    return _ensure_columns(native, MEGA_SHEET_COLUMNS["midland_ici"])[
-        MEGA_SHEET_COLUMNS["midland_ici"]
+    return _ensure_columns(native, MEGA_SHEET_COLUMNS["source_b_commercial"])[
+        MEGA_SHEET_COLUMNS["source_b_commercial"]
     ]
 
 
-def _build_centaline_queue(
-    centaline_oir: pd.DataFrame,
+def _build_source_a_queue(
+    source_a_commercial: pd.DataFrame,
     candidate_lookup: dict[str, tuple[str, str]],
 ) -> pd.DataFrame:
-    if centaline_oir.empty or "_match_method" not in centaline_oir.columns:
+    if source_a_commercial.empty or "_match_method" not in source_a_commercial.columns:
         return pd.DataFrame(columns=REVIEW_QUEUE_COLUMNS)
 
-    unmatched = centaline_oir[centaline_oir["_match_method"] == "unmatched"].copy()
+    unmatched = source_a_commercial[source_a_commercial["_match_method"] == "unmatched"].copy()
     if unmatched.empty or "propertyNameEn" not in unmatched.columns:
         return pd.DataFrame(columns=REVIEW_QUEUE_COLUMNS)
 
@@ -1189,7 +1189,7 @@ def _build_centaline_queue(
     ].copy()
 
     grouped["domain"] = "commercial"
-    grouped["source_system"] = "centaline_oir"
+    grouped["source_system"] = "source_a_commercial"
     grouped["source_join_key"] = pd.NA
     grouped["district_code"] = pd.NA
     grouped["district_name_en"] = grouped["districtNameEn"].astype("string")
@@ -1212,20 +1212,20 @@ def _build_centaline_queue(
     return grouped[REVIEW_QUEUE_COLUMNS]
 
 
-def _build_midland_queue(
-    midland_ici_base: pd.DataFrame,
+def _build_source_b_queue(
+    source_b_commercial_base: pd.DataFrame,
     candidate_lookup: dict[str, tuple[str, str]],
 ) -> pd.DataFrame:
-    if midland_ici_base.empty:
+    if source_b_commercial_base.empty:
         return pd.DataFrame(columns=REVIEW_QUEUE_COLUMNS)
 
-    if "has_building_match" in midland_ici_base.columns:
-        unmatched_mask = midland_ici_base["has_building_match"].fillna(False).ne(True)
+    if "has_building_match" in source_b_commercial_base.columns:
+        unmatched_mask = source_b_commercial_base["has_building_match"].fillna(False).ne(True)
     else:
-        unmatched_mask = pd.Series(True, index=midland_ici_base.index)
-    if "Building Name" in midland_ici_base.columns:
-        unmatched_mask |= _is_blank_series(midland_ici_base["Building Name"])
-    unmatched = midland_ici_base[unmatched_mask].copy()
+        unmatched_mask = pd.Series(True, index=source_b_commercial_base.index)
+    if "Building Name" in source_b_commercial_base.columns:
+        unmatched_mask |= _is_blank_series(source_b_commercial_base["Building Name"])
+    unmatched = source_b_commercial_base[unmatched_mask].copy()
     if unmatched.empty:
         return pd.DataFrame(columns=REVIEW_QUEUE_COLUMNS)
 
@@ -1252,7 +1252,7 @@ def _build_midland_queue(
     ].copy()
 
     grouped["domain"] = "commercial"
-    grouped["source_system"] = "midland_ici"
+    grouped["source_system"] = "source_b_commercial"
     grouped["district_code"] = grouped["dist_code"].astype("string")
     grouped["district_name_en"] = grouped["dist_name_en"].astype("string")
     grouped["zone_en"] = pd.NA
@@ -1275,27 +1275,27 @@ def _build_midland_queue(
 
 
 def _commercial_audit_summary(
-    centaline_oir: pd.DataFrame,
-    midland_ici_base: pd.DataFrame,
+    source_a_commercial: pd.DataFrame,
+    source_b_commercial_base: pd.DataFrame,
 ) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
 
-    if not centaline_oir.empty and "_match_method" in centaline_oir.columns:
-        counts = centaline_oir["_match_method"].fillna("missing").value_counts()
+    if not source_a_commercial.empty and "_match_method" in source_a_commercial.columns:
+        counts = source_a_commercial["_match_method"].fillna("missing").value_counts()
         for status, row_count in counts.items():
             rows.append(
                 {
                     "domain": "commercial",
-                    "source_system": "centaline_oir",
+                    "source_system": "source_a_commercial",
                     "metric": "match_method",
                     "status": status,
                     "row_count": int(row_count),
                 }
             )
 
-    if not midland_ici_base.empty and "has_building_match" in midland_ici_base.columns:
+    if not source_b_commercial_base.empty and "has_building_match" in source_b_commercial_base.columns:
         counts = (
-            midland_ici_base["has_building_match"]
+            source_b_commercial_base["has_building_match"]
             .map({True: "matched", False: "unmatched"})
             .fillna("missing")
             .value_counts()
@@ -1304,7 +1304,7 @@ def _commercial_audit_summary(
             rows.append(
                 {
                     "domain": "commercial",
-                    "source_system": "midland_ici",
+                    "source_system": "source_b_commercial",
                     "metric": "building_match",
                     "status": status,
                     "row_count": int(row_count),
@@ -1315,39 +1315,39 @@ def _commercial_audit_summary(
 
 
 def _residential_audit_summary(
-    centaline_res: Optional[pd.DataFrame],
-    midland_res: Optional[pd.DataFrame],
+    source_a_res: Optional[pd.DataFrame],
+    source_b_res: Optional[pd.DataFrame],
 ) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
 
-    if centaline_res is not None and not centaline_res.empty:
+    if source_a_res is not None and not source_a_res.empty:
         rows.extend(
             [
                 {
                     "domain": "residential",
-                    "source_system": "centaline_res",
+                    "source_system": "source_a_res",
                     "metric": "missing_tower_rows",
                     "status": "missing",
-                    "row_count": int(_nullish_count(centaline_res, "Tower")),
+                    "row_count": int(_nullish_count(source_a_res, "Tower")),
                 },
                 {
                     "domain": "residential",
-                    "source_system": "centaline_res",
+                    "source_system": "source_a_res",
                     "metric": "missing_building_code_rows",
                     "status": "missing",
-                    "row_count": int(_nullish_count(centaline_res, "building_code")),
+                    "row_count": int(_nullish_count(source_a_res, "building_code")),
                 },
             ]
         )
 
-    if midland_res is not None and not midland_res.empty:
+    if source_b_res is not None and not source_b_res.empty:
         rows.append(
             {
                 "domain": "residential",
-                "source_system": "midland_res",
+                "source_system": "source_b_res",
                 "metric": "missing_building_rows",
                 "status": "missing",
-                "row_count": int(_nullish_count(midland_res, "building")),
+                "row_count": int(_nullish_count(source_b_res, "building")),
             }
         )
 
@@ -1591,8 +1591,8 @@ def _merge_manual_rows_for_source(
     )
 
 
-def _build_centaline_oir_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
-    source_rows = master[master["source_system"] == "centaline_oir"].copy()
+def _build_source_a_commercial_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
+    source_rows = master[master["source_system"] == "source_a_commercial"].copy()
     if source_rows.empty:
         return pd.DataFrame()
     building_names = source_rows["canonical_building_name"].where(
@@ -1625,8 +1625,8 @@ def _build_centaline_oir_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def _build_midland_ici_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
-    source_rows = master[master["source_system"] == "midland_ici"].copy()
+def _build_source_b_commercial_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
+    source_rows = master[master["source_system"] == "source_b_commercial"].copy()
     if source_rows.empty:
         return pd.DataFrame()
     building_names = source_rows["canonical_building_name"].where(
@@ -1656,8 +1656,8 @@ def _build_midland_ici_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def _build_centaline_res_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
-    source_rows = master[master["source_system"] == "centaline_res"].copy()
+def _build_source_a_res_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
+    source_rows = master[master["source_system"] == "source_a_res"].copy()
     if source_rows.empty:
         return pd.DataFrame()
     building_names = source_rows["canonical_building_name"].where(
@@ -1687,8 +1687,8 @@ def _build_centaline_res_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def _build_midland_res_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
-    source_rows = master[master["source_system"] == "midland_res"].copy()
+def _build_source_b_res_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
+    source_rows = master[master["source_system"] == "source_b_res"].copy()
     if source_rows.empty:
         return pd.DataFrame()
     building_names = source_rows["canonical_building_name"].where(
@@ -1719,13 +1719,13 @@ def _build_midland_res_manual_rows(master: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-def _centaline_oir_building_key(row: pd.Series) -> str:
+def _source_a_commercial_building_key(row: pd.Series) -> str:
     join_key = _clean_key(row.get("property_id"))
     if join_key:
-        return f"centaline_oir::key::{join_key}"
+        return f"source_a_commercial::key::{join_key}"
     return "::".join(
         [
-            "centaline_oir",
+            "source_a_commercial",
             normalize_building_name(row.get("manual_normalized_name") or row.get("building_name")),
             str(_clean_text(row.get("district")) or ""),
             str(_clean_text(row.get("zone")) or ""),
@@ -1733,13 +1733,13 @@ def _centaline_oir_building_key(row: pd.Series) -> str:
     )
 
 
-def _midland_ici_building_key(row: pd.Series) -> str:
+def _source_b_commercial_building_key(row: pd.Series) -> str:
     join_key = _clean_key(row.get("id"))
     if join_key:
-        return f"midland_ici::key::{join_key}"
+        return f"source_b_commercial::key::{join_key}"
     return "::".join(
         [
-            "midland_ici",
+            "source_b_commercial",
             normalize_building_name(row.get("manual_normalized_name") or row.get("Building Name")),
             str(_clean_text(row.get("dist_name_en")) or ""),
             "",
@@ -1747,13 +1747,13 @@ def _midland_ici_building_key(row: pd.Series) -> str:
     )
 
 
-def _centaline_res_building_key(row: pd.Series) -> str:
+def _source_a_res_building_key(row: pd.Series) -> str:
     join_key = _clean_key(row.get("estate_code"))
     if join_key:
-        return f"centaline_res::key::{join_key}"
+        return f"source_a_res::key::{join_key}"
     return "::".join(
         [
-            "centaline_res",
+            "source_a_res",
             normalize_building_name(row.get("manual_normalized_name") or row.get("Name")),
             str(_clean_text(row.get("District")) or ""),
             str(_clean_text(row.get("Region")) or ""),
@@ -1761,13 +1761,13 @@ def _centaline_res_building_key(row: pd.Series) -> str:
     )
 
 
-def _midland_res_building_key(row: pd.Series) -> str:
+def _source_b_res_building_key(row: pd.Series) -> str:
     join_key = _clean_key(row.get("id"))
     if join_key:
-        return f"midland_res::key::{join_key}"
+        return f"source_b_res::key::{join_key}"
     return "::".join(
         [
-            "midland_res",
+            "source_b_res",
             normalize_building_name(row.get("manual_normalized_name") or row.get("name")),
             str(_clean_text(row.get("district_name")) or ""),
             str(_clean_text(row.get("region_name")) or ""),

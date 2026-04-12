@@ -3,28 +3,28 @@ import logging
 from datetime import datetime, timedelta
 import numpy as np
 import re
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
-############################## 1. Centaline Res Start ##############################
-def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
+############################## 1. Source A Res Start ##############################
+def cleanse_source_a_res(source_a_res_base_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Enhanced cleanse and standardize Centaline residential data with proper data type conversions,
+    Enhanced cleanse and standardize Source A residential data with proper data type conversions,
     precise age calculation with month consideration, and column management
     
     Args:
-        centaline_res_base_df: Raw enriched data from enrich_estate_data function
+        source_a_res_base_df: Raw enriched data from enrich_estate_data function
     
     Returns:
         pd.DataFrame: Cleaned and standardized data ready for analysis
     """
-    logger.info("🧹 Starting enhanced Centaline residential data cleansing...")
+    logger.info("🧹 Starting enhanced Source A residential data cleansing...")
     
     # Create a copy to avoid modifying the original dataframe
-    df = centaline_res_base_df.copy()
+    df = source_a_res_base_df.copy()
     
     # ============ DATE CLEANING ============
     logger.info("📅 Step 1/6: Converting date column to proper date format...")
@@ -404,7 +404,7 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
     
     # ============ DATASOURCE COLUMN ============
     logger.info("📊 Step 9/9: Adding Datasource column...")
-    df['Datasource'] = 'Centaline'
+    df['Datasource'] = 'Source A'
     
     # ============ COLUMN REMOVAL ============
     logger.info("🗑️ Step 10/10: Removing unwanted columns...")
@@ -552,15 +552,15 @@ def cleanse_centaline_res(centaline_res_base_df: pd.DataFrame) -> pd.DataFrame:
         logger.info("✅ No duplicate rows found")
     
     logger.info(f"Enhanced data cleansing completed: {len(df)} records processed")
-    logger.info("✅ Enhanced Centaline residential data cleansing completed successfully!")
+    logger.info("✅ Enhanced Source A residential data cleansing completed successfully!")
     
     return df
 
-############################## 1. Centaline Res End ##############################
+############################## 1. Source A Res End ##############################
 
-############################## 2. Centaline Oir Start ##############################
+############################## 2. Source A Oir Start ##############################
 
-def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
+def cleanse_source_a_commercial(merged_data: pd.DataFrame) -> pd.DataFrame:
 
     """
     Kedro node to process merged property transaction data.
@@ -903,33 +903,35 @@ def cleanse_centaline_oir(merged_data: pd.DataFrame) -> pd.DataFrame:
     
     # ============ DATASOURCE COLUMN ============
     logger.info("📊 Adding Datasource column...")
-    processed_df['Datasource'] = 'Centaline'
+    processed_df['Datasource'] = 'Source A'
     
     # ============ FILL NONE VALUES ============
     logger.info("🔄 Filling empty cells with 'None'...")
     
     def fill_none_values(df):
-        """Fill empty cells and standardize None values - simplified to avoid Parquet type issues"""
-        
+        """Clean null-like values. Use pd.NA to preserve data types for Parquet."""
         for col in df.columns:
-            # Convert everything to string to avoid complex type conflicts
-            df[col] = df[col].astype(str)
-            df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], 'None')
-            # Fill actual NaN values with 'None'
-            df[col] = df[col].fillna('None')
+            try:
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    continue
+                if pd.api.types.is_object_dtype(df[col]):
+                    df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], pd.NA)
+                    df[col] = df[col].fillna(pd.NA)
+            except Exception as e:
+                logger.warning(f"Error processing column '{col}': {e}")
         return df
-    
+
     processed_df = fill_none_values(processed_df)
-    logger.info("   ✅ Filled empty values with 'None'")
+    logger.info("   ✅ Cleaned empty values")
     
     logger.info(f"Processing completed. Final shape: {processed_df.shape}")
     return processed_df
 
-############################## 2. Centaline Oir End ##############################
+############################## 2. Source A Oir End ##############################
 
-############################## 3. Midland Res Start ##############################
+############################## 3. Source B Res Start ##############################
 
-def cleanse_midland_res(
+def cleanse_source_b_res(
     df: pd.DataFrame
     ) -> pd.DataFrame:
     """
@@ -1112,16 +1114,16 @@ def cleanse_midland_res(
         # ============ ADDRESS EXTRACTION FROM URLS ============
         logger.info("📍 Extracting address information from URLs...")
         
-        # Extract address information from url_desc_trans for Midland Residential
+        # Extract address information from url_desc_trans for Source B Residential
         if 'url_desc_trans' in processed_df.columns:
             try:
                 def extract_address_from_url(url):
-                    """Extract address information from Midland transaction URL"""
+                    """Extract address information from Source B transaction URL"""
                     if pd.isna(url) or not url:
                         return None
                     
                     try:
-                        # URL format: https://www.midland.com.hk/en/transaction/Hong-Kong-Island-Mid-Levels-West-Euston-Court-I20240802455
+                        # Example transaction URL format from the local Source B config.
                         # Extract the location part between 'transaction/' and the last identifier
                         url_parts = str(url).split('/transaction/')
                         if len(url_parts) > 1:
@@ -1143,29 +1145,26 @@ def cleanse_midland_res(
         
         # ============ DATASOURCE COLUMN ============
         logger.info("📊 Adding Datasource column...")
-        processed_df['Datasource'] = 'Midland'
+        processed_df['Datasource'] = 'Source B'
         
         # ============ FILL NONE VALUES ============
         logger.info("🔄 Filling empty cells with 'None'...")
         
         def fill_none_values(df):
-            """Fill empty cells and standardize None values"""
+            """Fill empty cells and standardize None values.
+            Numeric columns are coerced but left as NaN (not 0.0) since
+            0 is semantically invalid for prices, areas, etc.
+            """
+            numeric_cols = ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age', 'total_unit_count', 'total_block_count', 'primary_school_net', 'market_stat_yearly_total_tx_amount', 'market_stat_yearly_net_ft_price', 'market_stat_yearly_net_ft_price_chg']
             for col in df.columns:
                 try:
-                    # Handle numeric columns differently to avoid type conflicts
-                    if col in ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age', 'total_unit_count', 'total_block_count', 'primary_school_net', 'market_stat_yearly_total_tx_amount', 'market_stat_yearly_net_ft_price', 'market_stat_yearly_net_ft_price_chg']:
-                        # For numeric columns, convert to numeric first, then fill NaN with 0.0 to keep numeric type
+                    if col in numeric_cols:
                         df[col] = pd.to_numeric(df[col], errors='coerce')
-                        df[col] = df[col].fillna(0.0)
                     else:
-                        # For non-numeric columns, replace empty strings, 'none', '--' with 'None'
-                        df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
-                        # Fill actual NaN values with 'None'
-                        df[col] = df[col].fillna('None')
+                        df[col] = df[col].replace(['', ' ', 'none', 'None', 'nan', '--', 'NULL', 'null', 'N/A'], pd.NA)
+                        df[col] = df[col].fillna(pd.NA)
                 except Exception as e:
                     logger.warning(f"Error processing column {col}: {e}")
-                    # If there's an error, just fill with 'None' as string
-                    df[col] = df[col].fillna('None')
             return df
         
         processed_df = fill_none_values(processed_df)
@@ -1181,18 +1180,181 @@ def cleanse_midland_res(
 
 
     
-############################## 3. Midland Res End ##############################
+############################## 3. Source B Res End ##############################
 
-############################## 4. Midland ICI Start ##############################
+############################## 4. Source B ICI Start ##############################
 # Updated enrich_estate_data function
-def cleanse_midland_ici(
-    midland_ici_base: pd.DataFrame,
+MIDLAND_ICI_ZONE_BY_DIST_CODE = {
+    "ABE": "HK Island",
+    "ADM": "HK Island",
+    "ALC": "HK Island",
+    "CAB": "HK Island",
+    "CEN": "HK Island",
+    "CHW": "HK Island",
+    "HAV": "HK Island",
+    "MIL": "HK Island",
+    "NOP": "HK Island",
+    "PFL": "HK Island",
+    "QUB": "HK Island",
+    "SHW": "HK Island",
+    "SKW": "HK Island",
+    "SOU": "HK Island",
+    "SSW": "HK Island",
+    "TAH": "HK Island",
+    "TAK": "HK Island",
+    "TIH": "HK Island",
+    "TIW": "HK Island",
+    "VIP": "HK Island",
+    "WAC": "HK Island",
+    "WCH": "HK Island",
+    "WCN": "HK Island",
+    "WES": "HK Island",
+    "CSW": "Kowloon",
+    "HMT": "Kowloon",
+    "HUH": "Kowloon",
+    "JOR": "Kowloon",
+    "KAT": "Kowloon",
+    "KOB": "Kowloon",
+    "KOC": "Kowloon",
+    "KOT": "Kowloon",
+    "KWT": "Kowloon",
+    "LCK": "Kowloon",
+    "MEF": "Kowloon",
+    "MOK": "Kowloon",
+    "NCW": "Kowloon",
+    "NTK": "Kowloon",
+    "PRE": "Kowloon",
+    "SPK": "Kowloon",
+    "SSP": "Kowloon",
+    "TKT": "Kowloon",
+    "TKW": "Kowloon",
+    "TSE": "Kowloon",
+    "TSI": "Kowloon",
+    "TST": "Kowloon",
+    "WEK": "Kowloon",
+    "WTS": "Kowloon",
+    "YAT": "Kowloon",
+    "YMT": "Kowloon",
+    "CLK": "New Territories",
+    "ETC": "New Territories",
+    "FAN": "New Territories",
+    "FOT": "New Territories",
+    "HSK": "New Territories",
+    "ISD": "New Territories",
+    "KWC": "New Territories",
+    "MOS": "New Territories",
+    "SAK": "New Territories",
+    "SHM": "New Territories",
+    "SHS": "New Territories",
+    "SHT": "New Territories",
+    "SLY": "New Territories",
+    "STS": "New Territories",
+    "TAP": "New Territories",
+    "TAW": "New Territories",
+    "TIS": "New Territories",
+    "TKO": "New Territories",
+    "TSW": "New Territories",
+    "TSY": "New Territories",
+    "TUC": "New Territories",
+    "TUM": "New Territories",
+    "YUL": "New Territories",
+}
+
+
+def _is_blank_source_b_value(value: Any) -> bool:
+    if pd.isna(value):
+        return True
+    return str(value).strip().lower() in {"", "none", "nan", "null", "n/a", "--"}
+
+
+def _parse_source_b_area_desc_floor_flat(value: Any) -> tuple[Optional[str], Optional[str]]:
+    """Parse Source B split-area descriptors like ``G/F D室`` or ``1/F``."""
+    if _is_blank_source_b_value(value):
+        return (None, None)
+
+    text = str(value).replace("*", "").strip()
+    if not text:
+        return (None, None)
+
+    slash_floor = re.match(r"^(.+?/\s*F)\s+(\S.+)$", text, flags=re.IGNORECASE)
+    if slash_floor and re.search(
+        r"室|單位|舖|铺|Flat|flat|Shop|WF|舖位", slash_floor.group(2), flags=re.IGNORECASE
+    ):
+        return (slash_floor.group(1).strip(), slash_floor.group(2).strip())
+
+    chinese_floor = re.match(
+        r"^(地下|全層|高層|中層|低層|連天台|高|中|低)\s+(\S.+)$",
+        text,
+    )
+    if chinese_floor and re.search(
+        r"室|單位|舖|铺|Flat|flat|Shop|WF|舖位", chinese_floor.group(2), flags=re.IGNORECASE
+    ):
+        return (chinese_floor.group(1).strip(), chinese_floor.group(2).strip())
+
+    if re.fullmatch(r"(?i)(?:G|LG|UG|B)\s*/\s*F", text) or re.fullmatch(r"\d+\s*/\s*F", text):
+        return (text, None)
+
+    if text in {"地下", "地舖", "全層", "高層", "中層", "低層"}:
+        return (text, None)
+
+    return (None, None)
+
+
+def _source_b_zone_from_dist_code(dist_code: Any, dist_name_en: Any) -> Optional[str]:
+    code = None if _is_blank_source_b_value(dist_code) else str(dist_code).strip().upper()
+    if code in MIDLAND_ICI_ZONE_BY_DIST_CODE:
+        return MIDLAND_ICI_ZONE_BY_DIST_CODE[code]
+
+    name = None if _is_blank_source_b_value(dist_name_en) else str(dist_name_en).strip().lower()
+    if not name:
+        return None
+
+    if name in {
+        "aberdeen", "admiralty", "ap lei chau", "causeway bay", "central",
+        "chai wan", "happy vally", "happy valley", "mid level", "north point",
+        "pok fu lam", "quarry bay", "sheung wan", "shau kei wan",
+        "southern district", "siu sai wan", "tai hang", "taikoo shing",
+        "tin hau", "tin wan", "peak", "wan chai", "wong chuk hang",
+        "wan chai waterfront", "western district",
+    }:
+        return "HK Island"
+    if name in {
+        "cheung sha wan", "ho man tin", "hung hom", "jordan", "kai tak",
+        "kowloon bay", "kowloon city", "kowloon tong", "kwun tong",
+        "lai chi kok", "mei foo", "mong kok", "ngau chi wan", "ngau tau kok",
+        "prince edward", "san po kong", "sham shui po", "tai kok tsui",
+        "to kwa wan", "tsim sha tsui east", "tsim sha tsui west",
+        "tsim sha tsui", "west kowloon", "wong tai sin", "yau tong",
+        "yau ma tei",
+    }:
+        return "Kowloon"
+    return "New Territories"
+
+
+def _backfill_source_b_floor_flat(row: pd.Series, area_desc_columns: list[str]) -> pd.Series:
+    floor = row.get('floor')
+    flat = row.get('flat')
+
+    for col in area_desc_columns:
+        parsed_floor, parsed_flat = _parse_source_b_area_desc_floor_flat(row.get(col))
+        if pd.isna(floor) and parsed_floor is not None:
+            floor = parsed_floor
+        if pd.isna(flat) and parsed_flat is not None:
+            flat = parsed_flat
+        if not pd.isna(floor) and not pd.isna(flat):
+            break
+
+    return pd.Series({'floor': floor, 'flat': flat})
+
+
+def cleanse_source_b_commercial(
+    source_b_commercial_base: pd.DataFrame,
 ) -> pd.DataFrame:
     """
-    Process Midland ICI data with cleaning, transformations, and feature engineering.
+    Process Source B ICI data with cleaning, transformations, and feature engineering.
     
     Args:
-        midland_ici_base (pd.DataFrame): Raw joined data from midland_ici_base
+        source_b_commercial_base (pd.DataFrame): Raw joined data from source_b_commercial_base
         
     Returns:
         pd.DataFrame: Processed and cleaned data
@@ -1203,7 +1365,7 @@ def cleanse_midland_ici(
     import logging
     
     logger = logging.getLogger(__name__)
-    df = midland_ici_base.copy()
+    df = source_b_commercial_base.copy()
     
     try:
         logger.info(f"Starting data processing with {len(df)} records")
@@ -1219,23 +1381,25 @@ def cleanse_midland_ici(
                 if df[col].dtype == 'object':
                     df[col] = df[col].astype(str).replace('nan', np.nan)
             
-            # NEW: Fill specific area columns with 'None' for null values and convert to string
-            area_columns = [
-                'area1', 'area_desc1', 'area2', 'area_desc2', 
-                'area3', 'area_desc3', 'area4', 'area_desc4'
-            ]
+            area_value_columns = ['area1', 'area2', 'area3', 'area4']
+            area_desc_columns = ['area_desc1', 'area_desc2', 'area_desc3', 'area_desc4']
 
-            for col in area_columns:
+            for col in area_value_columns:
                 if col in df.columns:
-                    # Convert entire column to string first to handle mixed types
-                    df[col] = df[col].astype(str)
-                    # Replace 'nan' string with 'None'
-                    df[col] = df[col].replace('nan', 'None')
-                    # Also fill any remaining null values
-                    df[col] = df[col].fillna('None')
-                    #logger.info(f"Converted to string and filled null values with 'None' for column: {col}")
+                    df[col] = pd.to_numeric(
+                        df[col].replace(['', ' ', 'None', 'nan', 'NaN', 'null'], np.nan),
+                        errors='coerce',
+                    )
 
-            logger.info("Area columns processed successfully")
+            for col in area_desc_columns:
+                if col in df.columns:
+                    df[col] = (
+                        df[col]
+                        .replace(['', ' ', 'None', 'nan', 'NaN', 'null'], np.nan)
+                        .astype('string')
+                    )
+
+            logger.info("Split-area columns processed successfully")
             
         except Exception as e:
             logger.error(f"Error in step 1 - Error handling: {str(e)}")
@@ -1262,11 +1426,9 @@ def cleanse_midland_ici(
         except Exception as e:
             logger.error(f"Error processing ics_type column: {str(e)}")
 
-        # 2b. Use the English building name from joined building details when available.
-        # After midland_ici_join, the 'Building Name' column (English, from the detail
-        # page scrape) is present alongside 'eng_name' (which carries the Chinese name
-        # returned by the transaction API).  Prefer the English name so the final output
-        # has the correct eng_name.
+        # 2b. Prefer English building name from joined building details when available.
+        # Transaction rows already set eng_name from the en API payload and chi_name from zh-hk;
+        # detail scrape 'Building Name' overrides eng_name when present.
         try:
             if 'Building Name' in df.columns and 'eng_name' in df.columns:
                 valid_mask = (
@@ -1278,6 +1440,28 @@ def cleanse_midland_ici(
                 logger.info(f"eng_name updated with English building name for {matched:,} rows")
         except Exception as e:
             logger.error(f"Error updating eng_name from Building Name: {str(e)}")
+
+        # 2c. Keep split-area fragments separate from transaction district metadata.
+        try:
+            if {'area_desc1', 'dist_name_zh'}.issubset(df.columns):
+                no_split_area_values = pd.Series(True, index=df.index)
+                for col in ['area1', 'area2', 'area3', 'area4']:
+                    if col in df.columns:
+                        no_split_area_values &= df[col].isna()
+
+                stale_district_desc = (
+                    no_split_area_values
+                    & df['area_desc1'].notna()
+                    & (df['area_desc1'].astype('string') == df['dist_name_zh'].astype('string'))
+                )
+                df.loc[stale_district_desc, 'area_desc1'] = pd.NA
+                logger.info(
+                    "Cleared legacy district fallback from area_desc1 when no split-area values are present"
+                )
+
+            logger.info("Leaving area1/area_desc1 as Source B split-area fields; district remains in dist_* columns")
+        except Exception as e:
+            logger.error(f"Error preserving Source B split-area columns: {str(e)}")
 
         # 3. Placeholder for column rename and reorder
         logger.info("Step 3: Column rename and reorder (placeholder)")
@@ -1293,22 +1477,47 @@ def cleanse_midland_ici(
         logger.info("Step 4: Cleaning floor column")
         try:
             if 'floor' in df.columns:
-                df['floor'] = df['floor'].astype(str).str.replace('*', '', regex=False)
-                df['floor'] = df['floor'].str.strip()
+                df['floor'] = (
+                    df['floor']
+                    .replace(['', ' ', 'None', 'nan', 'NaN', 'null'], np.nan)
+                    .astype('string')
+                    .str.replace('*', '', regex=False)
+                    .str.strip()
+                )
                 logger.info("Floor column cleaned successfully")
+
+            needs_floor_backfill = pd.Series(False, index=df.index)
+            if 'floor' in df.columns:
+                needs_floor_backfill |= df['floor'].isna()
+            if 'flat' in df.columns:
+                needs_floor_backfill |= (
+                    df['flat'].replace(['', ' ', 'None', 'nan', 'NaN', 'null'], np.nan).isna()
+                )
+
+            area_desc_columns = [col for col in ['area_desc1', 'area_desc2', 'area_desc3', 'area_desc4'] if col in df.columns]
+            if area_desc_columns and needs_floor_backfill.any():
+                derived = df.loc[needs_floor_backfill, ['floor', 'flat', *area_desc_columns]].apply(
+                    lambda row: _backfill_source_b_floor_flat(row, area_desc_columns),
+                    axis=1,
+                )
+                df.loc[needs_floor_backfill, ['floor', 'flat']] = derived
+                logger.info("Backfilled missing floor/flat from Source B area_desc fragments")
         except Exception as e:
             logger.error(f"Error cleaning floor column: {str(e)}")
         
-        # 5. ENHANCED: Fix flat column Excel date conversion issue AND add apostrophe prefix
-        logger.info("Step 5: Fixing flat and streetno columns Excel conversion issues and adding apostrophe prefix")
+        # 5. Fix flat/streetno normalization; Excel-only quoting is applied at export time.
+        logger.info("Step 5: Fixing flat and streetno normalization issues")
         try:
             # Process both flat and streetno columns with the same logic
             columns_to_protect = ['flat', 'streetno']
             
             for col in columns_to_protect:
                 if col in df.columns:
-                    # Convert to string first
-                    df[col] = df[col].astype(str)
+                    df[col] = (
+                        df[col]
+                        .replace(['', ' ', 'None', 'nan', 'NaN', 'null', 'N/A'], pd.NA)
+                        .astype('string')
+                    )
                     
                     # Fix common Excel auto-conversions
                     # Pattern: 8-Oct, 9-Nov, etc. should become 8-10, 9-11, etc.
@@ -1320,13 +1529,8 @@ def cleanse_midland_ici(
                     
                     for month_name, month_num in month_mapping.items():
                         df[col] = df[col].str.replace(f'-{month_name}', f'-{month_num}', regex=False)
-                    
-                    # Add apostrophe prefix to prevent Excel auto-conversion
-                    # Only add apostrophe if the value is not null/nan and not already prefixed
-                    mask = (df[col].notna()) & (df[col] != 'nan') & (~df[col].str.startswith("'"))
-                    df.loc[mask, col] = "'" + df.loc[mask, col].astype(str)
-                    
-                    logger.info(f"{col} column Excel conversion issues fixed and apostrophe prefix added")
+
+                    logger.info(f"{col} column normalization completed")
             
         except Exception as e:
             logger.error(f"Error fixing flat and streetno columns: {str(e)}")
@@ -1395,24 +1599,40 @@ def cleanse_midland_ici(
 
         except Exception as e:
             logger.error(f"Error adding age column: {str(e)}")
+
+        # 7b. Add a Source A-aligned commercial zone label for Source B ICI.
+        try:
+            if 'dist_code' in df.columns or 'dist_name_en' in df.columns:
+                df['zoneEn'] = df.apply(
+                    lambda row: _source_b_zone_from_dist_code(
+                        row.get('dist_code'),
+                        row.get('dist_name_en'),
+                    ),
+                    axis=1,
+                ).astype('string')
+                logger.info("zoneEn derived from Source B district metadata")
+        except Exception as e:
+            logger.error(f"Error deriving zoneEn: {str(e)}")
         
-        # 8. Process date columns - convert format and add 1 day
+        # 8. Process date columns — Source B ICI tx_date matches API/HK calendar (no +1 day)
         logger.info("Step 8: Processing date columns format conversion")
         try:
-            # Define the 5 date columns to process
-            date_columns = [
-                'market_stat_monthly_0_date', 'first_op_date', 'update_date', 
-                'tx_date', 'building_first_op_date'
+            date_columns_offset = [
+                'market_stat_monthly_0_date', 'first_op_date', 'update_date',
+                'building_first_op_date',
             ]
-            
-            for col in date_columns:
+            for col in date_columns_offset:
                 if col in df.columns:
-                    # Convert from ISO format (2008-08-27T16:00:00.000Z) to dd/mm/yyyy and add 1 day
                     df[col] = pd.to_datetime(df[col], errors='coerce')
-                    df[col] = df[col] + timedelta(days=1)  # Add 1 day
-                    df[col] = df[col].dt.strftime('%Y-%m-%d')  # Format as yyyy-mm-dd
-                    logger.info(f"Processed date column: {col}")
-            
+                    df[col] = df[col] + timedelta(days=1)
+                    df[col] = df[col].dt.strftime('%Y-%m-%d')
+                    logger.info(f"Processed date column (with +1d offset): {col}")
+
+            if 'tx_date' in df.columns:
+                ts = pd.to_datetime(df['tx_date'], errors='coerce', utc=True)
+                df['tx_date'] = ts.dt.tz_convert('Asia/Hong_Kong').dt.strftime('%Y-%m-%d')
+                logger.info("Processed tx_date (HK calendar date; no legacy +1 day)")
+
             logger.info("Date columns processed successfully")
         except Exception as e:
             logger.error(f"Error processing date columns: {str(e)}")
@@ -1420,11 +1640,11 @@ def cleanse_midland_ici(
         # 9. Drop specified unwanted columns
         logger.info("Step 9: Dropping specified unwanted columns")
         columns_to_drop = [
-            'dist_id', 'dist_code', 'building_id', 'pis_bldg_id', 
+            'dist_id', 'building_id', 'pis_bldg_id', 
             'floor_zh', 'floor_en', 'rownum', 'id', 'Passenger Lift',
             'Cargo Lift', 'Car Park', 'Loading Area', 'Cargo Raised Floor',
             'Air Conditioning', 'Air Conditioning Opening Times',
-            'Transport', 'has_building_match', "sell", "ft_sell", "rent", "ft_rent",
+            'Transport', "sell", "ft_sell", "rent", "ft_rent",
             'building_name_zh', 'building_name_en', 'Building Name', 'Type', 'Title',
             'Cargo', 'Ceiling Height(Approx.)', 'Raised Floor', 'completion_year'
         ]
@@ -1452,16 +1672,16 @@ def cleanse_midland_ici(
         # ============ ADDRESS EXTRACTION FROM URLS ============
         logger.info("📍 Extracting address information from URLs...")
         
-        # Extract address information from url_desc_trans for Midland Residential
+        # Extract address information from url_desc_trans for Source B Residential
         if 'url_desc_trans' in df.columns:
             try:
                 def extract_address_from_url(url):
-                    """Extract address information from Midland transaction URL"""
+                    """Extract address information from Source B transaction URL"""
                     if pd.isna(url) or not url:
                         return None
                     
                     try:
-                        # URL format: https://www.midland.com.hk/en/transaction/Hong-Kong-Island-Mid-Levels-West-Euston-Court-I20240802455
+                        # Example transaction URL format from the local Source B config.
                         # Extract the location part between 'transaction/' and the last identifier
                         url_parts = str(url).split('/transaction/')
                         if len(url_parts) > 1:
@@ -1483,26 +1703,21 @@ def cleanse_midland_ici(
         
         # ============ DATASOURCE COLUMN ============
         logger.info("📊 Adding Datasource column...")
-        df['Datasource'] = 'Midland'
+        df['Datasource'] = 'Source B'
         
-        # ============ FILL NONE VALUES ============
-        logger.info("🔄 Filling empty cells with 'None'...")
-        
-        def fill_none_values(df):
-            """Fill empty cells and standardize None values"""
+        # ============ NORMALIZE EMPTY VALUES ============
+        logger.info("🔄 Normalizing empty cells to nulls...")
+
+        def normalize_missing_values(df):
             for col in df.columns:
-                # Skip numeric columns (age, price, etc.) - keep them as numeric
-                if col in ['age', 'price', 'unit_price_net', 'avgPrice']:
-                    df[col] = df[col].fillna(0.0)
+                if col in ['age', 'price', 'unit_price_net', 'avgPrice', 'price_per_feet', 'area', 'area1', 'area2', 'area3', 'area4']:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
                 else:
-                    # Replace empty strings, 'none', '--' with 'None'
-                    df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], 'None')
-                    # Fill actual NaN values with 'None'
-                    df[col] = df[col].fillna('None')
+                    df[col] = df[col].replace(['', ' ', 'none', 'None', '--', 'NULL', 'null', 'N/A'], pd.NA)
             return df
-        
-        df = fill_none_values(df)
-        logger.info("   ✅ Filled empty values with 'None'")
+
+        df = normalize_missing_values(df)
+        logger.info("   ✅ Normalized empty values without coercing to literal 'None'")
         
         logger.info(f"Data processing completed successfully. Final dataset has {len(df)} records and {len(df.columns)} columns")
         return df
@@ -1510,11 +1725,11 @@ def cleanse_midland_ici(
     except Exception as e:
         logger.error(f"Critical error in data processing: {str(e)}")
         # Return original dataframe if processing fails completely
-        return midland_ici_base
+        return source_b_commercial_base
 
 
 
-############################## 4. Midland ICI End ##############################
+############################## 4. Source B ICI End ##############################
 
 ############################## 5. Final Merging ##############################
 import re
@@ -1592,6 +1807,124 @@ def sanitize_dataframe_content(df: pd.DataFrame) -> pd.DataFrame:
     # Apply sanitization to all cells
     return df_copy.map(clean_cell)
 
+
+def _find_cross_source_overlap(
+    df_a: pd.DataFrame,
+    df_b: pd.DataFrame,
+    area_col_a: str = 'area',
+    area_col_b: str = 'area',
+    area_tol_pct: float = 0.03,
+    label_a: str = 'source_a',
+    label_b: str = 'source_b',
+) -> pd.DataFrame:
+    """
+    Find transactions present in both df_a and df_b.
+
+    Match key: standard_date + price (exact) + area within area_tol_pct (default 3%).
+    Both DataFrames must already have a 'standard_date' column (added by
+    standardize_dataframe). Returns a combined DataFrame tagged with
+    '_overlap_source' ('source_a' | 'source_b'), or an empty DataFrame when
+    no overlapping transactions are found.
+    """
+    required_a = ['standard_date', 'price', area_col_a]
+    required_b = ['standard_date', 'price', area_col_b]
+
+    missing_a = [c for c in required_a if c not in df_a.columns]
+    missing_b = [c for c in required_b if c not in df_b.columns]
+    if missing_a or missing_b:
+        logger.debug("Cross-source overlap: %s missing %s, %s missing %s", label_a, missing_a, label_b, missing_b)
+        return pd.DataFrame()
+
+    a = df_a.reset_index(drop=True)
+    b = df_b.reset_index(drop=True)
+
+    a_key = pd.DataFrame({
+        'standard_date': a['standard_date'],
+        'price': pd.to_numeric(a['price'], errors='coerce'),
+        'area_a': pd.to_numeric(a[area_col_a], errors='coerce'),
+        '_idx_a': a.index,
+    }).dropna(subset=['standard_date', 'price', 'area_a'])
+    a_key = a_key[a_key['price'] > 0]
+
+    b_key = pd.DataFrame({
+        'standard_date': b['standard_date'],
+        'price': pd.to_numeric(b['price'], errors='coerce'),
+        'area_b': pd.to_numeric(b[area_col_b], errors='coerce'),
+        '_idx_b': b.index,
+    }).dropna(subset=['standard_date', 'price', 'area_b'])
+    b_key = b_key[b_key['price'] > 0]
+
+    if a_key.empty or b_key.empty:
+        return pd.DataFrame()
+
+    merged = a_key.merge(b_key, on=['standard_date', 'price'], how='inner')
+    if merged.empty:
+        return pd.DataFrame()
+
+    rel_diff = (merged['area_a'] - merged['area_b']).abs() / merged['area_a'].where(merged['area_a'] != 0, np.nan)
+    matched = merged[rel_diff <= area_tol_pct]
+    if matched.empty:
+        return pd.DataFrame()
+
+    # De-duplicate: a single source_a row may match multiple source_b rows; keep best match
+    matched = matched.sort_values('_idx_a').drop_duplicates(subset=['_idx_a'], keep='first')
+    matched = matched.drop_duplicates(subset=['_idx_b'], keep='first')
+
+    rows_a = df_a.iloc[matched['_idx_a'].values].copy()
+    rows_b = df_b.iloc[matched['_idx_b'].values].copy()
+    rows_a['_overlap_source'] = label_a
+    rows_b['_overlap_source'] = label_b
+
+    return pd.concat([rows_a, rows_b], ignore_index=True, sort=False)
+
+
+def _generate_run_diff(
+    counts: Dict[str, int],
+    reporting_dir: str = 'data/08_reporting',
+) -> Dict[str, Any]:
+    """
+    Persist pipeline row counts and compute a delta vs the previous run.
+
+    Appends one entry to data/08_reporting/run_stats.json (kept to 30 runs).
+    Returns a diff dict: {source: {prev, current, delta}} for logging.
+    """
+    import json
+    import os
+
+    stats_file = os.path.join(reporting_dir, 'run_stats.json')
+    run_ts = datetime.now().isoformat()
+
+    prev_counts: Dict[str, int] = {}
+    history: list = []
+    if os.path.exists(stats_file):
+        try:
+            with open(stats_file) as f:
+                data = json.load(f)
+            history = data.get('history', [])
+            if history:
+                prev_counts = history[-1].get('counts', {})
+        except Exception as exc:
+            logger.warning("Could not read run_stats.json: %s", exc)
+
+    diff: Dict[str, Any] = {}
+    for key, current in counts.items():
+        prev = prev_counts.get(key)
+        delta = (current - prev) if prev is not None else None
+        diff[key] = {'prev': prev, 'current': current, 'delta': delta}
+
+    history.append({'run_at': run_ts, 'counts': counts, 'diff': diff})
+    history = history[-30:]
+
+    try:
+        os.makedirs(reporting_dir, exist_ok=True)
+        with open(stats_file, 'w') as f:
+            json.dump({'history': history}, f, indent=2, default=str)
+    except Exception as exc:
+        logger.warning("Could not write run_stats.json: %s", exc)
+
+    return diff
+
+
 def merge_and_excel(
     cr: pd.DataFrame,
     co: pd.DataFrame, 
@@ -1610,10 +1943,10 @@ def merge_and_excel(
     - RE_commercial_2024-{current_year}
     
     Args:
-        cr: Centaline Residential DataFrame
-        co: Centaline OIR (commercial) DataFrame
-        mr: Midland Residential DataFrame
-        mi: Midland ICI (commercial) DataFrame
+        cr: Source A Residential DataFrame
+        co: Source A OIR (commercial) DataFrame
+        mr: Source B Residential DataFrame
+        mi: Source B ICI (commercial) DataFrame
         
     Returns:
         Dictionary with four keys for the Excel outputs
@@ -1624,11 +1957,22 @@ def merge_and_excel(
     # Standardize date columns
     def standardize_dataframe(df, date_col='date'):
         df_copy = df.copy()
-        df_copy['standard_date'] = pd.to_datetime(df_copy[date_col], format='%Y-%m-%d', errors='coerce')
-        
+        # Try multiple formats instead of only %Y-%m-%d to avoid silent NaT conversion
+        parsed = pd.to_datetime(df_copy[date_col], format='%Y-%m-%d', errors='coerce')
+        # Fallback: parse remaining NaTs with flexible parser (handles dd/mm/yyyy, ISO, etc.)
+        still_nat = parsed.isna() & df_copy[date_col].notna()
+        if still_nat.any():
+            fallback = pd.to_datetime(df_copy.loc[still_nat, date_col], errors='coerce', dayfirst=True)
+            parsed.loc[still_nat] = fallback
+            recovered = fallback.notna().sum()
+            if recovered:
+                logger.info(f"  Recovered {recovered} dates via fallback parser")
+
+        df_copy['standard_date'] = parsed
+
         if df_copy['standard_date'].dt.tz is not None:
             df_copy['standard_date'] = df_copy['standard_date'].dt.tz_localize(None)
-        
+
         df_copy['date'] = df_copy['standard_date']
         return df_copy
     
@@ -1637,26 +1981,55 @@ def merge_and_excel(
     df_co_processed = standardize_dataframe(co)
     df_mr_processed = standardize_dataframe(mr)
     df_mi_processed = standardize_dataframe(mi)
-    
+
+    # ── Cross-source overlap detection ──────────────────────────────────────────
+    # Identifies transactions present in BOTH source_a and source_b.
+    # A match requires: same date, same price, area within 3%.
+    # Results are surfaced as dedicated "Overlap" sheets so the user can
+    # inspect and decide whether to exclude double-counted records.
+    logger.info("🔍 Running cross-source overlap detection...")
+    overlap_res_df = _find_cross_source_overlap(
+        df_cr_processed, df_mr_processed,
+        area_col_a='area', area_col_b='area',
+        label_a='Source A_Res', label_b='Source B_Res',
+    )
+    overlap_com_df = _find_cross_source_overlap(
+        df_co_processed, df_mi_processed,
+        area_col_a='transactionArea', area_col_b='area',
+        label_a='Source A_OIR', label_b='Source B_ICI',
+    )
+    n_overlap_res = overlap_res_df[overlap_res_df['_overlap_source'] == 'Source A_Res'].shape[0] if not overlap_res_df.empty else 0
+    n_overlap_com = overlap_com_df[overlap_com_df['_overlap_source'] == 'Source A_OIR'].shape[0] if not overlap_com_df.empty else 0
+    logger.info("  Residential overlap: %d matched transaction pair(s) across sources", n_overlap_res)
+    logger.info("  Commercial  overlap: %d matched transaction pair(s) across sources", n_overlap_com)
+
     # Split by date ranges: 2020-2023 and 2024-current
     def split_by_date_range(df, name):
+        null_date_count = df['standard_date'].isna().sum()
         valid_dates = df[df['standard_date'].notna()]
         if not valid_dates.empty:
             min_year = valid_dates['standard_date'].dt.year.min()
             max_year = valid_dates['standard_date'].dt.year.max()
             logger.info(f"{name}: Date range {min_year}-{max_year}, Total records: {len(df)}")
-        
+
+        if null_date_count > 0:
+            logger.warning(f"{name}: {null_date_count} records have NULL dates and will be excluded from Excel output")
+
+        pre_2020 = valid_dates[valid_dates['standard_date'].dt.year < 2020]
+        if not pre_2020.empty:
+            logger.warning(f"{name}: {len(pre_2020)} records before 2020 will be excluded from Excel output")
+
         df_2020_2023 = df[
-            (df['standard_date'].dt.year >= 2020) & 
+            (df['standard_date'].dt.year >= 2020) &
             (df['standard_date'].dt.year <= 2023)
         ].copy()
-        
+
         df_2024_current = df[
             df['standard_date'].dt.year >= 2024
         ].copy()
-        
+
         logger.info(f"{name}: 2020-2023: {len(df_2020_2023)} records, 2024-{current_year}: {len(df_2024_current)} records")
-        
+
         return df_2020_2023, df_2024_current
     
     # Prepare dataframe for Excel
@@ -1670,47 +2043,84 @@ def merge_and_excel(
         # Drop standard_date column
         if 'standard_date' in df_out.columns:
             df_out = df_out.drop(columns=['standard_date'])
+
+        for col in ['flat', 'streetno']:
+            if col in df_out.columns:
+                mask = df_out[col].notna() & (~df_out[col].astype('string').str.startswith("'"))
+                df_out.loc[mask, col] = "'" + df_out.loc[mask, col].astype('string')
         
         # Sort descending by date
         if 'date' in df_out.columns:
             df_out = df_out.sort_values(by='date', ascending=False, kind='mergesort').reset_index(drop=True)
         return df_out
     
-    # Split residential data (Centaline + Midland)
-    cr_2020_2023, cr_2024_current = split_by_date_range(df_cr_processed, "Centaline_Residential")
-    mr_2020_2023, mr_2024_current = split_by_date_range(df_mr_processed, "Midland_Residential")
-    
-    # Split commercial data (Centaline OIR + Midland ICI)
-    co_2020_2023, co_2024_current = split_by_date_range(df_co_processed, "Centaline_OIR")
-    mi_2020_2023, mi_2024_current = split_by_date_range(df_mi_processed, "Midland_ICI")
-    
+    # Split residential data (Source A + Source B)
+    cr_2020_2023, cr_2024_current = split_by_date_range(df_cr_processed, "Source A_Residential")
+    mr_2020_2023, mr_2024_current = split_by_date_range(df_mr_processed, "Source B_Residential")
+
+    # Split commercial data (Source A OIR + Source B ICI)
+    co_2020_2023, co_2024_current = split_by_date_range(df_co_processed, "Source A_OIR")
+    mi_2020_2023, mi_2024_current = split_by_date_range(df_mi_processed, "Source B_ICI")
+
+    # Split overlap data by the same date ranges (only when overlaps were found)
+    if not overlap_res_df.empty:
+        overlap_res_2020_2023, overlap_res_2024_current = split_by_date_range(overlap_res_df, "Overlap_Residential")
+    else:
+        overlap_res_2020_2023, overlap_res_2024_current = pd.DataFrame(), pd.DataFrame()
+
+    if not overlap_com_df.empty:
+        overlap_com_2020_2023, overlap_com_2024_current = split_by_date_range(overlap_com_df, "Overlap_Commercial")
+    else:
+        overlap_com_2020_2023, overlap_com_2024_current = pd.DataFrame(), pd.DataFrame()
+
     # Combine residential and commercial separately
     residential_2020_2023 = {
-        sanitize_worksheet_name('Centaline_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2020_2023)) if not cr_2020_2023.empty else None,
-        sanitize_worksheet_name('Midland_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2020_2023)) if not mr_2020_2023.empty else None
+        sanitize_worksheet_name('Source A_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2020_2023)) if not cr_2020_2023.empty else None,
+        sanitize_worksheet_name('Source B_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2020_2023)) if not mr_2020_2023.empty else None,
+        sanitize_worksheet_name('Overlap_Res'): sanitize_dataframe_content(prepare_for_excel(overlap_res_2020_2023)) if not overlap_res_2020_2023.empty else None,
     }
-    
+
     residential_2024_current = {
-        sanitize_worksheet_name('Centaline_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2024_current)) if not cr_2024_current.empty else None,
-        sanitize_worksheet_name('Midland_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2024_current)) if not mr_2024_current.empty else None
+        sanitize_worksheet_name('Source A_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2024_current)) if not cr_2024_current.empty else None,
+        sanitize_worksheet_name('Source B_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2024_current)) if not mr_2024_current.empty else None,
+        sanitize_worksheet_name('Overlap_Res'): sanitize_dataframe_content(prepare_for_excel(overlap_res_2024_current)) if not overlap_res_2024_current.empty else None,
     }
-    
+
     commercial_2020_2023 = {
-        sanitize_worksheet_name('Centaline_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2020_2023)) if not co_2020_2023.empty else None,
-        sanitize_worksheet_name('Midland_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2020_2023)) if not mi_2020_2023.empty else None
+        sanitize_worksheet_name('Source A_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2020_2023)) if not co_2020_2023.empty else None,
+        sanitize_worksheet_name('Source B_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2020_2023)) if not mi_2020_2023.empty else None,
+        sanitize_worksheet_name('Overlap_Com'): sanitize_dataframe_content(prepare_for_excel(overlap_com_2020_2023)) if not overlap_com_2020_2023.empty else None,
     }
-    
+
     commercial_2024_current = {
-        sanitize_worksheet_name('Centaline_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2024_current)) if not co_2024_current.empty else None,
-        sanitize_worksheet_name('Midland_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2024_current)) if not mi_2024_current.empty else None
+        sanitize_worksheet_name('Source A_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2024_current)) if not co_2024_current.empty else None,
+        sanitize_worksheet_name('Source B_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2024_current)) if not mi_2024_current.empty else None,
+        sanitize_worksheet_name('Overlap_Com'): sanitize_dataframe_content(prepare_for_excel(overlap_com_2024_current)) if not overlap_com_2024_current.empty else None,
     }
-    
-    # Remove None entries
+
+    # Remove None entries (also removes overlap sheets when no overlap was detected)
     residential_2020_2023 = {k: v for k, v in residential_2020_2023.items() if v is not None}
     residential_2024_current = {k: v for k, v in residential_2024_current.items() if v is not None}
     commercial_2020_2023 = {k: v for k, v in commercial_2020_2023.items() if v is not None}
     commercial_2024_current = {k: v for k, v in commercial_2024_current.items() if v is not None}
-    
+
+    # ── Run-to-run diff ──────────────────────────────────────────────────────────
+    # Persists row counts to data/08_reporting/run_stats.json and logs deltas
+    # so you can tell at a glance how many records each run contributed.
+    run_counts = {
+        'source_a_res': len(cr),
+        'source_a_commercial': len(co),
+        'source_b_res': len(mr),
+        'source_b_commercial': len(mi),
+        'overlap_res_pairs': n_overlap_res,
+        'overlap_com_pairs': n_overlap_com,
+    }
+    run_diff = _generate_run_diff(run_counts)
+    logger.info("📊 Run diff vs previous run:")
+    for src, d in run_diff.items():
+        delta_str = f"+{d['delta']}" if d['delta'] and d['delta'] > 0 else str(d['delta']) if d['delta'] is not None else "n/a (first run)"
+        logger.info("  %-28s %s  (prev=%s → current=%s)", src, delta_str, d['prev'], d['current'])
+
     return {
         'residential_2020_2023': residential_2020_2023,
         'commercial_2020_2023': commercial_2020_2023,
@@ -1720,9 +2130,9 @@ def merge_and_excel(
 
 ############################## COLUMN SELECTION FUNCTIONS ##############################
 
-def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
+def select_source_a_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Select and reorder columns for Centaline Residential dataset
+    Select and reorder columns for Source A Residential dataset
     
     Args:
         df: Input dataframe with all columns
@@ -1730,9 +2140,9 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
-    logger.info("📋 Selecting columns for Centaline Residential...")
+    logger.info("📋 Selecting columns for Source A Residential...")
     
-    # Current available columns from centaline_res_base (after enrich_estate_data)
+    # Current available columns from source_a_res_base (after enrich_estate_data)
     # Only select columns that actually exist in the data
     selected_columns = [
          'date',                    # Transaction date
@@ -1771,14 +2181,14 @@ def select_centaline_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     
     # No need to rename or fill - Name column from transaction data is already complete!
 
-    logger.info(f"✅ Selected {len(available_columns)} columns for Centaline Residential")
+    logger.info(f"✅ Selected {len(available_columns)} columns for Source A Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
 
     return result_df
 
-def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
+def select_source_a_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Select and reorder columns for Centaline Office/Industrial/Retail dataset
+    Select and reorder columns for Source A Office/Industrial/Retail dataset
     
     Args:
         df: Input dataframe with all columns
@@ -1786,7 +2196,7 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
-    logger.info("📋 Selecting columns for Centaline Office/Industrial/Retail...")
+    logger.info("📋 Selecting columns for Source A Office/Industrial/Retail...")
     
     # Log available columns for debugging
     logger.info(f"  Available columns in input: {len(df.columns)}")
@@ -1821,6 +2231,10 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
         'match_score',
         '_match_method',
         '_match_score',
+        'supplement_candidate_source',
+        'supplement_review_status',
+        'match_origin',
+        'record_source',
     ]
     
     # Filter to only columns that actually exist in the dataframe
@@ -1846,9 +2260,9 @@ def select_centaline_oir_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     return result_df
 
-def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
+def select_source_b_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Select and reorder columns for Midland Residential dataset
+    Select and reorder columns for Source B Residential dataset
     
     Args:
         df: Input dataframe with all columns
@@ -1856,7 +2270,7 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
-    logger.info("📋 Selecting columns for Midland Residential...")
+    logger.info("📋 Selecting columns for Source B Residential...")
     
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
@@ -1908,14 +2322,14 @@ def select_midland_res_columns(df: pd.DataFrame) -> pd.DataFrame:
     if 'tx_date' in result_df.columns:
         result_df = result_df.rename(columns={'tx_date': 'date'})
 
-    logger.info(f"✅ Selected {len(available_columns)} columns for Midland Residential")
+    logger.info(f"✅ Selected {len(available_columns)} columns for Source B Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
 
     return result_df
 
-def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
+def select_source_b_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Select and reorder columns for Midland Office/Industrial/Retail dataset
+    Select and reorder columns for Source B Office/Industrial/Retail dataset
     
     Args:
         df: Input dataframe with all columns
@@ -1923,12 +2337,15 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
-    logger.info("📋 Selecting columns for Midland Office/Industrial/Retail...")
+    logger.info("📋 Selecting columns for Source B Office/Industrial/Retail...")
     
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
     selected_columns = [
         'tx_date',  # date
+        'zoneEn',
+        'dist_code',
+        'dist_name_zh',
         'dist_name_en',  # dist_name_en
         'ics_type',  # ics_type
         'Grade',  # Grade
@@ -1940,6 +2357,7 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
         'area',  # area
         'price',  # price
         'price_per_feet',  # price_per_feet
+        'street_id',
         'street_name_zh',  # street_name_zh
         'street_name_en',  # street_name_en
         'streetno',  # streetno
@@ -1959,6 +2377,13 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
         'Management Fee (Approx. per sq. ft.)',  # Management Fee (Approx. per sq. ft.)
         'Floor Remark',  # Floor Remark
         'Management Company',  # Management Company
+        'has_building_match',
+        'building_match_method',
+        'matched_building_name',
+        'supplement_candidate_source',
+        'supplement_review_status',
+        'match_origin',
+        'record_source',
         'Datasource'  # Datasource
     ]
     
@@ -1969,8 +2394,8 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
     missing_columns = [col for col in selected_columns if col not in df.columns]
     if missing_columns:
         for col in missing_columns:
-            df[col] = 'None'
-        logger.warning(f"Missing columns filled with 'None': {missing_columns}")
+            df[col] = pd.Series(pd.NA, index=df.index)
+        logger.warning(f"Missing columns filled with nulls: {missing_columns}")
 
     # Filter dataframe to selected columns
     result_df = df[selected_columns]
@@ -1979,7 +2404,7 @@ def select_midland_ici_columns(df: pd.DataFrame) -> pd.DataFrame:
     if 'tx_date' in result_df.columns:
         result_df = result_df.rename(columns={'tx_date': 'date'})
 
-    logger.info(f"✅ Selected {len(selected_columns)} columns for Midland ICI")
+    logger.info(f"✅ Selected {len(selected_columns)} columns for Source B ICI")
     logger.info(f"📊 Final shape: {result_df.shape}")
 
     return result_df

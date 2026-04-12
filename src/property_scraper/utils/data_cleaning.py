@@ -135,7 +135,6 @@ def standardize_date_formats(df: pd.DataFrame, date_columns: List[str],
         if col in df.columns:
             # Convert to datetime and format
             df[col] = pd.to_datetime(df[col], errors='coerce')
-            df[col] = df[col] + timedelta(days=1)  # Add 1 day if needed
             df[col] = df[col].dt.strftime(output_format)
             logger.info(f"Standardized date format for column: {col}")
     
@@ -871,7 +870,7 @@ def clean_grade_column(grade_value: str) -> str:
 
 def extract_address_from_url(url: str) -> Optional[str]:
     """
-    Extract address information from Midland transaction URL.
+    Extract address information from Source B transaction URL.
     
     Args:
         url: Transaction URL
@@ -883,7 +882,7 @@ def extract_address_from_url(url: str) -> Optional[str]:
         return None
     
     try:
-        # URL format: https://www.midland.com.hk/en/transaction/Hong-Kong-Island-Mid-Levels-West-Euston-Court-I20240802455
+        # Example transaction URL format from the local Source B config.
         url_parts = str(url).split('/transaction/')
         if len(url_parts) > 1:
             location_part = url_parts[1]

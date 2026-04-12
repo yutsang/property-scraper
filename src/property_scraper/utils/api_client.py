@@ -32,46 +32,47 @@ logger = logging.getLogger(__name__)
 
 # ============ AUTHENTICATION AND HEADERS ============
 
-def create_midland_headers() -> Dict[str, str]:
-    """
-    Create standard headers for Midland API requests.
-    
-    Returns:
-        Dictionary of HTTP headers for Midland API
-    """
-    return {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
-        'authorization': 'Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJndWlkIjoibXItMjAyNC0xMi0wNy0tLVlWN0hKU2QxelRzOHpwVDhJNEdjdGxLcjQ1Z0l4cWhsdVp3SEdvZXVSX1o3RkU2cmh1Q1NjVVpqM1E3SXIzZWVQSmZpMy1JSSIsImF1ZCI6Im15cGFnZWFwcC1tbm5rYiIsInN1YiI6Im1yLTIwMjQtMTItMDctLS1ZVjdISlNkMXpUczh6cFQ4STRHY3RsS3I0NWdJeHFobHVad0hHb2V1Ul9aN0ZFNnJodUNTY1VaajNRN0lyM2VlUEpmaTMtSUkiLCJpYXQiOjE3MzM1NDk0MjUsImV4cCI6MTc2ODEwOTQyNSwiaXNzIjoiZGF0YS5taWRsYW5kLmNvbS5oayJ9.LOOVgc_Nw7OPNnAlB8iC1kRHL0W8UVNVa0GaJYaxTxVZtO33ZbkR64rxMHSifvZOzYr38aJENj-SDIbkq4Y75CxqMPegyBUgHtaub-Fez5qaH2W0Dz71pUdYijDG3rB4Dkbdf8k21QsHerJmOFnpryzTVnZDxv-3g8Lmjz2WUhmrqMamKox3w-T9wRJ4p_wzcJwvXWgtvxkapr3Ep0YSJy3fJsV-Nwm_QiJf2JR0V4rOAu7f-YLMSy7IYje3W-HvVqAZV2cDphg_cYnf6CpirJPu_ix2z6BtIMpYMXeSiZyZtKCHiWFNtUm6QTD2adArWtLl_NvbgcH9mhVYuWi8NcrZBdBh4c72bSNRm104oEbRb9-vb1AylH2oFkEz33xXXEAJRtbQxoQ3qZj_yoDIexrinOSlkJB50fSu98Xizv9eZstnbtzkgVjfKpOAWQFdHKennjN9Azq6yTlejDVspL7A0JsY4ZlO4HQNdkNhiOQDYypHgx8jQMm0B0rbaa0cEz1S0s43Lh01eNVBN9Is35jAWFsJIP-iLvHqXJ9d0pGoHe0N7PQk2dmLo9E5szP0U04MZxt4m9TEpJkn-0uS_ZDSVABlBU2KGIkTmuzm1VltsDhPhoNrbJBJVdxJJdublpDnVFk8aO1gFWKNzptw48ipmLfpRosynC_x3Ud6QMU'
+def create_source_b_headers(
+    authorization: Optional[str] = None, extra_headers: Optional[Dict[str, str]] = None
+) -> Dict[str, str]:
+    """Create public-safe default headers for Source B requests."""
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/plain, */*",
     }
+    if authorization:
+        headers["Authorization"] = authorization
+    if extra_headers:
+        headers.update(extra_headers)
+    return headers
 
-def create_centaline_headers() -> Dict[str, str]:
-    """
-    Create standard headers for Centaline API requests.
-    
-    Returns:
-        Dictionary of HTTP headers for Centaline API
-    """
-    return {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Referer': 'https://hk.centanet.com/'
-    }
 
-def create_centaline_cookies() -> Dict[str, str]:
-    """
-    Create standard cookies for Centaline API requests.
-    
-    Returns:
-        Dictionary of cookies for Centaline API
-    """
-    return {
-        'lang': 'en',
-        'currency': 'HKD',
-        'unit': 'feet'
+def create_source_a_headers(extra_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    """Create public-safe default headers for Source A requests."""
+    headers = {
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+        ),
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
     }
+    if extra_headers:
+        headers.update(extra_headers)
+    return headers
+
+
+def create_source_a_cookies(extra_cookies: Optional[Dict[str, str]] = None) -> Dict[str, str]:
+    """Create default cookies for Source A requests."""
+    cookies = {"lang": "en", "currency": "HKD", "unit": "feet"}
+    if extra_cookies:
+        cookies.update(extra_cookies)
+    return cookies
 
 # ============ RATE LIMITING AND THROTTLING ============
 
@@ -158,9 +159,9 @@ def execute_graphql_query(url: str, query: str, variables: Optional[Dict[str, An
     # This should never be reached due to the raise in the except block
     raise Exception("GraphQL query failed after all retries")
 
-def create_midland_buildings_query(district_id: str, sbu: str) -> Dict[str, Any]:
+def create_source_b_buildings_query(district_id: str, sbu: str) -> Dict[str, Any]:
     """
-    Create GraphQL query for Midland buildings.
+    Create GraphQL query for Source B buildings.
     
     Args:
         district_id: District ID
@@ -575,7 +576,8 @@ def create_session_with_defaults(headers: Dict[str, str] = None,
     if headers:
         session.headers.update(headers)
     
-    # Set default timeout
-    session.request = lambda *args, **kwargs: session.request(*args, timeout=timeout, **kwargs)
-    
+    # Set default timeout via HTTPAdapter instead of lambda (avoids infinite recursion)
+    original_request = session.request
+    session.request = lambda *args, **kwargs: original_request(*args, **{**{'timeout': timeout}, **kwargs})
+
     return session 

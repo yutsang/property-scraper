@@ -374,6 +374,39 @@ def standardize_text_columns(df: pd.DataFrame, text_columns: List[str],
 
 # ============ PARQUET FILE OPERATIONS ============
 
+def drop_non_parquet_serializable_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Drop columns whose values are dict/list (not Parquet-serializable).
+    Returns a copy with problematic columns removed.
+    """
+    df_out = df.copy()
+    drop_cols = []
+    for c in df_out.columns:
+        sample = df_out[c].dropna()
+        if len(sample) and isinstance(sample.iloc[0], (dict, list)):
+            drop_cols.append(c)
+    for c in drop_cols:
+        df_out = df_out.drop(columns=[c], errors="ignore")
+    if drop_cols:
+        logger.debug(f"Dropped non-Parquet columns: {drop_cols}")
+    return df_out
+
+
+def fix_transaction_df_parquet_types(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fix common transaction DataFrame columns for Parquet compatibility.
+    Converts rooms, completion_year, age to Int64; price/area/ft_price to numeric.
+    """
+    df_out = df.copy()
+    for col in ("rooms", "completion_year", "age"):
+        if col in df_out.columns:
+            df_out[col] = pd.to_numeric(df_out[col], errors="coerce").astype("Int64")
+    for col in ("price", "area", "ft_price", "g_area", "g_unit_price", "n_area", "n_unit_price"):
+        if col in df_out.columns:
+            df_out[col] = pd.to_numeric(df_out[col], errors="coerce")
+    return df_out
+
+
 def sanitize_parquet_columns(df: pd.DataFrame) -> pd.DataFrame:
     """
     Sanitize DataFrame columns for Parquet compatibility.

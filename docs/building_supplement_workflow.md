@@ -24,10 +24,10 @@ PYTHONPATH=src python scripts/build_manual_building_review_queue.py
 2. Open `data/02_intermediate/buildings.xlsx`.
 
 3. Review the source tabs:
-- `centaline_res`
-- `centaline_oir`
-- `midland_res`
-- `midland_ici`
+- `source_a_res`
+- `source_a_commercial`
+- `source_b_res`
+- `source_b_commercial`
 
 Each tab now mixes:
 - `native` rows already known from the source building or estate lists
@@ -85,18 +85,18 @@ For commercial data, the pipelines now follow this order:
 
 1. Native source join
 2. Manual exact key match using `source_join_key`
-3. Manual reviewed name match using normalized name plus district, and zone for Centaline OIR
+3. Manual reviewed name match using normalized name plus district, and zone for Source A OIR
 4. Remaining rows stay unmatched
 
 ## Output Fields
 
 After the supplement is applied:
 
-- Centaline OIR keeps `_match_method`, `match_origin`, and `record_source`
-- Midland ICI now keeps `has_building_match`
-- Midland ICI now keeps `building_match_method`
-- Midland ICI now keeps `matched_building_name`
-- Midland ICI now keeps `match_origin` and `record_source`
+- Source A OIR keeps `_match_method`, `match_origin`, and `record_source`
+- Source B ICI now keeps `has_building_match`
+- Source B ICI now keeps `building_match_method`
+- Source B ICI now keeps `matched_building_name`
+- Source B ICI now keeps `match_origin` and `record_source`
 
 This makes the improvement visible in final outputs instead of hiding the mapping
 status in intermediate tables only.

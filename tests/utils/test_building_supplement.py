@@ -12,7 +12,7 @@ def test_normalize_building_name_removes_punctuation_and_normalizes_case() -> No
 
 
 def test_build_supplemental_review_queue_groups_unmatched_rows_and_seeds_candidates() -> None:
-    centaline_oir = pd.DataFrame(
+    source_a_commercial = pd.DataFrame(
         {
             "propertyNameEn": ["One Plaza", "One Plaza", "No Match House", None, "None"],
             "_match_method": ["unmatched", "unmatched", "unmatched", "unmatched", "unmatched"],
@@ -20,7 +20,7 @@ def test_build_supplemental_review_queue_groups_unmatched_rows_and_seeds_candida
             "zoneEn": ["HK Island", "HK Island", "HK Island", "HK Island", "HK Island"],
         }
     )
-    midland_ici_base = pd.DataFrame(
+    source_b_commercial_base = pd.DataFrame(
         {
             "eng_name": ["One Plaza", "Other Building"],
             "chi_name": ["第一廣場", "其他大廈"],
@@ -30,35 +30,35 @@ def test_build_supplemental_review_queue_groups_unmatched_rows_and_seeds_candida
             "dist_code": ["CEN", "WAC"],
         }
     )
-    midland_ici_primary = pd.DataFrame({"eng_name": ["ONE PLAZA", "STAR HOUSE"]})
-    centaline_res = pd.DataFrame({"Name": ["Estate A"], "Tower": ["Tower 1"]})
-    midland_res = pd.DataFrame({"building": ["Block A"]})
-    leasinghub_frames = [pd.DataFrame({"name": ["ONE PLAZA", "Leasing Hub Tower"]})]
+    source_b_commercial_primary = pd.DataFrame({"eng_name": ["ONE PLAZA", "STAR HOUSE"]})
+    source_a_res = pd.DataFrame({"Name": ["Estate A"], "Tower": ["Tower 1"]})
+    source_b_res = pd.DataFrame({"building": ["Block A"]})
+    source_c_frames = [pd.DataFrame({"name": ["ONE PLAZA", "Leasing Hub Tower"]})]
 
     review_queue, audit_summary = build_supplemental_review_queue(
-        centaline_oir=centaline_oir,
-        midland_ici_base=midland_ici_base,
-        midland_ici_primary=midland_ici_primary,
-        centaline_res=centaline_res,
-        midland_res=midland_res,
-        leasinghub_frames=leasinghub_frames,
+        source_a_commercial=source_a_commercial,
+        source_b_commercial_base=source_b_commercial_base,
+        source_b_commercial_primary=source_b_commercial_primary,
+        source_a_res=source_a_res,
+        source_b_res=source_b_res,
+        source_c_frames=source_c_frames,
     )
 
-    centaline_row = review_queue[
-        (review_queue["source_system"] == "centaline_oir")
+    source_a_row = review_queue[
+        (review_queue["source_system"] == "source_a_commercial")
         & (review_queue["source_name_raw"] == "One Plaza")
     ].iloc[0]
-    assert centaline_row["transaction_count"] == 2
-    assert centaline_row["candidate_building_name"] == "ONE PLAZA"
-    assert centaline_row["candidate_source"] == "midland_ici_primary"
-    assert centaline_row["review_status"] == "pending"
+    assert source_a_row["transaction_count"] == 2
+    assert source_a_row["candidate_building_name"] == "ONE PLAZA"
+    assert source_a_row["candidate_source"] == "source_b_commercial_primary"
+    assert source_a_row["review_status"] == "pending"
     assert "None" not in set(review_queue["source_name_raw"].astype(str))
 
     assert set(audit_summary["source_system"]) >= {
-        "centaline_oir",
-        "midland_ici",
-        "centaline_res",
-        "midland_res",
+        "source_a_commercial",
+        "source_b_commercial",
+        "source_a_res",
+        "source_b_res",
     }
 
 
@@ -74,7 +74,7 @@ def test_apply_supplemental_matches_prefers_join_key_then_reviewed_name() -> Non
     master = pd.DataFrame(
         {
             "domain": ["commercial", "commercial"],
-            "source_system": ["midland_ici", "midland_ici"],
+            "source_system": ["source_b_commercial", "source_b_commercial"],
             "source_join_key": ["B100", None],
             "source_name_raw": ["Alpha Plaza", "Beta Centre"],
             "normalized_name": ["ALPHA PLAZA", "BETA CENTRE"],
@@ -89,7 +89,7 @@ def test_apply_supplemental_matches_prefers_join_key_then_reviewed_name() -> Non
     matched, remaining = apply_supplemental_matches(
         unmatched_df=unmatched,
         supplemental_master=master,
-        source_system="midland_ici",
+        source_system="source_b_commercial",
         domain="commercial",
         join_key_col="building_id",
         source_name_col="eng_name",
@@ -122,7 +122,7 @@ def test_apply_supplemental_matches_respects_zone_when_provided() -> None:
     master = pd.DataFrame(
         {
             "domain": ["commercial"],
-            "source_system": ["centaline_oir"],
+            "source_system": ["source_a_commercial"],
             "source_join_key": [None],
             "source_name_raw": ["Sky Tower"],
             "normalized_name": ["SKY TOWER"],
@@ -137,7 +137,7 @@ def test_apply_supplemental_matches_respects_zone_when_provided() -> None:
     matched, remaining = apply_supplemental_matches(
         unmatched_df=unmatched,
         supplemental_master=master,
-        source_system="centaline_oir",
+        source_system="source_a_commercial",
         domain="commercial",
         join_key_col=None,
         source_name_col="propertyNameEn",
@@ -150,10 +150,10 @@ def test_apply_supplemental_matches_respects_zone_when_provided() -> None:
     assert len(remaining) == 1
 
 
-def test_build_supplemental_review_queue_includes_midland_rows_with_missing_match_flag() -> None:
+def test_build_supplemental_review_queue_includes_source_b_rows_with_missing_match_flag() -> None:
     review_queue, _ = build_supplemental_review_queue(
-        centaline_oir=pd.DataFrame(),
-        midland_ici_base=pd.DataFrame(
+        source_a_commercial=pd.DataFrame(),
+        source_b_commercial_base=pd.DataFrame(
             {
                 "eng_name": ["Mystery House"],
                 "building_id": ["B1"],
@@ -162,19 +162,19 @@ def test_build_supplemental_review_queue_includes_midland_rows_with_missing_matc
                 "dist_code": ["CEN"],
             }
         ),
-        midland_ici_primary=pd.DataFrame(),
-        centaline_res=pd.DataFrame(),
-        midland_res=pd.DataFrame(),
-        leasinghub_frames=[],
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_c_frames=[],
     )
 
     assert "Mystery House" in set(review_queue["source_name_raw"])
 
 
-def test_build_supplemental_review_queue_handles_midland_frames_without_match_flag() -> None:
+def test_build_supplemental_review_queue_handles_source_b_frames_without_match_flag() -> None:
     review_queue, _ = build_supplemental_review_queue(
-        centaline_oir=pd.DataFrame(),
-        midland_ici_base=pd.DataFrame(
+        source_a_commercial=pd.DataFrame(),
+        source_b_commercial_base=pd.DataFrame(
             {
                 "eng_name": ["Mystery House"],
                 "building_id": ["B1"],
@@ -182,10 +182,10 @@ def test_build_supplemental_review_queue_handles_midland_frames_without_match_fl
                 "dist_code": ["CEN"],
             }
         ),
-        midland_ici_primary=pd.DataFrame(),
-        centaline_res=pd.DataFrame(),
-        midland_res=pd.DataFrame(),
-        leasinghub_frames=[],
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_c_frames=[],
     )
 
     assert "Mystery House" in set(review_queue["source_name_raw"])

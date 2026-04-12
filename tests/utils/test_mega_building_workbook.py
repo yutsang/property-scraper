@@ -13,7 +13,7 @@ from property_scraper.utils.building_supplement import (
 
 def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> None:
     workbook_sheets, supplement_cache, consolidated_commercial = build_mega_building_workbook(
-        centaline_oir=pd.DataFrame(
+        source_a_commercial=pd.DataFrame(
             {
                 "propertyNameEn": ["One Plaza", "One Plaza"],
                 "_match_method": ["unmatched", "unmatched"],
@@ -21,17 +21,17 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
                 "zoneEn": ["HK Island", "HK Island"],
             }
         ),
-        midland_ici_base=pd.DataFrame(
+        source_b_commercial_base=pd.DataFrame(
             {
-                "eng_name": ["Midland House"],
+                "eng_name": ["Source B House"],
                 "building_id": ["B1"],
                 "has_building_match": [False],
                 "dist_name_en": ["Central"],
                 "dist_code": ["CEN"],
             }
         ),
-        midland_ici_primary=pd.DataFrame({"eng_name": ["ONE PLAZA", "MIDLAND HOUSE"]}),
-        centaline_res=pd.DataFrame(
+        source_b_commercial_primary=pd.DataFrame({"eng_name": ["ONE PLAZA", "MIDLAND HOUSE"]}),
+        source_a_res=pd.DataFrame(
             {
                 "Name": ["Res Estate"],
                 "building_code": [pd.NA],
@@ -39,7 +39,7 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
                 "region": ["New Territories"],
             }
         ),
-        midland_res=pd.DataFrame(
+        source_b_res=pd.DataFrame(
             {
                 "estate": ["Res Court"],
                 "building": [pd.NA],
@@ -47,7 +47,7 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
                 "region_name_trans": ["New Territories"],
             }
         ),
-        centaline_oir_buildings=pd.DataFrame(
+        source_a_commercial_buildings=pd.DataFrame(
             {
                 "property_id": ["P1"],
                 "building_name": ["Native OIR"],
@@ -59,7 +59,7 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
                 "source_url": ["https://oir.example"],
             }
         ),
-        midland_ici_buildings=pd.DataFrame(
+        source_b_commercial_buildings=pd.DataFrame(
             {
                 "id": ["M1"],
                 "Building Name": ["Native ICI"],
@@ -68,7 +68,7 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
                 "URL": ["https://ici.example"],
             }
         ),
-        centaline_res_buildings=pd.DataFrame(
+        source_a_res_buildings=pd.DataFrame(
             {
                 "estate_code": ["E1"],
                 "Name": ["Native Estate"],
@@ -80,13 +80,13 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
                 "Link": ["https://res.example"],
             }
         ),
-        midland_res_buildings=pd.DataFrame(
+        source_b_res_buildings=pd.DataFrame(
             {
                 "id": ["R1"],
-                "name": ["Native Midland Estate"],
+                "name": ["Native Source B Estate"],
                 "district_name": ["Tsuen Wan"],
                 "region_name": ["New Territories"],
-                "location": ["3 Midland Road"],
+                "location": ["3 Source B Road"],
                 "first_op_date": ["2010"],
                 "developer_name": ["Dev B"],
                 "url_desc": ["https://midres.example"],
@@ -94,27 +94,27 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
         ),
         workbook_path=Path("/tmp/nonexistent_buildings.xlsx"),
         include_limit=0,
-        leasinghub_frames=[],
+        source_c_frames=[],
     )
 
     assert set(workbook_sheets) == {
-        "centaline_res",
-        "centaline_oir",
-        "midland_res",
-        "midland_ici",
+        "source_a_res",
+        "source_a_commercial",
+        "source_b_res",
+        "source_b_commercial",
     }
     assert supplement_cache.empty
 
-    centaline_oir_tab = workbook_sheets["centaline_oir"]
-    assert set(centaline_oir_tab["row_kind"]) == {"native", "unmatched_candidate"}
-    one_plaza = centaline_oir_tab.loc[
-        centaline_oir_tab["source_name_raw"] == "One Plaza"
+    source_a_commercial_tab = workbook_sheets["source_a_commercial"]
+    assert set(source_a_commercial_tab["row_kind"]) == {"native", "unmatched_candidate"}
+    one_plaza = source_a_commercial_tab.loc[
+        source_a_commercial_tab["source_name_raw"] == "One Plaza"
     ].iloc[0]
     assert one_plaza["occurrence_count"] == 2
 
-    centaline_res_tab = workbook_sheets["centaline_res"]
-    assert "Res Estate" in set(centaline_res_tab["source_name_raw"])
-    assert "Native Estate" in set(centaline_res_tab["source_name_raw"])
+    source_a_res_tab = workbook_sheets["source_a_res"]
+    assert "Res Estate" in set(source_a_res_tab["source_name_raw"])
+    assert "Native Estate" in set(source_a_res_tab["source_name_raw"])
 
     assert "Native OIR" in set(consolidated_commercial["canonical_building_name"])
     assert "Native ICI" in set(consolidated_commercial["canonical_building_name"])
@@ -129,7 +129,7 @@ def test_build_mega_building_workbook_preserves_manual_rows_and_exports_marked_c
             {
                 "row_kind": ["unmatched_candidate", "unmatched_candidate"],
                 "domain": ["commercial", "commercial"],
-                "source_system": ["centaline_oir", "centaline_oir"],
+                "source_system": ["source_a_commercial", "source_a_commercial"],
                 "source_join_key": [pd.NA, pd.NA],
                 "source_name_raw": ["Approved Plaza", "Old Tower"],
                 "normalized_name": ["APPROVED PLAZA", "OLD TOWER"],
@@ -150,10 +150,10 @@ def test_build_mega_building_workbook_preserves_manual_rows_and_exports_marked_c
                 "manual_notes": ["approved", "keep me"],
                 "manual_include": ["Y", pd.NA],
             }
-        ).to_excel(writer, sheet_name="centaline_oir", index=False)
+        ).to_excel(writer, sheet_name="source_a_commercial", index=False)
 
     workbook_sheets, supplement_cache, _ = build_mega_building_workbook(
-        centaline_oir=pd.DataFrame(
+        source_a_commercial=pd.DataFrame(
             {
                 "propertyNameEn": ["New Tower"],
                 "_match_method": ["unmatched"],
@@ -161,31 +161,31 @@ def test_build_mega_building_workbook_preserves_manual_rows_and_exports_marked_c
                 "zoneEn": ["HK Island"],
             }
         ),
-        midland_ici_base=pd.DataFrame(),
-        midland_ici_primary=pd.DataFrame(),
-        centaline_res=pd.DataFrame(),
-        midland_res=pd.DataFrame(),
-        centaline_oir_buildings=pd.DataFrame(),
-        midland_ici_buildings=pd.DataFrame(),
-        centaline_res_buildings=pd.DataFrame(),
-        midland_res_buildings=pd.DataFrame(),
+        source_b_commercial_base=pd.DataFrame(),
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_a_commercial_buildings=pd.DataFrame(),
+        source_b_commercial_buildings=pd.DataFrame(),
+        source_a_res_buildings=pd.DataFrame(),
+        source_b_res_buildings=pd.DataFrame(),
         workbook_path=workbook_path,
         include_limit=0,
-        leasinghub_frames=[],
+        source_c_frames=[],
     )
 
-    centaline_oir_tab = workbook_sheets["centaline_oir"]
-    assert "Old Tower" in set(centaline_oir_tab["source_name_raw"])
-    assert "New Tower" in set(centaline_oir_tab["source_name_raw"])
+    source_a_commercial_tab = workbook_sheets["source_a_commercial"]
+    assert "Old Tower" in set(source_a_commercial_tab["source_name_raw"])
+    assert "New Tower" in set(source_a_commercial_tab["source_name_raw"])
 
-    approved_row = centaline_oir_tab.loc[
-        centaline_oir_tab["source_name_raw"] == "Approved Plaza"
+    approved_row = source_a_commercial_tab.loc[
+        source_a_commercial_tab["source_name_raw"] == "Approved Plaza"
     ].iloc[0]
     assert approved_row["row_kind"] == "manual_approved"
 
     assert set(supplement_cache["canonical_building_name"]) == {"Approved Plaza"}
     cache_row = supplement_cache.iloc[0]
-    assert cache_row["source_system"] == "centaline_oir"
+    assert cache_row["source_system"] == "source_a_commercial"
     assert cache_row["record_source"] == "mega_workbook"
 
 
@@ -198,7 +198,7 @@ def test_build_mega_building_workbook_keeps_existing_rows_when_no_fresh_candidat
             {
                 "row_kind": ["unmatched_candidate"],
                 "domain": ["commercial"],
-                "source_system": ["centaline_oir"],
+                "source_system": ["source_a_commercial"],
                 "source_join_key": [pd.NA],
                 "source_name_raw": ["Carry Forward Tower"],
                 "normalized_name": ["CARRY FORWARD TOWER"],
@@ -225,24 +225,24 @@ def test_build_mega_building_workbook_keeps_existing_rows_when_no_fresh_candidat
                 "native_property_type": [pd.NA],
                 "native_developers": [pd.NA],
             }
-        ).to_excel(writer, sheet_name="centaline_oir", index=False)
+        ).to_excel(writer, sheet_name="source_a_commercial", index=False)
 
     workbook_sheets, supplement_cache, _ = build_mega_building_workbook(
-        centaline_oir=pd.DataFrame(),
-        midland_ici_base=pd.DataFrame(),
-        midland_ici_primary=pd.DataFrame(),
-        centaline_res=pd.DataFrame(),
-        midland_res=pd.DataFrame(),
-        centaline_oir_buildings=pd.DataFrame(),
-        midland_ici_buildings=pd.DataFrame(),
-        centaline_res_buildings=pd.DataFrame(),
-        midland_res_buildings=pd.DataFrame(),
+        source_a_commercial=pd.DataFrame(),
+        source_b_commercial_base=pd.DataFrame(),
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_a_commercial_buildings=pd.DataFrame(),
+        source_b_commercial_buildings=pd.DataFrame(),
+        source_a_res_buildings=pd.DataFrame(),
+        source_b_res_buildings=pd.DataFrame(),
         workbook_path=workbook_path,
         include_limit=0,
-        leasinghub_frames=[],
+        source_c_frames=[],
     )
 
-    assert "Carry Forward Tower" in set(workbook_sheets["centaline_oir"]["source_name_raw"])
+    assert "Carry Forward Tower" in set(workbook_sheets["source_a_commercial"]["source_name_raw"])
     assert supplement_cache.empty
 
 
@@ -254,11 +254,11 @@ def test_write_mega_building_workbook_sanitizes_excel_illegal_characters(
     write_mega_building_workbook(
         workbook_path,
         {
-            "centaline_oir": pd.DataFrame(
+            "source_a_commercial": pd.DataFrame(
                 {
                     "row_kind": ["unmatched_candidate"],
                     "domain": ["commercial"],
-                    "source_system": ["centaline_oir"],
+                    "source_system": ["source_a_commercial"],
                     "source_join_key": [pd.NA],
                     "source_name_raw": ["Bad\x1aName"],
                     "normalized_name": ["BAD NAME"],
@@ -289,7 +289,7 @@ def test_write_mega_building_workbook_sanitizes_excel_illegal_characters(
         },
     )
 
-    sheet = pd.read_excel(workbook_path, sheet_name="centaline_oir")
+    sheet = pd.read_excel(workbook_path, sheet_name="source_a_commercial")
     assert sheet.loc[0, "source_name_raw"] == "BadName"
 
 
@@ -301,11 +301,11 @@ def test_write_mega_building_workbook_normalizes_timezone_datetimes(
     write_mega_building_workbook(
         workbook_path,
         {
-            "centaline_oir": pd.DataFrame(
+            "source_a_commercial": pd.DataFrame(
                 {
                     "row_kind": ["unmatched_candidate"],
                     "domain": ["commercial"],
-                    "source_system": ["centaline_oir"],
+                    "source_system": ["source_a_commercial"],
                     "source_join_key": [pd.NA],
                     "source_name_raw": ["Timed Tower"],
                     "normalized_name": ["TIMED TOWER"],
@@ -336,7 +336,7 @@ def test_write_mega_building_workbook_normalizes_timezone_datetimes(
         },
     )
 
-    sheet = pd.read_excel(workbook_path, sheet_name="centaline_oir")
+    sheet = pd.read_excel(workbook_path, sheet_name="source_a_commercial")
     assert not sheet.empty
 
 
@@ -347,11 +347,11 @@ def test_load_supplemental_building_master_reads_marked_rows_from_mega_workbook(
     write_mega_building_workbook(
         workbook_path,
         {
-            "centaline_oir": pd.DataFrame(
+            "source_a_commercial": pd.DataFrame(
                 {
                     "row_kind": ["manual_approved"],
                     "domain": ["commercial"],
-                    "source_system": ["centaline_oir"],
+                    "source_system": ["source_a_commercial"],
                     "source_join_key": [pd.NA],
                     "source_name_raw": ["Workbook Plaza"],
                     "normalized_name": ["WORKBOOK PLAZA"],
@@ -389,7 +389,7 @@ def test_load_supplemental_building_master_reads_marked_rows_from_mega_workbook(
                 "master_file": str(workbook_path),
             }
         },
-        source_system="centaline_oir",
+        source_system="source_a_commercial",
     )
 
     assert set(master["canonical_building_name"]) == {"Workbook Plaza"}
@@ -402,11 +402,11 @@ def test_load_supplemental_building_master_uses_workbook_file_when_master_file_m
     write_mega_building_workbook(
         workbook_path,
         {
-            "centaline_oir": pd.DataFrame(
+            "source_a_commercial": pd.DataFrame(
                 {
                     "row_kind": ["manual_approved"],
                     "domain": ["commercial"],
-                    "source_system": ["centaline_oir"],
+                    "source_system": ["source_a_commercial"],
                     "source_join_key": [pd.NA],
                     "source_name_raw": ["Workbook Plaza"],
                     "normalized_name": ["WORKBOOK PLAZA"],
@@ -444,7 +444,7 @@ def test_load_supplemental_building_master_uses_workbook_file_when_master_file_m
                 "workbook_file": str(workbook_path),
             }
         },
-        source_system="centaline_oir",
+        source_system="source_a_commercial",
     )
 
     assert set(master["canonical_building_name"]) == {"Workbook Plaza"}
@@ -454,7 +454,7 @@ def test_merge_manual_rows_into_source_buildings_replaces_stale_manual_rows() ->
     approved_master = pd.DataFrame(
         {
             "domain": ["commercial", "residential"],
-            "source_system": ["centaline_oir", "midland_res"],
+            "source_system": ["source_a_commercial", "source_b_res"],
             "source_join_key": ["P-MANUAL", "R-MANUAL"],
             "source_name_raw": ["Workbook Plaza", "Workbook Court"],
             "normalized_name": ["WORKBOOK PLAZA", "WORKBOOK COURT"],
@@ -477,7 +477,7 @@ def test_merge_manual_rows_into_source_buildings_replaces_stale_manual_rows() ->
 
     updated_frames = merge_manual_rows_into_source_buildings(
         approved_master=approved_master,
-        centaline_oir_buildings=pd.DataFrame(
+        source_a_commercial_buildings=pd.DataFrame(
             {
                 "property_id": ["P-NATIVE", "P-OLD"],
                 "building_name": ["Native Tower", "Old Manual Plaza"],
@@ -492,9 +492,9 @@ def test_merge_manual_rows_into_source_buildings_replaces_stale_manual_rows() ->
                 "is_manual_record": [False, True],
             }
         ),
-        midland_ici_buildings=pd.DataFrame(),
-        centaline_res_buildings=pd.DataFrame(),
-        midland_res_buildings=pd.DataFrame(
+        source_b_commercial_buildings=pd.DataFrame(),
+        source_a_res_buildings=pd.DataFrame(),
+        source_b_res_buildings=pd.DataFrame(
             {
                 "id": ["R-NATIVE", "R-OLD"],
                 "name": ["Native Court", "Old Workbook Court"],
@@ -510,21 +510,21 @@ def test_merge_manual_rows_into_source_buildings_replaces_stale_manual_rows() ->
         ),
     )
 
-    centaline_oir = updated_frames["centaline_oir"]
-    assert "Native Tower" in set(centaline_oir["building_name"])
-    assert "Old Manual Plaza" not in set(centaline_oir["building_name"])
-    manual_oir = centaline_oir.loc[centaline_oir["building_name"] == "Workbook Plaza"].iloc[0]
+    source_a_commercial = updated_frames["source_a_commercial"]
+    assert "Native Tower" in set(source_a_commercial["building_name"])
+    assert "Old Manual Plaza" not in set(source_a_commercial["building_name"])
+    manual_oir = source_a_commercial.loc[source_a_commercial["building_name"] == "Workbook Plaza"].iloc[0]
     assert manual_oir["property_id"] == "P-MANUAL"
     assert manual_oir["record_source"] == "manual_workbook"
     assert bool(manual_oir["is_manual_record"]) is True
 
-    midland_res = updated_frames["midland_res"]
-    assert "Native Court" in set(midland_res["name"])
-    assert "Old Workbook Court" not in set(midland_res["name"])
-    manual_midland_res = midland_res.loc[midland_res["name"] == "Workbook Court"].iloc[0]
-    assert manual_midland_res["id"] == "R-MANUAL"
-    assert manual_midland_res["record_source"] == "manual_workbook"
-    assert bool(manual_midland_res["is_manual_record"]) is True
+    source_b_res = updated_frames["source_b_res"]
+    assert "Native Court" in set(source_b_res["name"])
+    assert "Old Workbook Court" not in set(source_b_res["name"])
+    manual_source_b_res = source_b_res.loc[source_b_res["name"] == "Workbook Court"].iloc[0]
+    assert manual_source_b_res["id"] == "R-MANUAL"
+    assert manual_source_b_res["record_source"] == "manual_workbook"
+    assert bool(manual_source_b_res["is_manual_record"]) is True
 
 
 def test_build_mega_building_workbook_ignores_manual_writeback_rows_in_native_inputs(
@@ -534,11 +534,11 @@ def test_build_mega_building_workbook_ignores_manual_writeback_rows_in_native_in
     write_mega_building_workbook(
         workbook_path,
         {
-            "centaline_oir": pd.DataFrame(
+            "source_a_commercial": pd.DataFrame(
                 {
                     "row_kind": ["manual_approved"],
                     "domain": ["commercial"],
-                    "source_system": ["centaline_oir"],
+                    "source_system": ["source_a_commercial"],
                     "source_join_key": ["P-MANUAL"],
                     "source_name_raw": ["Workbook Plaza"],
                     "normalized_name": ["WORKBOOK PLAZA"],
@@ -570,12 +570,12 @@ def test_build_mega_building_workbook_ignores_manual_writeback_rows_in_native_in
     )
 
     workbook_sheets, _, _ = build_mega_building_workbook(
-        centaline_oir=pd.DataFrame(),
-        midland_ici_base=pd.DataFrame(),
-        midland_ici_primary=pd.DataFrame(),
-        centaline_res=pd.DataFrame(),
-        midland_res=pd.DataFrame(),
-        centaline_oir_buildings=pd.DataFrame(
+        source_a_commercial=pd.DataFrame(),
+        source_b_commercial_base=pd.DataFrame(),
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_a_commercial_buildings=pd.DataFrame(
             {
                 "property_id": ["P-MANUAL"],
                 "building_name": ["Workbook Plaza"],
@@ -590,16 +590,16 @@ def test_build_mega_building_workbook_ignores_manual_writeback_rows_in_native_in
                 "is_manual_record": [True],
             }
         ),
-        midland_ici_buildings=pd.DataFrame(),
-        centaline_res_buildings=pd.DataFrame(),
-        midland_res_buildings=pd.DataFrame(),
+        source_b_commercial_buildings=pd.DataFrame(),
+        source_a_res_buildings=pd.DataFrame(),
+        source_b_res_buildings=pd.DataFrame(),
         workbook_path=workbook_path,
         include_limit=0,
-        leasinghub_frames=[],
+        source_c_frames=[],
     )
 
-    workbook_plaza_rows = workbook_sheets["centaline_oir"].loc[
-        workbook_sheets["centaline_oir"]["source_name_raw"] == "Workbook Plaza"
+    workbook_plaza_rows = workbook_sheets["source_a_commercial"].loc[
+        workbook_sheets["source_a_commercial"]["source_name_raw"] == "Workbook Plaza"
     ]
     assert len(workbook_plaza_rows) == 1
     assert workbook_plaza_rows.iloc[0]["row_kind"] == "manual_approved"
@@ -607,15 +607,15 @@ def test_build_mega_building_workbook_ignores_manual_writeback_rows_in_native_in
 
 def test_build_consolidated_commercial_master_skips_blank_manual_names() -> None:
     consolidated = build_consolidated_commercial_master(
-        centaline_buildings=pd.DataFrame(),
-        midland_buildings=pd.DataFrame(),
+        source_a_buildings=pd.DataFrame(),
+        source_b_buildings=pd.DataFrame(),
         manual_master=pd.DataFrame(
             {
                 "canonical_building_name": [pd.NA],
                 "normalized_name": ["BROKEN RECORD"],
                 "district_name_en": ["Central"],
                 "zone_en": ["HK Island"],
-                "source_system": ["centaline_oir"],
+                "source_system": ["source_a_commercial"],
                 "address": [pd.NA],
                 "completion_year": [pd.NA],
                 "management_company": [pd.NA],

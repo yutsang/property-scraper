@@ -1,0 +1,14 @@
+{
+  "_comment": "Synthetic example of the local Source B commercial transaction payload shape. Real endpoints and live samples are kept only in conf/local/parameters.yml.",
+  "record_zh_hk": {
+    "name": "Sample Tower",
+    "area": { "value": 4353 },
+    "building": { "id": "B000000001", "name": "Sample Tower" },
+    "flat": "1-2",
+    "floor": "**HIGH**",
+    "district": { "distCode": "ABC", "name": "Sample District" },
+    "streets": { "id": "100", "name": "Sample Road", "streetno": "39" },
+    "txDate": "2026-03-24",
+    "txType": "S"
+  }
+}

@@ -1,31 +1,43 @@
 # Node Execution Tracking
 
-This document describes the node execution tracking system implemented to handle Centaline's strict anti-scraping measures.
+This document describes the node execution tracking system implemented to handle Source A's anti-scraping measures while still reacting to real website changes.
 
 ## Overview
 
-The node execution tracker records when each pipeline node was last executed and prevents unnecessary re-runs based on configurable rules. This helps avoid triggering anti-scraping mechanisms while ensuring data freshness.
+The node execution tracker stores:
+
+1. Execution metadata such as last run time and record counts.
+2. Local dataset state such as file validity, row count, and max transaction date.
+3. Lightweight live website state such as sitemap lastmod or estate page-1 change signals.
+
+The goal is to answer:
+
+- "Has this node run before?"
+- "Is the local dataset still valid?"
+- "Does the website appear to have changed since the last successful run?"
 
 ## Node Types and Rules
 
 ### 1. Transaction Nodes (`transaction`)
-- **Rule**: Skip if already run on the same day
-- **Rationale**: Transaction data changes frequently, but running multiple times per day is unnecessary and risky
+- **Primary rule**: Compare live website freshness signals plus local dataset freshness.
+- **Fallback rule**: If live probing fails, use local dataset freshness instead of forcing a huge full rerun.
+- **Rationale**: Transaction data changes frequently, but we should avoid both redundant runs and accidental historical rescans when local files are broken.
 - **Examples**: 
-  - `transaction_data_scraper` (Centaline Residential)
-  - `scrape_transaction` (Centaline OIR)
-  - `fetch_midland_transactions` (Midland Residential)
-  - `ml_ici_scrape_trans` (Midland ICI)
+  - `transaction_data_scraper` (Source A Residential)
+  - `scrape_transaction` (Source A OIR)
+  - `fetch_source_b_transactions` (Source B Residential)
+  - `source_b_commercial_scrape_trans` (Source B ICI)
 
 ### 2. Estate Nodes (`estate`)
-- **Rule**: Skip if run within the last 7 days
-- **Rationale**: Estate information changes less frequently, but should be updated weekly
+- **Primary rule**: Compare page-1 website counts / totals or equivalent live probes.
+- **Fallback rule**: If probes fail, keep existing data and only rescrape conservatively.
+- **Rationale**: Estate data should be driven by upstream changes, not a fixed day count alone.
 - **Examples**:
-  - `estate_listing_scraper` (Centaline Residential)
+  - `estate_listing_scraper` (Source A Residential)
 
 ### 3. Default Nodes (`default`)
-- **Rule**: Always run (no restrictions)
-- **Rationale**: Processing and enrichment nodes don't involve scraping
+- **Rule**: Always run unless a caller provides a custom live-state decision.
+- **Rationale**: Processing and enrichment nodes do not hit external sites directly.
 - **Examples**:
   - Data processing nodes
   - Data enrichment nodes
@@ -37,30 +49,39 @@ The node execution tracker records when each pipeline node was last executed and
 
 1. **NodeExecutionTracker Class** (`src/property_scraper/utils/node_tracker.py`)
    - Manages execution history in JSON format
-   - Provides methods to check if nodes should run
-   - Records execution metadata
+   - Stores live-state hashes and dataset summaries
+   - Records both decisions and successful executions
 
 2. **Integration Points**
-   - Each scraping node checks execution status before running
-   - Nodes record their execution upon completion
-   - Existing data is returned if node should be skipped
+  - Nodes can record a run/skip decision before scraping
+  - Nodes record execution metadata upon completion
+  - Existing data can be returned when live state indicates no change
 
 ### Usage in Nodes
 
 ```python
-from ...utils.node_tracker import should_run_node, record_node_execution
+from ...utils.node_tracker import evaluate_node_run, record_node_decision, record_node_execution
 
 def scrape_transaction_data(area_df, params):
-    # Check if node should run
     node_name = "transaction_data_scraper"
-    if not should_run_node(node_name, "transaction"):
-        logger.info(f"Node '{node_name}' already run today - returning existing data")
-        # Return existing data if available
+    live_state = probe_live_site_state()
+    decision = evaluate_node_run(
+        node_name=node_name,
+        node_type="transaction",
+        data_file_path="data/01_raw/centaline_res_trans_lv_0.parquet",
+        live_state=live_state,
+    )
+    record_node_decision(
+        node_name=node_name,
+        node_type="transaction",
+        should_run=decision["should_run"],
+        reason=decision["reason"],
+        live_state=live_state,
+        dataset_state=decision.get("dataset_state"),
+    )
+    if not decision["should_run"]:
         return load_existing_data()
-    
-    # ... scraping logic ...
-    
-    # Record execution
+
     record_node_execution(
         node_name="transaction_data_scraper",
         node_type="transaction",
@@ -103,17 +124,12 @@ tracker = NodeExecutionTracker(tracking_file="custom/path/tracker.json")
 
 ## Testing
 
-Run the test script to verify the functionality:
+Suggested test coverage:
 
-```bash
-python test_node_tracker.py
-```
-
-This will:
-1. Test node execution checks
-2. Record sample executions
-3. Verify skip logic works correctly
-4. Show node status information
+1. Corrupt / empty parquet detection for transaction datasets.
+2. Live-state hashing and unchanged-state skip behavior.
+3. Probe failure fallback behavior.
+4. Reset-node and reset-all behavior.
 
 ## Monitoring
 
@@ -153,7 +169,7 @@ tracker.reset_all_nodes()        # Reset all nodes
 ```
 
 ### Force Execution
-To force a node to run despite tracking rules, you can temporarily reset its history or modify the tracking file directly.
+To force a node to run despite tracking rules, reset its tracker entry or set the relevant rerun parameter in `conf/base/parameters.yml`.
 
 ### Debug Issues
 - Check the tracking file for corruption
@@ -162,7 +178,6 @@ To force a node to run despite tracking rules, you can temporarily reset its his
 
 ## Future Enhancements
 
-1. **Dynamic Rules**: Configurable skip periods via parameters
-2. **Conditional Logic**: Skip based on data freshness rather than time
-3. **Integration**: Web UI for monitoring and management
-4. **Notifications**: Alerts when nodes are skipped for extended periods 
+1. **Deeper site probes**: Use richer transaction totals or district-level signals where lightweight probes are reliable.
+2. **Integration**: Web UI for monitoring and management.
+3. **Notifications**: Alerts when probes repeatedly fail or local datasets become corrupt.

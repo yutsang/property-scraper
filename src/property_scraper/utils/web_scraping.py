@@ -87,7 +87,7 @@ def setup_undetected_driver():
     options.add_argument('--disable-blink-features=AutomationControlled')
     
     # Create undetected driver with correct Chrome version
-    driver = uc.Chrome(options=options, version_main=137)
+    driver = uc.Chrome(options=options)
     
     return driver
 
@@ -122,8 +122,8 @@ def wait_for_cloudflare_check(driver, max_wait=5):
                 continue
             
             # Check if we have building content and correct URL
-            if (('building' in page_source or 'office' in page_source or 'leasinghub' in page_source) 
-                and 'leasinghub.com' in current_url):
+            if (('building' in page_source or 'office' in page_source or 'source_c' in page_source) 
+                and 'source_c.com' in current_url):
                 return True
             
             time.sleep(0.2)

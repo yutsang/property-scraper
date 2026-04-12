@@ -1,289 +1,391 @@
-import os
+import hashlib
 import json
 import logging
+import os
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class NodeExecutionTracker:
     """
-    Utility class to track node execution dates and determine if nodes should be re-run
-    based on anti-scraping requirements.
+    Track node executions and lightweight live-state comparisons.
+
+    The tracker can use:
+    - local dataset freshness (e.g. max transaction date)
+    - live website state (e.g. sitemap lastmod, page counts, probe fingerprints)
+    - stored execution metadata for later diagnostics
     """
-    
+
     def __init__(self, tracking_file: str = "data/node_execution_tracker.json"):
-        """
-        Initialize the node execution tracker.
-        
-        Args:
-            tracking_file: Path to the JSON file storing execution timestamps
-        """
         self.tracking_file = tracking_file
         self.execution_data = self._load_execution_data()
-    
+
     def _load_execution_data(self) -> Dict[str, Any]:
-        """Load execution data from JSON file."""
         if os.path.exists(self.tracking_file):
             try:
-                with open(self.tracking_file, 'r') as f:
+                with open(self.tracking_file, "r") as f:
                     return json.load(f)
             except Exception as e:
-                logger.warning(f"Failed to load execution tracker: {e}")
-                return {}
+                logger.warning("Failed to load execution tracker: %s", e)
         return {}
-    
+
     def _save_execution_data(self):
-        """Save execution data to JSON file."""
         try:
             os.makedirs(os.path.dirname(self.tracking_file), exist_ok=True)
-            with open(self.tracking_file, 'w') as f:
+            # Write atomically to prevent corruption from concurrent access
+            tmp_file = self.tracking_file + ".tmp"
+            with open(tmp_file, "w") as f:
                 json.dump(self.execution_data, f, indent=2, default=str)
+            os.replace(tmp_file, self.tracking_file)
         except Exception as e:
-            logger.error(f"Failed to save execution tracker: {e}")
-    
-    def should_run_node(self, node_name: str, node_type: str = "default", tracking_params: Optional[Dict[str, Any]] = None, data_file_path: Optional[str] = None) -> bool:
-        """
-        Determine if a node should be run based on data freshness (max date in dataset).
-        
-        NOTE: This method now ALWAYS returns True for non-transaction nodes.
-        Only transaction nodes perform date-based checks using actual data.
-        
-        Args:
-            node_name: Name of the node
-            node_type: Type of node ('transaction', 'estate', 'building', 'default')
-            tracking_params: Optional parameters for configuration (unused)
-            data_file_path: Path to the data file to check max date (transaction nodes only)
-            
-        Returns:
-            bool: True if node should be run (always True except for up-to-date transaction nodes)
-        """
-        # For transaction nodes, check max date in dataset vs current date
-        if node_type == "transaction" and data_file_path:
-            return self._should_run_transaction_node(node_name, data_file_path, tracking_params)
-        
-        # For all other nodes (estate, building, default): ALWAYS RUN
-        # No more "skip based on days since last run" logic
-        return True
-    
-    def _should_run_transaction_node(self, node_name: str, data_file_path: str, tracking_params: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Check if transaction node should run by comparing max date in dataset with current date.
-        
-        Logic:
-        - If max_date >= today: SKIP (dataset is up to date, no new data available)
-        - If max_date < today: RUN (scrape from max_date+1 to today)
-        """
-        if not os.path.exists(data_file_path):
-            logger.info(f"📊 Node '{node_name}': No existing data file - initial scrape required")
-            return True
-        
-        try:
-            # Load existing data to check max date
-            if data_file_path.endswith('.parquet'):
-                df = pd.read_parquet(data_file_path)
-            elif data_file_path.endswith('.csv'):
-                df = pd.read_csv(data_file_path)
-            else:
-                logger.warning(f"⚠️  Node '{node_name}': Unsupported file format - will execute")
-                return True
-            
-            if df.empty:
-                logger.info(f"📊 Node '{node_name}': Empty dataset - initial scrape required")
-                return True
-            
-            # Find date column
-            date_columns = ['date', 'transaction_date', 'tx_date', 'Date', 'transactionDate']
-            date_col = None
-            
-            for col in date_columns:
-                if col in df.columns:
-                    date_col = col
-                    break
-            
-            if not date_col:
-                logger.warning(f"⚠️  Node '{node_name}': No date column found - will execute")
-                return True
-            
-            # Parse dates and find max
-            df_temp = df.copy()
-            df_temp['parsed_date'] = df_temp[date_col].apply(self._parse_date_string)
-            valid_dates = df_temp['parsed_date'].dropna()
-            
-            if valid_dates.empty:
-                logger.info(f"📊 Node '{node_name}': No valid dates found - will execute")
-                return True
-            
-            # Calculate max date
-            max_date = valid_dates.max()
-            current_date = datetime.now().date()
-            
-            # Check if we need to scrape
-            if max_date >= current_date:
-                logger.info(f"✅ Node '{node_name}': Data up-to-date (max: {max_date}) - skipping")
-                return False
-            else:
-                days_behind = (current_date - max_date).days
-                logger.info(f"📊 Node '{node_name}': Data {days_behind} days behind (max: {max_date}) - will scrape")
-                return True
-                
-        except Exception as e:
-            logger.warning(f"⚠️  Error checking data for '{node_name}': {e}")
-            logger.info(f"📊 Will execute node for safety")
-            return True
-    
-    def _parse_date_string(self, date_str):
-        """
-        Parse date string using format detection.
-        Handles both ISO format (yyyy-mm-dd) and Hong Kong format (dd/mm/yyyy).
-        """
+            logger.error("Failed to save execution tracker: %s", e)
+
+    def _safe_value(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {str(k): self._safe_value(v) for k, v in sorted(value.items(), key=lambda item: str(item[0]))}
+        if isinstance(value, list):
+            return [self._safe_value(v) for v in value]
+        if isinstance(value, tuple):
+            return [self._safe_value(v) for v in value]
+        if isinstance(value, set):
+            return sorted(self._safe_value(v) for v in value)
+        if isinstance(value, Path):
+            return str(value)
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
+
+    def _hash_payload(self, payload: Any) -> Optional[str]:
+        if payload is None:
+            return None
+        normalized = self._safe_value(payload)
+        raw = json.dumps(normalized, sort_keys=True, ensure_ascii=True, default=str)
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+    def _parse_date_string(self, date_str: Any):
         if not date_str or pd.isna(date_str):
             return None
 
         date_str = str(date_str).strip()
-        
-        # Quick format detection
-        is_iso_format = (
-            'T' in date_str or  # ISO timestamp with time
-            (len(date_str) == 10 and date_str[4] == '-' and date_str[7] == '-')  # yyyy-mm-dd
+        is_iso_format = "T" in date_str or (
+            len(date_str) == 10 and date_str[4] == "-" and date_str[7] == "-"
         )
-        is_slash_format = '/' in date_str  # dd/mm/yyyy or mm/dd/yyyy
-        
-        # Try explicit format parsing first (faster and cleaner)
-        date_formats = []
-        
+        is_slash_format = "/" in date_str
+
         if is_iso_format:
-            # ISO formats - try without dayfirst
             date_formats = [
-                '%Y-%m-%dT%H:%M:%S.%fZ',  # ISO with milliseconds and Z
-                '%Y-%m-%dT%H:%M:%S.%f',   # ISO with milliseconds
-                '%Y-%m-%dT%H:%M:%SZ',     # ISO without milliseconds
-                '%Y-%m-%dT%H:%M:%S',      # ISO without timezone
-                '%Y-%m-%d',               # Simple yyyy-mm-dd
+                "%Y-%m-%dT%H:%M:%S.%fZ",
+                "%Y-%m-%dT%H:%M:%S.%f",
+                "%Y-%m-%dT%H:%M:%SZ",
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%d",
             ]
         elif is_slash_format:
-            # Slash formats - try dd/mm/yyyy first (Hong Kong standard)
-            date_formats = [
-                '%d/%m/%Y',   # dd/mm/yyyy (Hong Kong)
-                '%m/%d/%Y',   # mm/dd/yyyy (US)
-            ]
+            date_formats = ["%d/%m/%Y", "%m/%d/%Y"]
         else:
-            # Other formats
-            date_formats = [
-                '%Y%m%d',     # yyyymmdd
-                '%d-%m-%Y',   # dd-mm-yyyy
-                '%Y-%m-%d',   # yyyy-mm-dd
-            ]
-        
-        # Try each format
+            date_formats = ["%Y%m%d", "%d-%m-%Y", "%Y-%m-%d"]
+
         for fmt in date_formats:
             try:
                 return datetime.strptime(date_str, fmt).date()
             except (ValueError, TypeError):
                 continue
-        
-        # Fallback to pandas auto-detection (only if explicit formats failed)
+
         try:
-            # Use dayfirst only for slash formats that aren't ISO
-            use_dayfirst = is_slash_format and not is_iso_format
-            parsed = pd.to_datetime(date_str, errors='coerce', dayfirst=use_dayfirst)
+            parsed = pd.to_datetime(
+                date_str,
+                errors="coerce",
+                dayfirst=is_slash_format and not is_iso_format,
+            )
             if pd.notna(parsed):
                 return parsed.date()
-        except:
+        except Exception:
             pass
-        
+
         return None
-    
-    def record_node_execution(self, node_name: str, node_type: str = "default", 
-                            metadata: Optional[Dict[str, Any]] = None):
-        """
-        Record that a node has been executed.
-        
-        Args:
-            node_name: Name of the node
-            node_type: Type of node ('transaction', 'estate', 'default')
-            metadata: Additional metadata to store
-        """
-        current_time = datetime.now().isoformat()
-        
-        self.execution_data[node_name] = {
-            'last_run': current_time,
-            'node_type': node_type,
-            'execution_count': self.execution_data.get(node_name, {}).get('execution_count', 0) + 1,
-            'metadata': metadata or {}
+
+    def build_data_file_state(self, data_file_path: Optional[str]) -> Optional[Dict[str, Any]]:
+        """Summarize dataset state without mutating tracker state."""
+        if not data_file_path:
+            return None
+
+        path = Path(data_file_path)
+        state: Dict[str, Any] = {
+            "path": str(path),
+            "exists": path.exists(),
+            "is_valid": False,
+            "row_count": 0,
+            "size_bytes": path.stat().st_size if path.exists() else 0,
+            "max_date": None,
+            "date_column": None,
+            "modified_at": datetime.fromtimestamp(path.stat().st_mtime).isoformat() if path.exists() else None,
+            "error": None,
         }
-        
+
+        if not path.exists():
+            state["error"] = "file_missing"
+            return state
+
+        if state["size_bytes"] == 0:
+            state["error"] = "file_empty"
+            return state
+
+        try:
+            if path.suffix == ".parquet":
+                df = pd.read_parquet(path)
+            elif path.suffix == ".csv":
+                df = pd.read_csv(path)
+            else:
+                state["error"] = f"unsupported_format:{path.suffix}"
+                return state
+
+            state["row_count"] = len(df)
+            if df.empty:
+                state["error"] = "dataset_empty"
+                return state
+
+            date_columns = ["date", "transaction_date", "tx_date", "Date", "transactionDate"]
+            date_col = next((col for col in date_columns if col in df.columns), None)
+            if date_col:
+                parsed_dates = df[date_col].apply(self._parse_date_string).dropna()
+                if not parsed_dates.empty:
+                    state["max_date"] = parsed_dates.max().isoformat()
+                    state["date_column"] = date_col
+
+            state["is_valid"] = True
+            return state
+        except Exception as exc:
+            state["error"] = str(exc)
+            return state
+
+    def should_run_node(
+        self,
+        node_name: str,
+        node_type: str = "default",
+        tracking_params: Optional[Dict[str, Any]] = None,
+        data_file_path: Optional[str] = None,
+        live_state: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        decision = self.evaluate_run(
+            node_name=node_name,
+            node_type=node_type,
+            tracking_params=tracking_params,
+            data_file_path=data_file_path,
+            live_state=live_state,
+        )
+        return decision["should_run"]
+
+    def evaluate_run(
+        self,
+        node_name: str,
+        node_type: str = "default",
+        tracking_params: Optional[Dict[str, Any]] = None,
+        data_file_path: Optional[str] = None,
+        live_state: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Return a detailed run/skip decision."""
+        tracking_params = tracking_params or {}
+        current_time = datetime.now().isoformat()
+        previous = self.execution_data.get(node_name, {})
+        dataset_state = self.build_data_file_state(data_file_path)
+
+        if live_state is not None:
+            current_live_hash = self._hash_payload(live_state)
+            previous_live_hash = previous.get("last_live_state_hash")
+            live_probe_failed = bool(live_state.get("probe_failed")) if isinstance(live_state, dict) else False
+
+            if live_probe_failed:
+                if dataset_state and dataset_state.get("is_valid") and dataset_state.get("max_date"):
+                    max_date = self._parse_date_string(dataset_state["max_date"])
+                    if max_date and max_date >= datetime.now().date():
+                        return {
+                            "should_run": False,
+                            "reason": "live_probe_failed_but_local_dataset_current",
+                            "live_state": live_state,
+                            "dataset_state": dataset_state,
+                            "evaluated_at": current_time,
+                        }
+                return {
+                    "should_run": True,
+                    "reason": "live_probe_failed_fallback_to_safe_run",
+                    "live_state": live_state,
+                    "dataset_state": dataset_state,
+                    "evaluated_at": current_time,
+                }
+
+            if previous_live_hash and current_live_hash == previous_live_hash:
+                if dataset_state and dataset_state.get("is_valid"):
+                    return {
+                        "should_run": False,
+                        "reason": "live_state_unchanged",
+                        "live_state": live_state,
+                        "dataset_state": dataset_state,
+                        "evaluated_at": current_time,
+                    }
+
+            return {
+                "should_run": True,
+                "reason": "live_state_changed_or_untracked",
+                "live_state": live_state,
+                "dataset_state": dataset_state,
+                "evaluated_at": current_time,
+            }
+
+        if node_type == "transaction" and dataset_state:
+            if not dataset_state.get("exists"):
+                return {
+                    "should_run": True,
+                    "reason": "transaction_file_missing",
+                    "dataset_state": dataset_state,
+                    "evaluated_at": current_time,
+                }
+            if not dataset_state.get("is_valid"):
+                return {
+                    "should_run": True,
+                    "reason": f"transaction_dataset_invalid:{dataset_state.get('error')}",
+                    "dataset_state": dataset_state,
+                    "evaluated_at": current_time,
+                }
+
+            max_date = self._parse_date_string(dataset_state.get("max_date"))
+            if max_date and max_date >= datetime.now().date():
+                return {
+                    "should_run": False,
+                    "reason": f"transaction_data_current:{max_date}",
+                    "dataset_state": dataset_state,
+                    "evaluated_at": current_time,
+                }
+            return {
+                "should_run": True,
+                "reason": f"transaction_data_stale:{dataset_state.get('max_date')}",
+                "dataset_state": dataset_state,
+                "evaluated_at": current_time,
+            }
+
+        return {
+            "should_run": True,
+            "reason": "default_run",
+            "dataset_state": dataset_state,
+            "evaluated_at": current_time,
+        }
+
+    def record_node_decision(
+        self,
+        node_name: str,
+        node_type: str = "default",
+        should_run: bool = True,
+        reason: str = "",
+        metadata: Optional[Dict[str, Any]] = None,
+        live_state: Optional[Dict[str, Any]] = None,
+        dataset_state: Optional[Dict[str, Any]] = None,
+    ):
+        entry = self.execution_data.get(node_name, {})
+        entry.update(
+            {
+                "node_type": node_type,
+                "last_decision_at": datetime.now().isoformat(),
+                "last_should_run": should_run,
+                "last_reason": reason,
+            }
+        )
+        if metadata is not None:
+            entry["metadata"] = metadata
+        if live_state is not None:
+            entry["last_live_state"] = self._safe_value(live_state)
+            entry["last_live_state_hash"] = self._hash_payload(live_state)
+        if dataset_state is not None:
+            entry["last_dataset_state"] = self._safe_value(dataset_state)
+        self.execution_data[node_name] = entry
         self._save_execution_data()
-        logger.info(f"Recorded execution for node '{node_name}' at {current_time}")
-    
+
+    def record_node_execution(
+        self,
+        node_name: str,
+        node_type: str = "default",
+        metadata: Optional[Dict[str, Any]] = None,
+        live_state: Optional[Dict[str, Any]] = None,
+        dataset_state: Optional[Dict[str, Any]] = None,
+    ):
+        current_time = datetime.now().isoformat()
+        existing = self.execution_data.get(node_name, {})
+
+        entry = {
+            "last_run": current_time,
+            "node_type": node_type,
+            "execution_count": existing.get("execution_count", 0) + 1,
+            "metadata": self._safe_value(metadata or {}),
+            "last_decision_at": current_time,
+            "last_should_run": True,
+            "last_reason": "executed",
+        }
+        if live_state is not None:
+            entry["last_live_state"] = self._safe_value(live_state)
+            entry["last_live_state_hash"] = self._hash_payload(live_state)
+        else:
+            entry["last_live_state"] = existing.get("last_live_state")
+            entry["last_live_state_hash"] = existing.get("last_live_state_hash")
+
+        if dataset_state is not None:
+            entry["last_dataset_state"] = self._safe_value(dataset_state)
+        elif existing.get("last_dataset_state") is not None:
+            entry["last_dataset_state"] = existing.get("last_dataset_state")
+
+        self.execution_data[node_name] = entry
+        self._save_execution_data()
+        logger.info("Recorded execution for node '%s' at %s", node_name, current_time)
+
     def get_node_status(self, node_name: str) -> Dict[str, Any]:
-        """
-        Get the current status of a node.
-        
-        Args:
-            node_name: Name of the node
-            
-        Returns:
-            Dict containing node status information
-        """
         if node_name not in self.execution_data:
             return {
-                'node_name': node_name,
-                'last_run': None,
-                'node_type': None,
-                'execution_count': 0,
-                'should_run': True,
-                'days_since_last_run': None
+                "node_name": node_name,
+                "last_run": None,
+                "node_type": None,
+                "execution_count": 0,
+                "should_run": True,
+                "days_since_last_run": None,
+                "last_reason": None,
             }
-        
+
         data = self.execution_data[node_name]
-        last_run = data.get('last_run')
-        
+        last_run = data.get("last_run")
+        days_since_last_run = None
         if last_run:
             try:
-                last_run_date = datetime.fromisoformat(last_run)
-                current_date = datetime.now()
-                days_since_last_run = (current_date - last_run_date).days
-            except:
+                days_since_last_run = (datetime.now() - datetime.fromisoformat(last_run)).days
+            except Exception:
                 days_since_last_run = None
-        else:
-            days_since_last_run = None
-        
+
         return {
-            'node_name': node_name,
-            'last_run': last_run,
-            'node_type': data.get('node_type'),
-            'execution_count': data.get('execution_count', 0),
-            'should_run': self.should_run_node(node_name, data.get('node_type')),
-            'days_since_last_run': days_since_last_run,
-            'metadata': data.get('metadata', {})
+            "node_name": node_name,
+            "last_run": last_run,
+            "node_type": data.get("node_type"),
+            "execution_count": data.get("execution_count", 0),
+            "should_run": data.get("last_should_run", True),
+            "days_since_last_run": days_since_last_run,
+            "metadata": data.get("metadata", {}),
+            "last_reason": data.get("last_reason"),
+            "last_live_state": data.get("last_live_state"),
+            "last_dataset_state": data.get("last_dataset_state"),
         }
-    
+
     def get_all_node_statuses(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get status of all tracked nodes.
-        
-        Returns:
-            Dict mapping node names to their status
-        """
-        return {node_name: self.get_node_status(node_name) 
-                for node_name in self.execution_data.keys()}
-    
+        return {
+            node_name: self.get_node_status(node_name)
+            for node_name in self.execution_data.keys()
+        }
+
     def reset_node(self, node_name: str):
-        """
-        Reset a node's execution history.
-        
-        Args:
-            node_name: Name of the node to reset
-        """
         if node_name in self.execution_data:
             del self.execution_data[node_name]
             self._save_execution_data()
-            logger.info(f"Reset execution history for node '{node_name}'")
-    
+            logger.info("Reset execution history for node '%s'", node_name)
+
     def reset_all_nodes(self):
-        """Reset all node execution history."""
         self.execution_data = {}
         self._save_execution_data()
         logger.info("Reset all node execution history")
@@ -299,7 +401,13 @@ def get_node_tracker() -> NodeExecutionTracker:
         _node_tracker = NodeExecutionTracker()
     return _node_tracker
 
-def should_run_node(node_name: str, node_type: str = "default", tracking_params: Optional[Dict[str, Any]] = None, data_file_path: Optional[str] = None) -> bool:
+def should_run_node(
+    node_name: str,
+    node_type: str = "default",
+    tracking_params: Optional[Dict[str, Any]] = None,
+    data_file_path: Optional[str] = None,
+    live_state: Optional[Dict[str, Any]] = None,
+) -> bool:
     """
     Convenience function to check if a node should be run.
     
@@ -312,10 +420,39 @@ def should_run_node(node_name: str, node_type: str = "default", tracking_params:
     Returns:
         bool: True if node should be run, False otherwise
     """
-    return get_node_tracker().should_run_node(node_name, node_type, tracking_params, data_file_path)
+    return get_node_tracker().should_run_node(
+        node_name,
+        node_type,
+        tracking_params,
+        data_file_path,
+        live_state,
+    )
 
-def record_node_execution(node_name: str, node_type: str = "default", 
-                         metadata: Optional[Dict[str, Any]] = None):
+
+def evaluate_node_run(
+    node_name: str,
+    node_type: str = "default",
+    tracking_params: Optional[Dict[str, Any]] = None,
+    data_file_path: Optional[str] = None,
+    live_state: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Convenience wrapper for detailed run/skip decisions."""
+    return get_node_tracker().evaluate_run(
+        node_name=node_name,
+        node_type=node_type,
+        tracking_params=tracking_params,
+        data_file_path=data_file_path,
+        live_state=live_state,
+    )
+
+
+def record_node_execution(
+    node_name: str,
+    node_type: str = "default",
+    metadata: Optional[Dict[str, Any]] = None,
+    live_state: Optional[Dict[str, Any]] = None,
+    dataset_state: Optional[Dict[str, Any]] = None,
+):
     """
     Convenience function to record node execution.
     
@@ -324,7 +461,34 @@ def record_node_execution(node_name: str, node_type: str = "default",
         node_type: Type of node ('transaction', 'estate', 'default')
         metadata: Additional metadata to store
     """
-    get_node_tracker().record_node_execution(node_name, node_type, metadata)
+    get_node_tracker().record_node_execution(
+        node_name,
+        node_type,
+        metadata,
+        live_state=live_state,
+        dataset_state=dataset_state,
+    )
+
+
+def record_node_decision(
+    node_name: str,
+    node_type: str = "default",
+    should_run: bool = True,
+    reason: str = "",
+    metadata: Optional[Dict[str, Any]] = None,
+    live_state: Optional[Dict[str, Any]] = None,
+    dataset_state: Optional[Dict[str, Any]] = None,
+):
+    """Convenience wrapper for storing skip/run decisions before execution."""
+    get_node_tracker().record_node_decision(
+        node_name=node_name,
+        node_type=node_type,
+        should_run=should_run,
+        reason=reason,
+        metadata=metadata,
+        live_state=live_state,
+        dataset_state=dataset_state,
+    )
 
 def get_node_status(node_name: str) -> Dict[str, Any]:
     """
