@@ -26,7 +26,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Step 1.5: Column Selection for Source A Residential Data
             node(
                 func=select_source_a_res_columns,
-                inputs="source_a_res_cleaned",
+                inputs=["source_a_res_cleaned", "parameters"],
                 outputs="source_a_res",
                 name="select_source_a_res_columns",
             ),
@@ -42,7 +42,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Step 2.5: Column Selection for Source A OIR Data
             node(
                 func=select_source_a_commercial_columns,
-                inputs="source_a_commercial_cleaned",
+                inputs=["source_a_commercial_cleaned", "parameters"],
                 outputs="source_a_commercial",
                 name="select_source_a_commercial_columns",
             ),
@@ -58,7 +58,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Step 3.5: Column Selection for Source B Residential Data
             node(
                 func=select_source_b_res_columns,
-                inputs="source_b_res_cleaned",
+                inputs=["source_b_res_cleaned", "parameters"],
                 outputs="source_b_res",
                 name="select_source_b_res_columns",
             ),
@@ -74,7 +74,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Step 4.5: Column Selection for Source B ICI Data
             node(
                 func=select_source_b_commercial_columns,
-                inputs="source_b_commercial_cleaned",
+                inputs=["source_b_commercial_cleaned", "parameters"],
                 outputs="source_b_commercial",
                 name="select_source_b_commercial_columns",
             ),

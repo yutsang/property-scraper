@@ -5,8 +5,27 @@ import numpy as np
 import re
 from typing import Dict, Any, Optional
 
+from ...utils.area_conversion import (
+    classify_retail_floor,
+    derive_net_area,
+    load_gross_to_net_ratios,
+    normalize_region,
+)
+
 # Configure logging
 logger = logging.getLogger(__name__)
+
+
+# Display labels for the two data providers. Internal source keys stay anonymized
+# (source_a = Centaline, source_b = Midland) as functional identifiers; these
+# labels are used only for user-facing output (run summary, Excel report tabs,
+# overlap tags). Matches the labels defined in conf/local/parameters.yml.
+SOURCE_DISPLAY_LABELS = {
+    "source_a_res": "Centaline Residential",
+    "source_a_commercial": "Centaline OIR",
+    "source_b_res": "Midland Residential",
+    "source_b_commercial": "Midland ICI",
+}
 
 
 ############################## 1. Source A Res Start ##############################
@@ -1991,15 +2010,17 @@ def merge_and_excel(
     overlap_res_df = _find_cross_source_overlap(
         df_cr_processed, df_mr_processed,
         area_col_a='area', area_col_b='area',
-        label_a='Source A_Res', label_b='Source B_Res',
+        label_a=SOURCE_DISPLAY_LABELS['source_a_res'],
+        label_b=SOURCE_DISPLAY_LABELS['source_b_res'],
     )
     overlap_com_df = _find_cross_source_overlap(
         df_co_processed, df_mi_processed,
         area_col_a='transactionArea', area_col_b='area',
-        label_a='Source A_OIR', label_b='Source B_ICI',
+        label_a=SOURCE_DISPLAY_LABELS['source_a_commercial'],
+        label_b=SOURCE_DISPLAY_LABELS['source_b_commercial'],
     )
-    n_overlap_res = overlap_res_df[overlap_res_df['_overlap_source'] == 'Source A_Res'].shape[0] if not overlap_res_df.empty else 0
-    n_overlap_com = overlap_com_df[overlap_com_df['_overlap_source'] == 'Source A_OIR'].shape[0] if not overlap_com_df.empty else 0
+    n_overlap_res = overlap_res_df[overlap_res_df['_overlap_source'] == SOURCE_DISPLAY_LABELS['source_a_res']].shape[0] if not overlap_res_df.empty else 0
+    n_overlap_com = overlap_com_df[overlap_com_df['_overlap_source'] == SOURCE_DISPLAY_LABELS['source_a_commercial']].shape[0] if not overlap_com_df.empty else 0
     logger.info("  Residential overlap: %d matched transaction pair(s) across sources", n_overlap_res)
     logger.info("  Commercial  overlap: %d matched transaction pair(s) across sources", n_overlap_com)
 
@@ -2054,13 +2075,13 @@ def merge_and_excel(
             df_out = df_out.sort_values(by='date', ascending=False, kind='mergesort').reset_index(drop=True)
         return df_out
     
-    # Split residential data (Source A + Source B)
-    cr_2020_2023, cr_2024_current = split_by_date_range(df_cr_processed, "Source A_Residential")
-    mr_2020_2023, mr_2024_current = split_by_date_range(df_mr_processed, "Source B_Residential")
+    # Split residential data (Centaline + Midland)
+    cr_2020_2023, cr_2024_current = split_by_date_range(df_cr_processed, SOURCE_DISPLAY_LABELS['source_a_res'])
+    mr_2020_2023, mr_2024_current = split_by_date_range(df_mr_processed, SOURCE_DISPLAY_LABELS['source_b_res'])
 
-    # Split commercial data (Source A OIR + Source B ICI)
-    co_2020_2023, co_2024_current = split_by_date_range(df_co_processed, "Source A_OIR")
-    mi_2020_2023, mi_2024_current = split_by_date_range(df_mi_processed, "Source B_ICI")
+    # Split commercial data (Centaline OIR + Midland ICI)
+    co_2020_2023, co_2024_current = split_by_date_range(df_co_processed, SOURCE_DISPLAY_LABELS['source_a_commercial'])
+    mi_2020_2023, mi_2024_current = split_by_date_range(df_mi_processed, SOURCE_DISPLAY_LABELS['source_b_commercial'])
 
     # Split overlap data by the same date ranges (only when overlaps were found)
     if not overlap_res_df.empty:
@@ -2075,26 +2096,26 @@ def merge_and_excel(
 
     # Combine residential and commercial separately
     residential_2020_2023 = {
-        sanitize_worksheet_name('Source A_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2020_2023)) if not cr_2020_2023.empty else None,
-        sanitize_worksheet_name('Source B_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2020_2023)) if not mr_2020_2023.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_res']): sanitize_dataframe_content(prepare_for_excel(cr_2020_2023)) if not cr_2020_2023.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_res']): sanitize_dataframe_content(prepare_for_excel(mr_2020_2023)) if not mr_2020_2023.empty else None,
         sanitize_worksheet_name('Overlap_Res'): sanitize_dataframe_content(prepare_for_excel(overlap_res_2020_2023)) if not overlap_res_2020_2023.empty else None,
     }
 
     residential_2024_current = {
-        sanitize_worksheet_name('Source A_Res'): sanitize_dataframe_content(prepare_for_excel(cr_2024_current)) if not cr_2024_current.empty else None,
-        sanitize_worksheet_name('Source B_Res'): sanitize_dataframe_content(prepare_for_excel(mr_2024_current)) if not mr_2024_current.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_res']): sanitize_dataframe_content(prepare_for_excel(cr_2024_current)) if not cr_2024_current.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_res']): sanitize_dataframe_content(prepare_for_excel(mr_2024_current)) if not mr_2024_current.empty else None,
         sanitize_worksheet_name('Overlap_Res'): sanitize_dataframe_content(prepare_for_excel(overlap_res_2024_current)) if not overlap_res_2024_current.empty else None,
     }
 
     commercial_2020_2023 = {
-        sanitize_worksheet_name('Source A_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2020_2023)) if not co_2020_2023.empty else None,
-        sanitize_worksheet_name('Source B_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2020_2023)) if not mi_2020_2023.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_commercial']): sanitize_dataframe_content(prepare_for_excel(co_2020_2023)) if not co_2020_2023.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_commercial']): sanitize_dataframe_content(prepare_for_excel(mi_2020_2023)) if not mi_2020_2023.empty else None,
         sanitize_worksheet_name('Overlap_Com'): sanitize_dataframe_content(prepare_for_excel(overlap_com_2020_2023)) if not overlap_com_2020_2023.empty else None,
     }
 
     commercial_2024_current = {
-        sanitize_worksheet_name('Source A_OIR'): sanitize_dataframe_content(prepare_for_excel(co_2024_current)) if not co_2024_current.empty else None,
-        sanitize_worksheet_name('Source B_ICI'): sanitize_dataframe_content(prepare_for_excel(mi_2024_current)) if not mi_2024_current.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_commercial']): sanitize_dataframe_content(prepare_for_excel(co_2024_current)) if not co_2024_current.empty else None,
+        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_commercial']): sanitize_dataframe_content(prepare_for_excel(mi_2024_current)) if not mi_2024_current.empty else None,
         sanitize_worksheet_name('Overlap_Com'): sanitize_dataframe_content(prepare_for_excel(overlap_com_2024_current)) if not overlap_com_2024_current.empty else None,
     }
 
@@ -2119,7 +2140,8 @@ def merge_and_excel(
     logger.info("📊 Run diff vs previous run:")
     for src, d in run_diff.items():
         delta_str = f"+{d['delta']}" if d['delta'] and d['delta'] > 0 else str(d['delta']) if d['delta'] is not None else "n/a (first run)"
-        logger.info("  %-28s %s  (prev=%s → current=%s)", src, delta_str, d['prev'], d['current'])
+        label = SOURCE_DISPLAY_LABELS.get(src, src)
+        logger.info("  %-28s %s  (prev=%s → current=%s)", label, delta_str, d['prev'], d['current'])
 
     return {
         'residential_2020_2023': residential_2020_2023,
@@ -2130,18 +2152,41 @@ def merge_and_excel(
 
 ############################## COLUMN SELECTION FUNCTIONS ##############################
 
-def select_source_a_res_columns(df: pd.DataFrame) -> pd.DataFrame:
+def select_source_a_res_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     """
     Select and reorder columns for Source A Residential dataset
-    
+
     Args:
         df: Input dataframe with all columns
-        
+        params: Full project parameters (used for area_conversion config)
+
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
     logger.info("📋 Selecting columns for Source A Residential...")
-    
+
+    # Fill missing NFA (area) from GFA (g_area) using region/property-type ratios,
+    # and record whether area is original or calculated.
+    ratio_config = load_gross_to_net_ratios(params)
+    if ratio_config is not None and 'g_area' in df.columns and 'area' in df.columns:
+        ratios, fallback_region = ratio_config
+        category = df.get('property_type', pd.Series(pd.NA, index=df.index)).map(
+            lambda value: 'residential' if str(value).strip().lower() == 'residential' else None
+        )
+        region = df.get('region', pd.Series(pd.NA, index=df.index)).map(normalize_region)
+        net_area, provenance = derive_net_area(
+            gross_area=df['g_area'],
+            property_category=category,
+            region=region,
+            ratios=ratios,
+            fallback_region=fallback_region,
+            existing_net_area=df['area'],
+        )
+        df['area'] = net_area
+        df['area_provenance'] = provenance
+    else:
+        df['area_provenance'] = pd.NA
+
     # Current available columns from source_a_res_base (after enrich_estate_data)
     # Only select columns that actually exist in the data
     selected_columns = [
@@ -2155,11 +2200,12 @@ def select_source_a_res_columns(df: pd.DataFrame) -> pd.DataFrame:
          'Floor',                   # Floor number
          'Flat',                    # Flat/unit number
          'transaction_type',        # Type of transaction
-         'area',                    # Net area (from JavaScript nArea)
+         'area',                    # Net area (from JavaScript nArea; may be filled from GFA)
          'price',                   # Transaction price (from JavaScript)
          'ft_price',                # Net price per sqft (from JavaScript nUnitPrice)
          'g_area',                  # Gross area (from JavaScript gArea)
          'g_unit_price',            # Gross price per sqft (from JavaScript gUnitPrice)
+         'area_provenance',         # Whether 'area' is original or calculated_from_gfa
          'year',                    # Completion year
          'age',                     # Building age
          'developer',               # Developer
@@ -2186,21 +2232,59 @@ def select_source_a_res_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     return result_df
 
-def select_source_a_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
+def _classify_source_a_commercial_category(usage: Any, floor: Any) -> Optional[str]:
+    text = str(usage).strip() if usage is not None and not pd.isna(usage) else ''
+    if text == 'Retail':
+        return classify_retail_floor(floor)
+    if text == 'Commercial':
+        return 'office'
+    if text == 'Industrial':
+        return 'industrial'
+    return None
+
+
+def select_source_a_commercial_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     """
     Select and reorder columns for Source A Office/Industrial/Retail dataset
-    
+
     Args:
         df: Input dataframe with all columns
-        
+        params: Full project parameters (used for area_conversion config)
+
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
     logger.info("📋 Selecting columns for Source A Office/Industrial/Retail...")
-    
+
     # Log available columns for debugging
     logger.info(f"  Available columns in input: {len(df.columns)}")
-    
+
+    # Neither this source nor Source B commercial has an existing gross/net area
+    # split (unlike residential); the single transactionArea figure is GFA per HK
+    # market convention for non-residential listings. Derive NFA from it.
+    ratio_config = load_gross_to_net_ratios(params)
+    if ratio_config is not None and 'transactionArea' in df.columns:
+        ratios, fallback_region = ratio_config
+        usage = df.get('propertyUsageDisplayName', pd.Series(pd.NA, index=df.index))
+        floor = df.get('floor', pd.Series(pd.NA, index=df.index))
+        category = pd.Series(
+            [_classify_source_a_commercial_category(u, f) for u, f in zip(usage, floor)],
+            index=df.index,
+        )
+        region = df.get('zoneEn', pd.Series(pd.NA, index=df.index)).map(normalize_region)
+        net_area, provenance = derive_net_area(
+            gross_area=df['transactionArea'],
+            property_category=category,
+            region=region,
+            ratios=ratios,
+            fallback_region=fallback_region,
+        )
+        df['net_area'] = net_area
+        df['area_provenance'] = provenance
+    else:
+        df['net_area'] = pd.NA
+        df['area_provenance'] = pd.NA
+
     # Core columns to select (filter to only those that exist)
     desired_columns = [
         'transactionDate',  # Will be renamed to 'date'
@@ -2214,6 +2298,8 @@ def select_source_a_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
         'unit',
         'transactionType',
         'transactionArea',
+        'net_area',  # NFA calculated from transactionArea (GFA) via area_conversion ratios
+        'area_provenance',  # calculated_from_gfa / unavailable / not_applicable
         'price',
         'avgPrice',
         'full_address',
@@ -2260,18 +2346,39 @@ def select_source_a_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     return result_df
 
-def select_source_b_res_columns(df: pd.DataFrame) -> pd.DataFrame:
+def select_source_b_res_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     """
     Select and reorder columns for Source B Residential dataset
-    
+
     Args:
         df: Input dataframe with all columns
-        
+        params: Full project parameters (used for area_conversion config)
+
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
     logger.info("📋 Selecting columns for Source B Residential...")
-    
+
+    # Fill missing NFA (net_area) from GFA (area) using region/property-type ratios,
+    # and record whether net_area is original or calculated.
+    ratio_config = load_gross_to_net_ratios(params)
+    if ratio_config is not None and 'area' in df.columns and 'net_area' in df.columns:
+        ratios, fallback_region = ratio_config
+        category = pd.Series('residential', index=df.index)
+        region = df.get('region_name_trans', pd.Series(pd.NA, index=df.index)).map(normalize_region)
+        net_area, provenance = derive_net_area(
+            gross_area=df['area'],
+            property_category=category,
+            region=region,
+            ratios=ratios,
+            fallback_region=fallback_region,
+            existing_net_area=df['net_area'],
+        )
+        df['net_area'] = net_area
+        df['area_provenance'] = provenance
+    else:
+        df['area_provenance'] = pd.NA
+
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
     selected_columns = [
@@ -2287,7 +2394,8 @@ def select_source_b_res_columns(df: pd.DataFrame) -> pd.DataFrame:
         'flat',  # flat
         'tx_type',  # tx_type
         'price',  # price
-        'net_area',  # net_area
+        'net_area',  # net_area (may be filled from GFA)
+        'area_provenance',  # whether net_area is original or calculated_from_gfa
         'unit_price_net',  # unit_price_net
         'building_first_op_date',  # building_first_op_date
         'age',  # age
@@ -2327,18 +2435,56 @@ def select_source_b_res_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     return result_df
 
-def select_source_b_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
+def _classify_source_b_commercial_category(ics_type: Any, floor: Any) -> Optional[str]:
+    text = str(ics_type).strip() if ics_type is not None and not pd.isna(ics_type) else ''
+    if text == 'Retail':
+        return classify_retail_floor(floor)
+    if text == 'Office':
+        return 'office'
+    if text == 'Industrial':
+        return 'industrial'
+    return None
+
+
+def select_source_b_commercial_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     """
     Select and reorder columns for Source B Office/Industrial/Retail dataset
-    
+
     Args:
         df: Input dataframe with all columns
-        
+        params: Full project parameters (used for area_conversion config)
+
     Returns:
         pd.DataFrame: Dataframe with selected columns only
     """
     logger.info("📋 Selecting columns for Source B Office/Industrial/Retail...")
-    
+
+    # Neither this source nor Source A commercial has an existing gross/net area
+    # split; the single area figure is GFA per HK market convention for
+    # non-residential listings. Derive NFA from it.
+    ratio_config = load_gross_to_net_ratios(params)
+    if ratio_config is not None and 'area' in df.columns:
+        ratios, fallback_region = ratio_config
+        ics_type = df.get('ics_type', pd.Series(pd.NA, index=df.index))
+        floor = df.get('floor', pd.Series(pd.NA, index=df.index))
+        category = pd.Series(
+            [_classify_source_b_commercial_category(t, f) for t, f in zip(ics_type, floor)],
+            index=df.index,
+        )
+        region = df.get('zoneEn', pd.Series(pd.NA, index=df.index)).map(normalize_region)
+        net_area, provenance = derive_net_area(
+            gross_area=df['area'],
+            property_category=category,
+            region=region,
+            ratios=ratios,
+            fallback_region=fallback_region,
+        )
+        df['net_area'] = net_area
+        df['area_provenance'] = provenance
+    else:
+        df['net_area'] = pd.NA
+        df['area_provenance'] = pd.NA
+
     # Current available columns (commented for reference)
     # Uncomment and reorder the columns you want to keep
     selected_columns = [
@@ -2355,6 +2501,8 @@ def select_source_b_commercial_columns(df: pd.DataFrame) -> pd.DataFrame:
         'flat',  # flat
         'tx_type',  # tx_type
         'area',  # area
+        'net_area',  # NFA calculated from area (GFA) via area_conversion ratios
+        'area_provenance',  # calculated_from_gfa / unavailable / not_applicable
         'price',  # price
         'price_per_feet',  # price_per_feet
         'street_id',

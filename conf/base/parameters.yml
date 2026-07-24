@@ -193,3 +193,35 @@ buildings:
     distance_threshold_meters: 100  # Distance threshold for location matching (meters)
     enable_geocoding: true    # Enable/disable geocoding functionality
 
+# Gross-to-net (GFA -> NFA) floor area conversion, used to fill missing NFA when only
+# GFA is available. Ratios are NFA/GFA efficiency ratios by macro-region and property
+# type. fallback_region applies when a record's region can't be resolved.
+area_conversion:
+  enabled: true
+  fallback_region: "Overall Hong Kong"
+  gross_to_net_ratios:
+    "Overall Hong Kong":
+      residential: 0.79
+      office: 0.67
+      retail_overall: 0.70
+      retail_street_shop: 0.87
+      industrial: 0.72
+    "Hong Kong Island":
+      residential: 0.81
+      office: 0.68
+      retail_overall: 0.71
+      retail_street_shop: 0.87
+      industrial: 0.73
+    "Kowloon":
+      residential: 0.79
+      office: 0.67
+      retail_overall: 0.73
+      retail_street_shop: 0.87
+      industrial: 0.71
+    "New Territories":
+      residential: 0.78
+      office: 0.64
+      retail_overall: 0.66
+      retail_street_shop: 0.87
+      industrial: 0.73
+
