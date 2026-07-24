@@ -94,6 +94,7 @@ MEGA_SHEET_COLUMNS = {
     ],
     "source_b_commercial": [
         *MEGA_BASE_COLUMNS,
+        "native_grade",
         "native_type",
         "native_title",
         "native_total_area",
@@ -179,6 +180,70 @@ def load_excel_supplemental_master(
     return combined.reset_index(drop=True)
 
 
+def _derive_source_b_commercial_building_geo(
+    source_b_commercial_base: pd.DataFrame,
+) -> pd.DataFrame:
+    """Recover per-building district/zone for Source B ICI from transaction data.
+
+    midland_ici_building_details.parquet (the native building-level scrape) never
+    captured district/zone, even though every transaction row already carries
+    dist_code/dist_name_en. This aggregates the transaction-level values (most
+    common per building_id) so cross-source building matching keys line up with
+    Source A commercial, which already populates district_name_en/zone_en natively.
+    """
+    if source_b_commercial_base.empty or "building_id" not in source_b_commercial_base.columns:
+        return pd.DataFrame(columns=["building_id", "district_name_en", "zone_en"])
+
+    # Reuses the authoritative Source B district->zone mapping already maintained
+    # for the main data_process pipeline, so the two stay in sync.
+    from ..pipelines.data_process.nodes import _source_b_zone_from_dist_code
+
+    working = source_b_commercial_base[source_b_commercial_base["building_id"].notna()].copy()
+    if working.empty:
+        return pd.DataFrame(columns=["building_id", "district_name_en", "zone_en"])
+
+    working["_zone_en"] = working.apply(
+        lambda row: _source_b_zone_from_dist_code(
+            row.get("dist_code"), row.get("dist_name_en")
+        ),
+        axis=1,
+    )
+
+    def _mode_or_na(series: pd.Series) -> Any:
+        cleaned = series.dropna()
+        cleaned = cleaned[cleaned.astype(str).str.strip() != ""]
+        if cleaned.empty:
+            return pd.NA
+        return cleaned.mode().iloc[0]
+
+    aggregated = (
+        working.groupby("building_id")
+        .agg(
+            district_name_en=("dist_name_en", _mode_or_na),
+            zone_en=("_zone_en", _mode_or_na),
+        )
+        .reset_index()
+    )
+    return aggregated
+
+
+def _enrich_source_b_commercial_buildings_with_geo(
+    source_b_commercial_buildings: pd.DataFrame,
+    source_b_commercial_base: pd.DataFrame,
+) -> pd.DataFrame:
+    """Attach district_name_en/zone_en to the Source B ICI native buildings frame."""
+    if source_b_commercial_buildings.empty or "id" not in source_b_commercial_buildings.columns:
+        return source_b_commercial_buildings
+
+    geo = _derive_source_b_commercial_building_geo(source_b_commercial_base)
+    if geo.empty:
+        return source_b_commercial_buildings
+
+    return source_b_commercial_buildings.merge(
+        geo, left_on="id", right_on="building_id", how="left"
+    ).drop(columns=["building_id"], errors="ignore")
+
+
 def build_mega_building_workbook(
     *,
     source_a_commercial: pd.DataFrame,
@@ -200,6 +265,13 @@ def build_mega_building_workbook(
         source_c_frames=source_c_frames,
     )
     existing_tabs = load_existing_mega_workbook_tabs(workbook_path)
+
+    # Source B ICI's native building-details frame never captured district/zone;
+    # recover it from the transaction-level data so it can be used for building
+    # matching/consolidation just like Source A commercial's native district/zone.
+    source_b_commercial_buildings = _enrich_source_b_commercial_buildings_with_geo(
+        source_b_commercial_buildings, source_b_commercial_base
+    )
 
     fresh_candidates = {
         "source_a_res": _build_source_a_res_candidate_rows(source_a_res),
@@ -397,6 +469,7 @@ def build_consolidated_commercial_master(
                     "address": getattr(row, "full_address", None),
                     "completion_year": getattr(row, "completion_year", None),
                     "management_company": getattr(row, "management_company", None),
+                    "grade": getattr(row, "grade", None),
                     "provenance": "native",
                 }
             )
@@ -411,12 +484,16 @@ def build_consolidated_commercial_master(
                 {
                     "canonical_building_name": building_name,
                     "normalized_name": normalized,
-                    "district_name_en": None,
-                    "zone_en": None,
+                    # district_name_en/zone_en come from _enrich_source_b_commercial_buildings_with_geo
+                    # (build_mega_building_workbook), which backfills them from transaction data since
+                    # the native building scrape never captured district/zone directly.
+                    "district_name_en": row.get("district_name_en"),
+                    "zone_en": row.get("zone_en"),
                     "source_system": "source_b_commercial",
                     "address": None,
                     "completion_year": row.get("Completion"),
                     "management_company": row.get("Management Company"),
+                    "grade": row.get("Grade"),
                     "provenance": "native",
                 }
             )
@@ -456,6 +533,7 @@ def build_consolidated_commercial_master(
                 "preferred_completion_year",
                 "preferred_address",
                 "preferred_management_company",
+                "preferred_grade",
                 "provenance",
             ]
         )
@@ -497,6 +575,12 @@ def build_consolidated_commercial_master(
                 .iloc[0]
                 if preferred_group["management_company"].dropna().any()
                 else pd.NA,
+                "preferred_grade": preferred_group["grade"]
+                .dropna()
+                .astype(str)
+                .iloc[0]
+                if "grade" in preferred_group.columns and preferred_group["grade"].dropna().any()
+                else pd.NA,
                 "provenance": "manual" if (group["provenance"] == "manual").any() else "native",
             }
         )
@@ -515,6 +599,7 @@ def build_consolidated_commercial_master(
                 "preferred_completion_year",
                 "preferred_address",
                 "preferred_management_company",
+                "preferred_grade",
                 "provenance",
             ]
         )
@@ -1133,8 +1218,11 @@ def _build_source_b_commercial_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "source_name_raw": frame.get("Building Name", pd.Series(pd.NA, index=frame.index)),
             "normalized_name": frame.get("Building Name", pd.Series(pd.NA, index=frame.index)).map(normalize_building_name),
             "district_code": pd.NA,
-            "district_name_en": pd.NA,
-            "zone_en": pd.NA,
+            # district_name_en/zone_en are backfilled by
+            # _enrich_source_b_commercial_buildings_with_geo from transaction data,
+            # since the native building scrape never captured district/zone directly.
+            "district_name_en": frame.get("district_name_en", pd.Series(pd.NA, index=frame.index)),
+            "zone_en": frame.get("zone_en", pd.Series(pd.NA, index=frame.index)),
             "occurrence_count": 0,
             "candidate_building_name": pd.NA,
             "candidate_source": pd.NA,
@@ -1150,6 +1238,7 @@ def _build_source_b_commercial_native_rows(frame: pd.DataFrame) -> pd.DataFrame:
             "manual_url": pd.NA,
             "manual_notes": pd.NA,
             "manual_include": pd.NA,
+            "native_grade": frame.get("Grade", pd.Series(pd.NA, index=frame.index)),
             "native_type": frame.get("Type", pd.Series(pd.NA, index=frame.index)),
             "native_title": frame.get("Title", pd.Series(pd.NA, index=frame.index)),
             "native_total_area": frame.get("Total Area", pd.Series(pd.NA, index=frame.index)),
@@ -1251,11 +1340,18 @@ def _build_source_b_queue(
         & ~grouped["normalized_name"].isin(_BLANK_VALUES)
     ].copy()
 
+    # Reuses the authoritative Source B district->zone mapping already maintained
+    # for the main data_process pipeline, so the two stay in sync.
+    from ..pipelines.data_process.nodes import _source_b_zone_from_dist_code
+
     grouped["domain"] = "commercial"
     grouped["source_system"] = "source_b_commercial"
     grouped["district_code"] = grouped["dist_code"].astype("string")
     grouped["district_name_en"] = grouped["dist_name_en"].astype("string")
-    grouped["zone_en"] = pd.NA
+    grouped["zone_en"] = grouped.apply(
+        lambda row: _source_b_zone_from_dist_code(row["dist_code"], row["dist_name_en"]),
+        axis=1,
+    )
     grouped["review_status"] = "pending"
     grouped["review_notes"] = pd.NA
     grouped["canonical_building_name"] = pd.NA

@@ -120,6 +120,124 @@ def test_build_mega_building_workbook_creates_four_combined_source_tabs() -> Non
     assert "Native ICI" in set(consolidated_commercial["canonical_building_name"])
 
 
+def test_build_mega_building_workbook_merges_cross_source_building_when_district_zone_align() -> None:
+    """Source B ICI's native building-details frame never captures district/zone.
+
+    Previously this meant every Source B commercial building had a permanently null
+    district_name_en/zone_en, so it could never fall into the same
+    (normalized_name, district_name_en, zone_en) group as the matching Source A
+    building, and consolidated_commercial_building_master never merged a single
+    cross-source pair. This backfills district/zone from Source B's own transaction
+    data (which does carry district/zone) so the two sources can actually align.
+    """
+    workbook_sheets, _, consolidated_commercial = build_mega_building_workbook(
+        source_a_commercial=pd.DataFrame(),
+        source_b_commercial_base=pd.DataFrame(
+            {
+                "eng_name": ["Alpha Plaza", "Alpha Plaza"],
+                "building_id": ["B1", "B1"],
+                "has_building_match": [True, True],
+                "dist_name_en": ["Central", "Central"],
+                "dist_code": ["CEN", "CEN"],
+            }
+        ),
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_a_commercial_buildings=pd.DataFrame(
+            {
+                "property_id": ["P1"],
+                "building_name": ["Alpha Plaza"],
+                "district": ["Central"],
+                "zone": ["HK Island"],
+                "full_address": ["1 Alpha Road"],
+                "completion_year": ["2000"],
+                "management_company": ["Mgmt Co A"],
+                "grade": ["A"],
+            }
+        ),
+        source_b_commercial_buildings=pd.DataFrame(
+            {
+                "id": ["B1"],
+                "Building Name": ["Alpha Plaza"],
+                "Completion": ["2000"],
+                "Management Company": ["Mgmt Co B"],
+                "Grade": ["B"],
+            }
+        ),
+        source_a_res_buildings=pd.DataFrame(),
+        source_b_res_buildings=pd.DataFrame(),
+        workbook_path=Path("/tmp/nonexistent_cross_source_buildings.xlsx"),
+        include_limit=0,
+        source_c_frames=[],
+    )
+
+    # The workbook tab itself should show Source B's own district/zone/grade
+    # (each source's raw values stay visible for human review).
+    source_b_native = workbook_sheets["source_b_commercial"]
+    source_b_native = source_b_native.loc[source_b_native["row_kind"] == "native"].iloc[0]
+    assert source_b_native["district_name_en"] == "Central"
+    assert source_b_native["zone_en"] == "HK Island"
+    assert source_b_native["native_grade"] == "B"
+
+    # And the consolidated master should now merge the two sources into one row.
+    merged_row = consolidated_commercial.loc[
+        consolidated_commercial["canonical_building_name"] == "Alpha Plaza"
+    ].iloc[0]
+    assert merged_row["source_systems"] == "source_a_commercial,source_b_commercial"
+    assert merged_row["native_source_count"] == 2
+
+
+def test_build_consolidated_commercial_master_picks_first_available_grade() -> None:
+    consolidated = build_consolidated_commercial_master(
+        source_a_buildings=pd.DataFrame(
+            {
+                "building_name": ["Beta Tower"],
+                "district": ["Central"],
+                "zone": ["HK Island"],
+                "grade": ["A"],
+            }
+        ),
+        source_b_buildings=pd.DataFrame(
+            {
+                "Building Name": ["Beta Tower"],
+                "district_name_en": ["Central"],
+                "zone_en": ["HK Island"],
+                "Grade": ["B"],
+            }
+        ),
+        manual_master=pd.DataFrame(columns=[]),
+    )
+
+    row = consolidated.loc[consolidated["canonical_building_name"] == "Beta Tower"].iloc[0]
+    assert row["preferred_grade"] == "A"
+
+
+def test_build_consolidated_commercial_master_handles_manual_only_input_without_grade_column() -> None:
+    # manual_master never carries a "grade" field (that's Phase 3 scope), so the
+    # combined frame may have no "grade" column at all when there are no native
+    # buildings -- this must not raise a KeyError.
+    consolidated = build_consolidated_commercial_master(
+        source_a_buildings=pd.DataFrame(),
+        source_b_buildings=pd.DataFrame(),
+        manual_master=pd.DataFrame(
+            {
+                "canonical_building_name": ["Manual Only Tower"],
+                "normalized_name": ["MANUAL ONLY TOWER"],
+                "district_name_en": ["Central"],
+                "zone_en": ["HK Island"],
+                "source_system": ["source_a_commercial"],
+                "address": ["1 Manual Road"],
+                "completion_year": ["2010"],
+                "management_company": ["Manual Co"],
+            }
+        ),
+    )
+
+    assert "Manual Only Tower" in set(consolidated["canonical_building_name"])
+    assert pd.isna(consolidated.iloc[0]["preferred_grade"])
+
+
 def test_build_mega_building_workbook_preserves_manual_rows_and_exports_marked_cache(
     tmp_path: Path,
 ) -> None:

@@ -62,6 +62,35 @@ def test_build_supplemental_review_queue_groups_unmatched_rows_and_seeds_candida
     }
 
 
+def test_build_supplemental_review_queue_derives_zone_en_for_source_b_candidates() -> None:
+    # source_b_commercial candidate rows previously always had zone_en hardcoded to
+    # null, even though dist_code/dist_name_en were already available and Source A's
+    # equivalent rows always populate zone_en from real data.
+    source_b_commercial_base = pd.DataFrame(
+        {
+            "eng_name": ["Island Tower", "Kowloon Tower"],
+            "building_id": ["B1", "B2"],
+            "has_building_match": [False, False],
+            "dist_name_en": ["Central", "Mongkok"],
+            "dist_code": ["CEN", "MOK"],
+        }
+    )
+
+    review_queue, _ = build_supplemental_review_queue(
+        source_a_commercial=pd.DataFrame(),
+        source_b_commercial_base=source_b_commercial_base,
+        source_b_commercial_primary=pd.DataFrame(),
+        source_a_res=pd.DataFrame(),
+        source_b_res=pd.DataFrame(),
+        source_c_frames=[],
+    )
+
+    island_row = review_queue.loc[review_queue["source_name_raw"] == "Island Tower"].iloc[0]
+    kowloon_row = review_queue.loc[review_queue["source_name_raw"] == "Kowloon Tower"].iloc[0]
+    assert island_row["zone_en"] == "HK Island"
+    assert kowloon_row["zone_en"] == "Kowloon"
+
+
 def test_apply_supplemental_matches_prefers_join_key_then_reviewed_name() -> None:
     unmatched = pd.DataFrame(
         {
