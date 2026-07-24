@@ -225,3 +225,8 @@ area_conversion:
       retail_street_shop: 0.87
       industrial: 0.73
 
+data_process:
+  # Cross-source (Centaline vs Midland) overlap detection adds Overlap_Res/Overlap_Com
+  # sheets to the RE_*.xlsx reports. Off until the matching logic has more test coverage.
+  enable_overlap_sheets: false
+

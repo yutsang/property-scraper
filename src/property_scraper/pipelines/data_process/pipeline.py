@@ -81,7 +81,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             # Step 5: Combine all processed data and split by residential/commercial
             node(
                 func=merge_and_excel,
-                inputs=["source_a_res", "source_a_commercial", "source_b_res", "source_b_commercial"],
+                inputs=["source_a_res", "source_a_commercial", "source_b_res", "source_b_commercial", "parameters"],
                 outputs={
                     'residential_2020_2023': 'output_residential_2020_2023',
                     'commercial_2020_2023': 'output_commercial_2020_2023',

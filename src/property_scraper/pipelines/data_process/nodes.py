@@ -1946,27 +1946,29 @@ def _generate_run_diff(
 
 def merge_and_excel(
     cr: pd.DataFrame,
-    co: pd.DataFrame, 
+    co: pd.DataFrame,
     mr: pd.DataFrame,
-    mi: pd.DataFrame
+    mi: pd.DataFrame,
+    params: dict
 ) -> Dict[str, Dict[str, pd.DataFrame]]:
     import logging
     logger = logging.getLogger(__name__)
-    
+
     """
-    Process four input DataFrames, standardize date columns, and split into 
+    Process four input DataFrames, standardize date columns, and split into
     four Excel files:
     - RE_residential_2020-2023
     - RE_commercial_2020-2023
     - RE_residential_2024-{current_year}
     - RE_commercial_2024-{current_year}
-    
+
     Args:
         cr: Source A Residential DataFrame
         co: Source A OIR (commercial) DataFrame
         mr: Source B Residential DataFrame
         mi: Source B ICI (commercial) DataFrame
-        
+        params: Full project parameters (used for data_process.enable_overlap_sheets)
+
     Returns:
         Dictionary with four keys for the Excel outputs
     """
@@ -2006,23 +2008,32 @@ def merge_and_excel(
     # A match requires: same date, same price, area within 3%.
     # Results are surfaced as dedicated "Overlap" sheets so the user can
     # inspect and decide whether to exclude double-counted records.
-    logger.info("🔍 Running cross-source overlap detection...")
-    overlap_res_df = _find_cross_source_overlap(
-        df_cr_processed, df_mr_processed,
-        area_col_a='area', area_col_b='area',
-        label_a=SOURCE_DISPLAY_LABELS['source_a_res'],
-        label_b=SOURCE_DISPLAY_LABELS['source_b_res'],
-    )
-    overlap_com_df = _find_cross_source_overlap(
-        df_co_processed, df_mi_processed,
-        area_col_a='transactionArea', area_col_b='area',
-        label_a=SOURCE_DISPLAY_LABELS['source_a_commercial'],
-        label_b=SOURCE_DISPLAY_LABELS['source_b_commercial'],
-    )
-    n_overlap_res = overlap_res_df[overlap_res_df['_overlap_source'] == SOURCE_DISPLAY_LABELS['source_a_res']].shape[0] if not overlap_res_df.empty else 0
-    n_overlap_com = overlap_com_df[overlap_com_df['_overlap_source'] == SOURCE_DISPLAY_LABELS['source_a_commercial']].shape[0] if not overlap_com_df.empty else 0
-    logger.info("  Residential overlap: %d matched transaction pair(s) across sources", n_overlap_res)
-    logger.info("  Commercial  overlap: %d matched transaction pair(s) across sources", n_overlap_com)
+    # Gated behind a flag until the matching logic has more test coverage.
+    enable_overlap_sheets = params.get('data_process', {}).get('enable_overlap_sheets', False)
+    if enable_overlap_sheets:
+        logger.info("🔍 Running cross-source overlap detection...")
+        overlap_res_df = _find_cross_source_overlap(
+            df_cr_processed, df_mr_processed,
+            area_col_a='area', area_col_b='area',
+            label_a=SOURCE_DISPLAY_LABELS['source_a_res'],
+            label_b=SOURCE_DISPLAY_LABELS['source_b_res'],
+        )
+        overlap_com_df = _find_cross_source_overlap(
+            df_co_processed, df_mi_processed,
+            area_col_a='transactionArea', area_col_b='area',
+            label_a=SOURCE_DISPLAY_LABELS['source_a_commercial'],
+            label_b=SOURCE_DISPLAY_LABELS['source_b_commercial'],
+        )
+        n_overlap_res = overlap_res_df[overlap_res_df['_overlap_source'] == SOURCE_DISPLAY_LABELS['source_a_res']].shape[0] if not overlap_res_df.empty else 0
+        n_overlap_com = overlap_com_df[overlap_com_df['_overlap_source'] == SOURCE_DISPLAY_LABELS['source_a_commercial']].shape[0] if not overlap_com_df.empty else 0
+        logger.info("  Residential overlap: %d matched transaction pair(s) across sources", n_overlap_res)
+        logger.info("  Commercial  overlap: %d matched transaction pair(s) across sources", n_overlap_com)
+    else:
+        logger.info("⏭️  Cross-source overlap detection disabled (data_process.enable_overlap_sheets=false)")
+        overlap_res_df = pd.DataFrame()
+        overlap_com_df = pd.DataFrame()
+        n_overlap_res = 0
+        n_overlap_com = 0
 
     # Split by date ranges: 2020-2023 and 2024-current
     def split_by_date_range(df, name):
