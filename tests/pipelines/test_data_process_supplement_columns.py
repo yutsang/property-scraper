@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 
 from property_scraper.pipelines.data_process.nodes import (
+    build_residential_quality_report,
+    cleanse_source_a_res,
+    cleanse_source_b_res,
     select_source_a_commercial_columns,
     select_source_a_res_columns,
     select_source_b_commercial_columns,
@@ -152,3 +155,93 @@ def test_select_source_b_res_columns_fills_net_area_from_gfa_when_missing() -> N
     assert result.loc[0, "area_provenance"] == "calculated_from_gfa"
     assert result.loc[1, "net_area"] == 500.0
     assert result.loc[1, "area_provenance"] == "original"
+
+
+def test_source_a_res_outputs_standard_completion_year_and_age() -> None:
+    frame = pd.DataFrame(
+        {
+            "date": ["2026-07-15"],
+            "completion_year": [2000],
+            "Name": ["Example Estate"],
+            "address": ["Example Estate 1/F Flat A"],
+            "price": [5_000_000],
+            "area": [500],
+            "ft_price": [10_000],
+        }
+    )
+
+    cleaned = cleanse_source_a_res(frame)
+    result = select_source_a_res_columns(
+        cleaned, {"area_conversion": {"enabled": False}}
+    )
+
+    assert result.loc[0, "completion_year"] == 2000
+    assert result.loc[0, "age"] == pd.Timestamp.now().year - 2000
+
+
+def test_source_b_res_coalesces_occupation_dates_per_row() -> None:
+    frame = pd.DataFrame(
+        {
+            "tx_date": ["2026-07-15", "2026-07-16"],
+            "building_first_op_date": ["2001-05-01", None],
+            "first_op_date": [None, "1998-08-01"],
+            "price": [5_000_000, 6_000_000],
+            "net_area": [500, 600],
+            "area": [600, 700],
+        }
+    )
+
+    cleaned = cleanse_source_b_res(frame)
+    result = select_source_b_res_columns(
+        cleaned, {"area_conversion": {"enabled": False}}
+    )
+
+    assert result["completion_year"].tolist() == [2001, 1998]
+    assert result["age"].tolist() == [
+        pd.Timestamp.now().year - 2001,
+        pd.Timestamp.now().year - 1998,
+    ]
+
+
+def test_residential_quality_report_flags_stage_id_drift() -> None:
+    source_a_raw = pd.DataFrame(
+        {"transaction_id": ["a"], "date": ["2026-07-15"], "area": [500]}
+    )
+    source_a_base = pd.DataFrame(
+        {
+            "transaction_id": ["a", "stale"],
+            "date": ["2026-07-15", "2026-07-14"],
+            "area": [500, 400],
+        }
+    )
+    source_a_final = pd.DataFrame(
+        {
+            "date": ["2026-07-15"],
+            "area": [500],
+            "completion_year": [2000],
+            "age": [26],
+        }
+    )
+    source_b = pd.DataFrame(
+        {
+            "url_desc_trans": ["b"],
+            "tx_date": ["2026-07-15"],
+            "area": [500],
+        }
+    )
+
+    report = build_residential_quality_report(
+        source_a_raw,
+        source_a_base,
+        source_a_final,
+        source_b,
+        source_b,
+        source_b.rename(columns={"tx_date": "date"}),
+    )
+
+    metric = report[
+        (report["dataset"] == "source_a_stage_consistency")
+        & (report["metric"] == "base_ids_absent_from_raw")
+    ].iloc[0]
+    assert metric["value"] == 1
+    assert metric["status"] == "warning"

@@ -53,6 +53,77 @@ from ...utils.data_processing import drop_non_parquet_serializable_columns, fix_
 
 logger = logging.getLogger(__name__)
 
+
+def _incremental_boundary(max_date, lookback_days: int):
+    """Return an inclusive boundary that revisits recently published records."""
+    safe_lookback = max(1, int(lookback_days))
+    return max_date - timedelta(days=safe_lookback - 1)
+
+
+def _partition_transaction_page(
+    page_data: List[Dict[str, Any]],
+    boundary_date,
+) -> Tuple[List[Dict[str, Any]], bool]:
+    """Keep in-window rows and report whether the complete page is older.
+
+    Source A pages are not strictly ordered by transaction date. The caller
+    must inspect the entire page rather than stopping at the first old row.
+    Unparseable dates are retained so a parser change cannot silently discard
+    source records.
+    """
+    accepted: List[Dict[str, Any]] = []
+    parsed_dates = []
+    has_unparseable_date = False
+
+    for record in page_data:
+        parsed_date = parse_date_from_string(record.get("date"))
+        if parsed_date is None:
+            has_unparseable_date = True
+            accepted.append(record)
+            continue
+        parsed_dates.append(parsed_date)
+        if parsed_date >= boundary_date:
+            accepted.append(record)
+
+    complete_page_is_old = bool(parsed_dates) and not has_unparseable_date and all(
+        parsed_date < boundary_date for parsed_date in parsed_dates
+    )
+    return accepted, complete_page_is_old
+
+
+def _deduplicate_transaction_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    """Deduplicate IDs without collapsing every row whose ID is blank."""
+    if frame.empty:
+        return frame
+
+    if "transaction_id" not in frame.columns:
+        fallback = [
+            column
+            for column in ["date", "address", "price", "area"]
+            if column in frame.columns
+        ]
+        return (
+            frame.drop_duplicates(subset=fallback, keep="last")
+            if fallback
+            else frame
+        )
+
+    ids = frame["transaction_id"].astype("string").str.strip()
+    valid_id = ids.notna() & ids.ne("") & ids.ne("None")
+    with_id = frame.loc[valid_id].drop_duplicates(
+        subset=["transaction_id"], keep="last"
+    )
+    without_id = frame.loc[~valid_id]
+    fallback = [
+        column
+        for column in ["date", "address", "price", "area"]
+        if column in without_id.columns
+    ]
+    if fallback:
+        without_id = without_id.drop_duplicates(subset=fallback, keep="last")
+    return pd.concat([with_id, without_id], ignore_index=True)
+
+
 def scroll_down(page: Page) -> None:
     """Scroll to bottom of page to trigger lazy loading"""
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -325,7 +396,7 @@ def scrape_transaction_data(
             )
             if not txl:
                 return None
-            total = txl.get("total") or txl.get("totalCount")
+            total = txl.get("count") or txl.get("total") or txl.get("totalCount")
             if total is not None:
                 return int(total)
             pag = txl.get("pagination") or txl.get("pageInfo")
@@ -556,11 +627,20 @@ def scrape_transaction_data(
             next_loc = page.locator("button.btn-next:not(.disabled):not([disabled]), a.pagination-next:not(.disabled)")
             if next_loc.count() > 0:
                 next_btn = next_loc.first
+                first_id = page.evaluate(
+                    "() => String(window.__NUXT__?.state?.transaction?.transactionList?.data?.[0]?.id || '')"
+                )
                 next_btn.scroll_into_view_if_needed()
                 _smart_sleep()
                 next_btn.click()
-                _smart_sleep()
-                _smart_sleep()
+                try:
+                    page.wait_for_function(
+                        "previousId => String(window.__NUXT__?.state?.transaction?.transactionList?.data?.[0]?.id || '') !== previousId",
+                        arg=first_id,
+                        timeout=4000,
+                    )
+                except Exception:
+                    page.wait_for_timeout(1500)
                 return True
             return False
         except Exception:
@@ -569,6 +649,20 @@ def scrape_transaction_data(
     # ============ INCREMENTAL UPDATE LOGIC ============
     transaction_file = params.get("source_a_res", {}).get(
         "res_trans_path", "data/01_raw/centaline_res_trans_lv_0.parquet"
+    )
+    lookback_days = params.get("source_a_res", {}).get(
+        "transaction_lookback_days", 60
+    )
+    required_stale_pages = max(
+        1,
+        int(
+            params.get("source_a_res", {}).get(
+                "transaction_consecutive_stale_pages", 3
+            )
+        ),
+    )
+    stop_on_stale_pages = params.get("source_a_res", {}).get(
+        "transaction_stop_on_stale_pages", False
     )
     tracker_params = _build_tracker_params(params)
     full_rerun = params.get("source_a_res", {}).get("full_rerun", False)
@@ -600,9 +694,13 @@ def scrape_transaction_data(
             valid_dates = existing_data_temp["parsed_date"].dropna()
             if not valid_dates.empty:
                 max_date = valid_dates.max()
-                control_date = max_date + timedelta(days=1)
+                control_date = _incremental_boundary(max_date, lookback_days)
                 logger.info(
-                    f"✅ Using incremental control date: {control_date} (max existing: {max_date})"
+                    "✅ Using incremental lookback boundary: %s "
+                    "(max existing: %s, lookback: %s days)",
+                    control_date,
+                    max_date,
+                    lookback_days,
                 )
             else:
                 control_date = pd.to_datetime(
@@ -635,7 +733,10 @@ def scrape_transaction_data(
     end_date = datetime.now().date()
     logger.info(f"Scraping transactions from {control_date} to {end_date}")
 
-    if not (full_rerun or transaction_full_rerun):
+    allow_live_skip = params.get("source_a_res", {}).get(
+        "allow_transaction_live_skip", False
+    )
+    if not (full_rerun or transaction_full_rerun) and allow_live_skip:
         live_state = _probe_source_a_live_state(params, "transaction_data_scraper")
         tracker_decision = evaluate_node_run(
             node_name="transaction_data_scraper",
@@ -668,6 +769,11 @@ def scrape_transaction_data(
                 tracker_decision["reason"],
             )
             return existing_data if not existing_data.empty else pd.DataFrame()
+    elif not (full_rerun or transaction_full_rerun):
+        logger.info(
+            "Transaction live skip disabled; running the configured lookback "
+            "to capture delayed records"
+        )
 
     # If control date is already today or later, return existing data
     if control_date >= end_date:
@@ -703,10 +809,29 @@ def scrape_transaction_data(
             try:
                 next_loc = page.locator("button.btn-next:not(.disabled):not([disabled]), a.pagination-next:not(.disabled)")
                 if await next_loc.count() > 0:
+                    first_id = await page.evaluate(
+                        "() => String(window.__NUXT__?.state?.transaction?.transactionList?.data?.[0]?.id || '')"
+                    )
                     await next_loc.first.scroll_into_view_if_needed()
                     await asyncio.sleep(random.uniform(params['global']['min_delay'], params['global']['max_delay']))
                     await next_loc.first.click()
-                    await asyncio.sleep(random.uniform(params['global']['min_delay'], params['global']['max_delay']) * 2)
+                    try:
+                        await page.wait_for_function(
+                            "previousId => String(window.__NUXT__?.state?.transaction?.transactionList?.data?.[0]?.id || '') !== previousId",
+                            arg=first_id,
+                            timeout=4000,
+                        )
+                    except Exception:
+                        await asyncio.sleep(
+                            max(
+                                0.5,
+                                random.uniform(
+                                    params['global']['min_delay'],
+                                    params['global']['max_delay'],
+                                )
+                                * 2,
+                            )
+                        )
                     return True
             except Exception:
                 pass
@@ -752,37 +877,11 @@ def scrape_transaction_data(
             return table_data
 
         async def extract_combined_async(page):
-            """Merge __NUXT__ + HTML (async). Ensures we get all data from both sources."""
+            """Prefer complete __NUXT__ records; use HTML only as a fallback."""
             js_data = await extract_nuxt_async(page)
-            html_data = await extract_table_data_async(page)
-            if not js_data and not html_data:
-                return []
-            if js_data and html_data:
-                merged = []
-                for i, js_rec in enumerate(js_data):
-                    if i < len(html_data):
-                        hr = html_data[i]
-                        if js_rec.get("area") is None and hr.get("area") and hr["area"] != "--":
-                            area_clean = re.sub(r"[^\d.]", "", str(hr["area"]))
-                            if area_clean:
-                                js_rec["area"] = float(area_clean)
-                        if js_rec.get("price") is None and hr.get("price"):
-                            p = str(hr["price"]).replace("$", "").replace(",", "")
-                            if "萬" in p:
-                                m = re.findall(r"[\d.]+", p)
-                                if m:
-                                    js_rec["price"] = float(m[0]) * 10000
-                            else:
-                                m = re.findall(r"[\d.]+", p)
-                                if m:
-                                    js_rec["price"] = float(m[0])
-                        if js_rec.get("ft_price") is None and hr.get("ft_price") and hr["ft_price"] != "--":
-                            fp = re.findall(r"[\d.]+", str(hr["ft_price"]))
-                            if fp:
-                                js_rec["ft_price"] = float(fp[0])
-                    merged.append(js_rec)
-                return merged
-            return js_data if js_data else html_data
+            if js_data:
+                return js_data
+            return await extract_table_data_async(page)
 
         async def scrape_one_area(context, area_row):
             async with semaphore:
@@ -807,32 +906,43 @@ def scrape_transaction_data(
                     try:
                         website_total = await page.evaluate(
                             "() => { const t = window.__NUXT__?.state?.transaction?.transactionList; "
-                            "return t?.total ?? t?.totalCount ?? t?.pagination?.total ?? t?.pageInfo?.total ?? null; }"
+                            "return t?.count ?? t?.total ?? t?.totalCount ?? t?.pagination?.total ?? t?.pageInfo?.total ?? null; }"
                         )
                         if website_total is not None:
                             website_total = int(website_total)
                     except Exception:
                         pass
                     page_num = 1
-                    date_reached = False
+                    consecutive_stale_pages = 0
                     max_pages = params.get("source_a_res", {}).get(
                         "max_pages_per_area",
                         params["global"].get("max_pages_per_area", 50),
                     )
-                    while not date_reached and page_num <= max_pages:
+                    if not (full_rerun or transaction_full_rerun):
+                        max_pages = min(
+                            max_pages,
+                            int(
+                                params.get("source_a_res", {}).get(
+                                    "transaction_incremental_max_pages", 20
+                                )
+                            ),
+                        )
+                    while page_num <= max_pages:
                         page_data = await extract_combined_async(page)
-                        for record in page_data:
-                            try:
-                                txn_date = parse_date_from_string(record.get('date'))
-                                if txn_date and txn_date < control_date:
-                                    date_reached = True
-                                    break
-                            except Exception:
-                                pass
+                        accepted_records, page_is_old = _partition_transaction_page(
+                            page_data, control_date
+                        )
+                        for record in accepted_records:
                             record['area_code'] = area_row['Code']
                             record['scrape_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                             area_data.append(record)
-                        if date_reached:
+                        consecutive_stale_pages = (
+                            consecutive_stale_pages + 1 if page_is_old else 0
+                        )
+                        if (
+                            stop_on_stale_pages
+                            and consecutive_stale_pages >= required_stale_pages
+                        ):
                             break
                         if not await go_to_next_page_async(page):
                             break
@@ -843,7 +953,7 @@ def scrape_transaction_data(
                                 f"⚠️ Transaction count exceeds website {area_row['Subdistrict']} ({area_row['Code']}): "
                                 f"scraped={len(area_data)} website_total={website_total}"
                             )
-                        elif not date_reached and len(area_data) < website_total:
+                        elif consecutive_stale_pages < required_stale_pages and len(area_data) < website_total:
                             logger.info(
                                 f"   {area_row['Subdistrict']}: scraped={len(area_data)} website_total={website_total} (pagination complete)"
                             )
@@ -858,7 +968,6 @@ def scrape_transaction_data(
             browser = await launch_browser_async(p, headless=headless)
             try:
                 context = await browser.new_context(user_agent=user_agent)
-                await context.route("**/*", block_slow_resources_async)
                 results = [None] * len(area_rows)
                 total_records = [0]  # mutable for closure
 
@@ -929,28 +1038,38 @@ def scrape_transaction_data(
             website_total = get_nuxt_transaction_total(page)
 
             page_num = 1
-            date_reached = False
+            consecutive_stale_pages = 0
             max_pages = params.get("source_a_res", {}).get(
                 "max_pages_per_area",
                 params["global"].get("max_pages_per_area", 50),
             )
+            if not (full_rerun or transaction_full_rerun):
+                max_pages = min(
+                    max_pages,
+                    int(
+                        params.get("source_a_res", {}).get(
+                            "transaction_incremental_max_pages", 20
+                        )
+                    ),
+                )
 
-            while not date_reached and page_num <= max_pages:
+            while page_num <= max_pages:
                 page_data = extract_combined_data(page)
-                for record in page_data:
-                    try:
-                        transaction_date = parse_date_from_string(record['date'])
-                        if transaction_date and transaction_date < control_date:
-                            date_reached = True
-                            break
-                    except Exception:
-                        pass
-
+                accepted_records, page_is_old = _partition_transaction_page(
+                    page_data, control_date
+                )
+                for record in accepted_records:
                     record['area_code'] = area_row['Code']
                     record['scrape_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     area_data.append(record)
 
-                if date_reached:
+                consecutive_stale_pages = (
+                    consecutive_stale_pages + 1 if page_is_old else 0
+                )
+                if (
+                    stop_on_stale_pages
+                    and consecutive_stale_pages >= required_stale_pages
+                ):
                     break
                 if not go_to_next_page(page):
                     break
@@ -962,7 +1081,7 @@ def scrape_transaction_data(
                         f"⚠️ Transaction count exceeds website {area_row['Subdistrict']} ({area_row['Code']}): "
                         f"scraped={len(area_data)} website_total={website_total}"
                     )
-                elif not date_reached and len(area_data) < website_total:
+                elif consecutive_stale_pages < required_stale_pages and len(area_data) < website_total:
                     logger.info(
                         f"   {area_row['Subdistrict']}: scraped={len(area_data)} website_total={website_total} (pagination complete)"
                     )
@@ -1022,6 +1141,13 @@ def scrape_transaction_data(
     logger.info(f"✅ Successfully scraped {len(all_data)} transactions from {len(area_rows) - len(failed_areas)} areas")
     if failed_areas:
         logger.warning(f"⚠️ Failed to scrape {len(failed_areas)} areas")
+        logger.warning(
+            "Failed transaction areas: %s",
+            ", ".join(
+                str(result.get("area", "unknown"))
+                for result in failed_areas
+            ),
+        )
 
     # ============ COMBINE AND CLEAN DATA ============
     new_data_df = pd.DataFrame(all_data)
@@ -1065,23 +1191,14 @@ def scrape_transaction_data(
                 combined_df['scrape_timestamp'], errors='coerce'
             ).dt.strftime('%Y-%m-%d %H:%M:%S')
 
-        # Deduplicate based on transaction_id (if available) or key columns
-        if 'transaction_id' in combined_df.columns:
-            before_dedup = len(combined_df)
-            combined_df = combined_df.drop_duplicates(subset=['transaction_id'], keep='last')
-            after_dedup = len(combined_df)
-            if before_dedup != after_dedup:
-                logger.info(f"Removed {before_dedup - after_dedup} duplicate transactions by ID")
-        else:
-            # Fallback dedup
-            dedup_columns = ['date', 'address', 'price', 'area']
-            dedup_columns = [col for col in dedup_columns if col in combined_df.columns]
-            if dedup_columns:
-                before_dedup = len(combined_df)
-                combined_df = combined_df.drop_duplicates(subset=dedup_columns, keep='last')
-                after_dedup = len(combined_df)
-                if before_dedup != after_dedup:
-                    logger.info(f"Removed {before_dedup - after_dedup} duplicate transactions")
+        before_dedup = len(combined_df)
+        combined_df = _deduplicate_transaction_rows(combined_df)
+        after_dedup = len(combined_df)
+        if before_dedup != after_dedup:
+            logger.info(
+                "Removed %s duplicate transactions using IDs and fallback keys",
+                before_dedup - after_dedup,
+            )
 
     logger.info(f"Final dataset contains {len(combined_df)} transactions")
     
@@ -2529,6 +2646,39 @@ def enrich_estate_data(
         def merge_duplicates(df: pd.DataFrame, key_cols: list[str]) -> pd.DataFrame:
             if not key_cols:
                 return df
+            if key_cols == ['transaction_id'] and 'transaction_id' in df.columns:
+                work = df.copy()
+                ids = work['transaction_id'].astype('string').str.strip()
+                valid_id = ids.notna() & ids.ne('') & ids.ne('None')
+                identified = work.loc[valid_id].copy()
+                object_columns = identified.select_dtypes(
+                    include=['object', 'string']
+                ).columns
+                identified[object_columns] = identified[object_columns].replace(
+                    ['', 'None', 'nan', '<NA>'], pd.NA
+                )
+                merged_identified = (
+                    identified.groupby(
+                        'transaction_id',
+                        as_index=False,
+                        sort=False,
+                        dropna=False,
+                    )
+                    .last()
+                )
+                unidentified = work.loc[~valid_id].drop_duplicates(
+                    subset=[
+                        column
+                        for column in ['date', 'Name', 'Tower', 'Floor', 'Flat', 'price']
+                        if column in work.columns
+                    ],
+                    keep='last',
+                )
+                return pd.concat(
+                    [merged_identified, unidentified],
+                    ignore_index=True,
+                    sort=False,
+                )
             # Group by key columns and merge each group
             merged = (
                 df.groupby(key_cols, as_index=False, dropna=False)
@@ -2562,7 +2712,32 @@ def enrich_estate_data(
         if not existing_enriched.empty:
             logger.info(f"📊 Found {len(existing_enriched)} existing records")
 
-            combined = pd.concat([existing_enriched, current], ignore_index=True, sort=False)
+            existing_to_merge = existing_enriched
+            if (
+                'transaction_id' in existing_enriched.columns
+                and 'transaction_id' in current.columns
+            ):
+                current_ids = set(
+                    current['transaction_id'].dropna().astype(str)
+                )
+                existing_to_merge = existing_enriched[
+                    existing_enriched['transaction_id'].astype(str).isin(
+                        current_ids
+                    )
+                ]
+                stale_count = len(existing_enriched) - len(existing_to_merge)
+                if stale_count:
+                    logger.warning(
+                        "Dropping %s stale enriched rows absent from the "
+                        "authoritative raw transaction dataset",
+                        stale_count,
+                    )
+
+            combined = pd.concat(
+                [existing_to_merge, current],
+                ignore_index=True,
+                sort=False,
+            )
             logger.info(f"📊 Combined to {len(combined)} total records (before cross-run merge)")
 
             if 'transaction_id' in combined.columns:

@@ -1,7 +1,7 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import cleanse_source_a_res, cleanse_source_a_commercial
 from .nodes import cleanse_source_b_commercial, cleanse_source_b_res
-from .nodes import merge_and_excel
+from .nodes import build_residential_quality_report, merge_and_excel
 from .nodes import select_source_a_res_columns, select_source_a_commercial_columns
 from .nodes import select_source_b_res_columns, select_source_b_commercial_columns
 
@@ -61,6 +61,19 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs=["source_b_res_cleaned", "parameters"],
                 outputs="source_b_res",
                 name="select_source_b_res_columns",
+            ),
+            node(
+                func=build_residential_quality_report,
+                inputs=[
+                    "raw_transaction_data",
+                    "source_a_res_base",
+                    "source_a_res",
+                    "source_b_res_transactions",
+                    "source_b_res_base",
+                    "source_b_res",
+                ],
+                outputs="residential_quality_audit",
+                name="build_residential_quality_report",
             ),
             
             # Step 4: Data Processing for Source B ICI Data

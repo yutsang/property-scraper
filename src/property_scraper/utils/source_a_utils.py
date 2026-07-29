@@ -24,17 +24,34 @@ def parse_date_from_string(date_str: Any) -> Optional[date]:
     if not date_str or pd.isna(date_str):
         return None
     date_str = str(date_str).strip()
+    # Parse explicit formats before pandas inference. Inference treats ambiguous
+    # values such as 07/12/2026 as month-first on some systems, which can move
+    # the incremental watermark by months and skip valid transactions.
+    normalized = date_str.replace("Z", "+00:00")
     try:
-        parsed = pd.to_datetime(date_str, errors="coerce")
-        if pd.notna(parsed):
-            return parsed.date()
-    except Exception:
+        parsed_iso = datetime.fromisoformat(normalized)
+        return parsed_iso.date()
+    except (ValueError, TypeError):
         pass
-    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%Y%m%d", "%d-%m-%Y"):
+
+    for fmt in (
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%d-%m-%Y",
+        "%Y%m%d",
+        "%Y/%m/%d",
+    ):
         try:
             return datetime.strptime(date_str, fmt).date()
         except (ValueError, TypeError):
             continue
+
+    try:
+        parsed = pd.to_datetime(date_str, errors="coerce", dayfirst=True)
+        if pd.notna(parsed):
+            return parsed.date()
+    except Exception:
+        pass
     return None
 
 

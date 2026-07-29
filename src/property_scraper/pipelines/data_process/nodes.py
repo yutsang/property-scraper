@@ -28,6 +28,39 @@ SOURCE_DISPLAY_LABELS = {
 }
 
 
+def _normalize_completion_years(
+    frame: pd.DataFrame,
+    candidate_columns: list[str],
+) -> pd.DataFrame:
+    """Coalesce completion-year candidates and derive a consistent age."""
+    result = frame.copy()
+    completion_year = pd.Series(pd.NA, index=result.index, dtype="Int64")
+
+    for column in candidate_columns:
+        if column not in result.columns:
+            continue
+        values = result[column]
+        if pd.api.types.is_datetime64_any_dtype(values):
+            years = values.dt.year
+        else:
+            parsed_dates = pd.to_datetime(values, errors="coerce")
+            numeric_years = pd.to_numeric(values, errors="coerce")
+            years = numeric_years.where(
+                numeric_years.between(1800, pd.Timestamp.now().year),
+                parsed_dates.dt.year,
+            )
+        valid_years = pd.to_numeric(years, errors="coerce").where(
+            lambda series: series.between(1800, pd.Timestamp.now().year)
+        )
+        completion_year = completion_year.fillna(valid_years.astype("Int64"))
+
+    result["completion_year"] = completion_year
+    result["age"] = (
+        pd.Timestamp.now().year - result["completion_year"]
+    ).where(result["completion_year"].notna()).astype("Int64")
+    return result
+
+
 ############################## 1. Source A Res Start ##############################
 def cleanse_source_a_res(source_a_res_base_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -217,27 +250,15 @@ def cleanse_source_a_res(source_a_res_base_df: pd.DataFrame) -> pd.DataFrame:
         logger.info(f"   ✅ Converted {df['ft_price'].notna().sum()} ft_price values successfully")
     
     # ============ COMPLETION YEAR AND AGE CALCULATION ============
-    logger.info("🏗️ Step 5/6: Calculating completion year and age from year column...")
-    
-    # The year column should already contain completion years from the enrich_estate_data function
-    if 'year' in df.columns:
-        try:
-            # Calculate age based on completion year
-            current_year = pd.Timestamp.now().year
-            df['age'] = df['year'].apply(
-                lambda x: max(0, current_year - x) if pd.notna(x) and x != 'None' else None
-            )
-            
-            # Ensure correct data types
-            df['year'] = pd.to_numeric(df['year'], errors='coerce').astype('Int64')
-            df['age'] = pd.to_numeric(df['age'], errors='coerce').astype('float64')
-            
-            logger.info(f"   ✅ Calculated age for {df['age'].notna().sum()} properties from completion year")
-        except Exception as e:
-            logger.warning(f"   ⚠️ Error calculating age: {e}")
-            df['age'] = None
-    else:
-        logger.warning("   ⚠️ No year column found - age column not created")
+    logger.info("🏗️ Step 5/6: Standardizing completion year and age...")
+    df = _normalize_completion_years(
+        df,
+        ["completion_year", "year"],
+    )
+    logger.info(
+        "   ✅ Standardized completion year and age for %s properties",
+        df["completion_year"].notna().sum(),
+    )
     
     # ============ TITLE-LG ADOPTION FOR PROPERTY NAMES ============
     logger.info("🏠 Step 6/9: Setting property names...")
@@ -535,7 +556,8 @@ def cleanse_source_a_res(source_a_res_base_df: pd.DataFrame) -> pd.DataFrame:
         # Critical columns that should preserve their data types and NOT be converted to string
         preserve_columns = [
             'estate_name', 'Name', 'title_lg', 'building_name',  # Name-related columns
-            'date', 'price', 'area', 'ft_price', 'age', 'year',  # Numeric/date columns
+            'date', 'price', 'area', 'ft_price', 'age', 'year',
+            'completion_year',  # Numeric/date columns
             'Tower', 'Floor', 'Flat',  # Address components
             'g_area', 'g_unit_price', 'building_code',  # Additional JavaScript fields
         ]
@@ -1000,38 +1022,24 @@ def cleanse_source_b_res(
                     # Keep original values if processing fails
                     continue
         
-        # 2. Add age column based on building_first_op_date
+        # 2. Standardize completion year and age from occupation dates
         try:
-            # Check for building_first_op_date first, then fallback to first_op_date
-            date_col_for_age = None
-            if 'building_first_op_date' in processed_df.columns:
-                date_col_for_age = 'building_first_op_date'
-            elif 'first_op_date' in processed_df.columns:
-                date_col_for_age = 'first_op_date'
-            
-            if date_col_for_age:
-                processed_df['age'] = None
-                
-                # Calculate age only for non-null date values (excluding 'None' strings)
-                mask = (processed_df[date_col_for_age].notna()) & (processed_df[date_col_for_age] != 'None')
-                if mask.any():
-                    # Convert string dates back to datetime for age calculation
-                    op_dates = pd.to_datetime(processed_df.loc[mask, date_col_for_age], errors='coerce')
-                    ages = (pd.Timestamp.now() - op_dates).dt.days / 365.25
-                    processed_df.loc[mask, 'age'] = ages.round(1)
-                    
-                    # Ensure age column has correct data type
-                    processed_df['age'] = pd.to_numeric(processed_df['age'], errors='coerce').astype('float64')
-                    
-                    logger.info(f"✅ Age calculated for {mask.sum()} records using {date_col_for_age}")
-                else:
-                    logger.warning(f"No valid dates found in {date_col_for_age} for age calculation")
-            else:
-                logger.warning("Neither building_first_op_date nor first_op_date column found, skipping age calculation")
-                
+            processed_df = _normalize_completion_years(
+                processed_df,
+                ["building_first_op_date", "first_op_date"],
+            )
+            logger.info(
+                "✅ Completion year and age calculated for %s residential records",
+                processed_df["completion_year"].notna().sum(),
+            )
         except (ValueError, TypeError) as e:
-            logger.warning(f"Error calculating age column: {e}")
-            processed_df['age'] = None
+            logger.warning(f"Error calculating completion year and age columns: {e}")
+            processed_df["completion_year"] = pd.Series(
+                pd.NA, index=processed_df.index, dtype="Int64"
+            )
+            processed_df["age"] = pd.Series(
+                pd.NA, index=processed_df.index, dtype="Int64"
+            )
         
         # 3. Add tx_type mapping: S->SALE, L->RENT
         try:
@@ -1174,7 +1182,7 @@ def cleanse_source_b_res(
             Numeric columns are coerced but left as NaN (not 0.0) since
             0 is semantically invalid for prices, areas, etc.
             """
-            numeric_cols = ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age', 'total_unit_count', 'total_block_count', 'primary_school_net', 'market_stat_yearly_total_tx_amount', 'market_stat_yearly_net_ft_price', 'market_stat_yearly_net_ft_price_chg']
+            numeric_cols = ['price', 'last_price', 'area', 'net_area', 'unit_price_net', 'age', 'completion_year', 'total_unit_count', 'total_block_count', 'primary_school_net', 'market_stat_yearly_total_tx_amount', 'market_stat_yearly_net_ft_price', 'market_stat_yearly_net_ft_price_chg']
             for col in df.columns:
                 try:
                     if col in numeric_cols:
@@ -1897,6 +1905,120 @@ def _find_cross_source_overlap(
     return pd.concat([rows_a, rows_b], ignore_index=True, sort=False)
 
 
+def build_residential_quality_report(
+    source_a_raw: pd.DataFrame,
+    source_a_base: pd.DataFrame,
+    source_a_final: pd.DataFrame,
+    source_b_raw: pd.DataFrame,
+    source_b_base: pd.DataFrame,
+    source_b_final: pd.DataFrame,
+) -> pd.DataFrame:
+    """Build a stage-by-stage residential data quality report."""
+    datasets = {
+        "source_a_raw": source_a_raw,
+        "source_a_base": source_a_base,
+        "source_a_final": source_a_final,
+        "source_b_raw": source_b_raw,
+        "source_b_base": source_b_base,
+        "source_b_final": source_b_final,
+    }
+    rows: list[dict[str, Any]] = []
+
+    def add(dataset: str, metric: str, value: int, status: str, details: str = ""):
+        rows.append(
+            {
+                "checked_at": datetime.now().isoformat(timespec="seconds"),
+                "dataset": dataset,
+                "metric": metric,
+                "value": int(value),
+                "status": status,
+                "details": details,
+            }
+        )
+
+    for dataset_name, frame in datasets.items():
+        add(dataset_name, "row_count", len(frame), "info")
+
+        date_column = next(
+            (
+                column
+                for column in ["date", "tx_date", "transactionDate"]
+                if column in frame.columns
+            ),
+            None,
+        )
+        if date_column:
+            invalid_dates = pd.to_datetime(
+                frame[date_column], errors="coerce", utc=True
+            ).isna().sum()
+            add(
+                dataset_name,
+                "invalid_date_count",
+                invalid_dates,
+                "pass" if invalid_dates == 0 else "warning",
+                f"column={date_column}",
+            )
+
+        for column in ["area", "net_area", "completion_year", "age"]:
+            if column not in frame.columns:
+                continue
+            missing = frame[column].isna() | frame[column].astype("string").str.strip().isin(
+                ["", "None", "nan", "NaT", "--"]
+            )
+            add(
+                dataset_name,
+                f"missing_{column}_count",
+                missing.sum(),
+                "pass" if not missing.any() else "warning",
+                f"rate={missing.mean():.2%}",
+            )
+
+        id_column = next(
+            (
+                column
+                for column in ["transaction_id", "url_desc_trans"]
+                if column in frame.columns
+            ),
+            None,
+        )
+        if id_column:
+            ids = frame[id_column].astype("string").str.strip()
+            valid = ids.notna() & ids.ne("") & ids.ne("None")
+            duplicate_rows = ids[valid].duplicated(keep=False).sum()
+            add(
+                dataset_name,
+                "duplicate_transaction_id_rows",
+                duplicate_rows,
+                "pass" if duplicate_rows == 0 else "warning",
+                f"column={id_column}",
+            )
+
+    for source_name, raw, base, id_column in [
+        ("source_a", source_a_raw, source_a_base, "transaction_id"),
+        ("source_b", source_b_raw, source_b_base, "url_desc_trans"),
+    ]:
+        if id_column not in raw.columns or id_column not in base.columns:
+            continue
+        raw_ids = set(raw[id_column].dropna().astype(str))
+        base_ids = set(base[id_column].dropna().astype(str))
+        downstream_only = len(base_ids - raw_ids)
+        upstream_only = len(raw_ids - base_ids)
+        add(
+            f"{source_name}_stage_consistency",
+            "base_ids_absent_from_raw",
+            downstream_only,
+            "pass" if downstream_only == 0 else "warning",
+        )
+        add(
+            f"{source_name}_stage_consistency",
+            "raw_ids_absent_from_base",
+            upstream_only,
+            "pass" if upstream_only == 0 else "warning",
+        )
+
+    return pd.DataFrame(rows)
+
+
 def _generate_run_diff(
     counts: Dict[str, int],
     reporting_dir: str = 'data/08_reporting',
@@ -2217,7 +2339,7 @@ def select_source_a_res_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
          'g_area',                  # Gross area (from JavaScript gArea)
          'g_unit_price',            # Gross price per sqft (from JavaScript gUnitPrice)
          'area_provenance',         # Whether 'area' is original or calculated_from_gfa
-         'year',                    # Completion year
+         'completion_year',         # Completion year
          'age',                     # Building age
          'developer',               # Developer
          'source',                  # Data source (not 'Datasource')
@@ -2409,6 +2531,7 @@ def select_source_b_res_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
         'area_provenance',  # whether net_area is original or calculated_from_gfa
         'unit_price_net',  # unit_price_net
         'building_first_op_date',  # building_first_op_date
+        'completion_year',  # standardized building completion year
         'age',  # age
         'developer_name',  # developer_name
         'source',  # source

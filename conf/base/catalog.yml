@@ -283,6 +283,12 @@ building_match_audit_summary:
   save_args:
     index: False
 
+residential_quality_audit:
+  type: pandas.CSVDataset
+  filepath: data/08_reporting/residential_quality_audit.csv
+  save_args:
+    index: False
+
 consolidated_commercial_building_master:
   type: pandas.ParquetDataset
   filepath: data/03_primary/consolidated_commercial_building_master.parquet

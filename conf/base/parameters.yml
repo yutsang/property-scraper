@@ -31,6 +31,11 @@ webscraper:
     res_trans_path: data/01_raw/centaline_res_trans_lv_0.parquet
     max_pages_per_area: 999
     max_transaction_workers: 6
+    transaction_lookback_days: 60  # Revisit recent dates for delayed/backfilled records
+    transaction_incremental_max_pages: 20  # Bounded recent-posting scan per area
+    transaction_consecutive_stale_pages: 3  # Pages are not strictly date-sorted
+    transaction_stop_on_stale_pages: false  # Scan the full bounded window; page order varies by session
+    allow_transaction_live_skip: false  # Sitemap freshness is too coarse for transaction completeness
     transaction_full_rerun: false  # When true: backup transactions and rescrape all (Playwright)
     abort_on_corrupt_transaction_file: true
     restore_from_backup_on_corruption: true

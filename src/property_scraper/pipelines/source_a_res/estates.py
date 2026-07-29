@@ -83,6 +83,8 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
                     required_columns,
                     district_meta,
                     existing_listings,
+                    estate_url_template,
+                    estate_base_url,
                 )
             finally:
                 try:
@@ -97,7 +99,18 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
         return existing_listings[existing_listings["Name"].notnull()] if not existing_listings.empty else pd.DataFrame()
 
 
-def _scrape_estate_listings_impl(page, area_df, params, listings_file, meta_file, required_columns, district_meta, existing_listings):
+def _scrape_estate_listings_impl(
+    page,
+    area_df,
+    params,
+    listings_file,
+    meta_file,
+    required_columns,
+    district_meta,
+    existing_listings,
+    estate_url_template,
+    estate_base_url,
+):
     """Estate listings: Playwright probes page 1, then full-scrapes only changed districts."""
     from tqdm.auto import tqdm
 
