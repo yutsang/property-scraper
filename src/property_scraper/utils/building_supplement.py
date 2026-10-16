@@ -669,6 +669,28 @@ def load_supplemental_building_master(
     return approved.reset_index(drop=True)
 
 
+def load_source_a_commercial_supplemental_master(
+    params: dict[str, Any],
+) -> pd.DataFrame:
+    """Kedro adapter for Source A commercial supplemental mappings."""
+    return load_supplemental_building_master(
+        params,
+        domain="commercial",
+        source_system="source_a_commercial",
+    )
+
+
+def load_source_b_commercial_supplemental_master(
+    params: dict[str, Any],
+) -> pd.DataFrame:
+    """Kedro adapter for Source B commercial supplemental mappings."""
+    return load_supplemental_building_master(
+        params,
+        domain="commercial",
+        source_system="source_b_commercial",
+    )
+
+
 def apply_supplemental_matches(
     *,
     unmatched_df: pd.DataFrame,

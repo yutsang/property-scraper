@@ -3,6 +3,9 @@ from pathlib import Path
 import pandas as pd
 
 from property_scraper.pipelines.source_b_commercial.nodes import source_b_commercial_join
+from property_scraper.utils.building_supplement import (
+    load_source_b_commercial_supplemental_master,
+)
 
 
 def test_source_b_commercial_join_applies_supplemental_master_and_tracks_match_method(
@@ -74,6 +77,7 @@ def test_source_b_commercial_join_applies_supplemental_master_and_tracks_match_m
     result = source_b_commercial_join(
         transactions=transactions,
         building_details=building_details,
+        supplemental_master=load_source_b_commercial_supplemental_master(params),
         params=params,
     )
 

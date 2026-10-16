@@ -29,7 +29,48 @@ from ...utils.web_scraping import generate_session_id, random_sleep
 logger = logging.getLogger(__name__)
 
 
-def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
+def load_existing_estate_snapshots(
+    params: Dict[str, Any],
+) -> tuple[pd.DataFrame, dict, pd.DataFrame]:
+    """Load residential estate snapshots and probe metadata as one adapter node."""
+    source_params = params.get("source_a_res", {})
+    if source_params.get("full_rerun", False) or source_params.get(
+        "estate_full_rerun",
+        False,
+    ):
+        return pd.DataFrame(), {}, pd.DataFrame()
+    listings_file = source_params.get(
+        "estate_listings_file",
+        "data/01_raw/centaline_estate_lv_1.parquet",
+    )
+    details_file = source_params.get(
+        "estate_details_file",
+        "data/01_raw/centaline_estate_lv_2.parquet",
+    )
+    meta_file = listings_file.replace(".parquet", "_meta.json")
+    listings = (
+        pd.read_parquet(listings_file)
+        if os.path.exists(listings_file)
+        else pd.DataFrame()
+    )
+    details = (
+        pd.read_parquet(details_file)
+        if os.path.exists(details_file)
+        else pd.DataFrame()
+    )
+    metadata = {}
+    if os.path.exists(meta_file):
+        with open(meta_file) as handle:
+            metadata = json.load(handle)
+    return listings, metadata, details
+
+
+def scrape_estate_listings(
+    area_df: pd.DataFrame,
+    existing_listings: pd.DataFrame,
+    district_meta: dict,
+    params: Dict[str, Any],
+) -> pd.DataFrame:
     """Estate scraper with per-district change detection. Uses Playwright probes and pagination."""
     centa_params = params.get("source_a_res", {})
     listings_file = centa_params.get("estate_listings_file", "data/01_raw/centaline_estate_lv_1.parquet")
@@ -46,25 +87,15 @@ def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.
         "District", "Subdistrict", "Code", "LastScraped",
     ]
 
-    existing_listings = pd.DataFrame(columns=required_columns)
-    district_meta: dict = {}
-    if not (full_rerun or estate_full_rerun):
-        try:
-            if os.path.exists(listings_file):
-                existing_listings = pd.read_parquet(listings_file)
-                existing_listings["Subdistrict"] = existing_listings["Subdistrict"].str.strip()
-                existing_listings["Code"] = existing_listings["Code"].astype(str).str.strip()
-                logger.info(f"Loaded {len(existing_listings)} existing estate listings")
-        except Exception as e:
-            logger.error(f"Failed to load existing listings: {e}")
-        try:
-            if os.path.exists(meta_file):
-                with open(meta_file, "r") as f:
-                    district_meta = json.load(f)
-        except Exception as e:
-            logger.warning(f"Could not load district metadata: {e}")
+    if not (full_rerun or estate_full_rerun) and not existing_listings.empty:
+        existing_listings = existing_listings.copy()
+        existing_listings["Subdistrict"] = existing_listings["Subdistrict"].str.strip()
+        existing_listings["Code"] = existing_listings["Code"].astype(str).str.strip()
+        logger.info(f"Received {len(existing_listings)} existing estate listings")
     else:
-        logger.info("Full rerun mode: rescraping all districts (no skip)")
+        existing_listings = pd.DataFrame(columns=required_columns)
+        if full_rerun or estate_full_rerun:
+            logger.info("Full rerun mode: rescraping all districts (no skip)")
 
     logger.info(f"🏘️  Will check {len(area_df)} districts for updates...")
 
@@ -438,8 +469,10 @@ def _scrape_estate_listings_impl(
             logger.info(f"Removed {before_dedup - len(final_df)} duplicate estates")
 
         final_df = final_df[final_df["Name"].notnull() & (final_df["Name"].str.strip() != "")]
-        final_df.to_parquet(listings_file, index=False)
-        logger.info(f"📦 Saved {len(final_df)} total estates to {listings_file}")
+        logger.info(
+            "Prepared %s total estates for catalog persistence",
+            len(final_df),
+        )
 
         try:
             with open(meta_file, "w") as f:
@@ -520,8 +553,13 @@ def process_estate_item(item, district_row, estate_base_url: str) -> dict:
     href = item.get("href", "")
     link = href if href.startswith("http") else f"{estate_base_url}{href}"
     estate_code = href.rstrip("/").split("/")[-1] if href else ""
-    name = safe_extract_bs4(item, ".property-text-title")
-    address = safe_extract_bs4(item, ".property-text-detail")
+    # Site redesign (~2026-09): the card markup dropped .property-text-title /
+    # .property-text-detail / .property-text-info in favour of .main-text,
+    # .address, and (label, value) pairs in .data-lbl/.data-value. Falling back
+    # to the href slug for the name would also work, but the visible text is
+    # more faithful to how the site actually renders it (spacing, punctuation).
+    name = safe_extract_bs4(item, ".main-text") or safe_extract_bs4(item, ".property-text-title")
+    address = safe_extract_bs4(item, ".address") or safe_extract_bs4(item, ".property-text-detail")
 
     blocks = None
     units = None
@@ -530,27 +568,59 @@ def process_estate_item(item, district_row, estate_base_url: str) -> dict:
     for_sale = None
     for_rent = None
 
-    lines = [el.get_text(" ", strip=True) for el in item.select(".property-text-info, .property-text-data, .property-text-sub")]
-    all_text = " | ".join(lines)
+    labels = item.select(".data-lbl")
+    field_text: dict[str, str] = {}
+    for lbl in labels:
+        label_text = lbl.get_text(" ", strip=True)
+        value_el = lbl.find_next_sibling(class_="data-value")
+        if value_el is None:
+            parent = lbl.parent
+            value_el = parent.select_one(".data-value") if parent else None
+        field_text[label_text] = value_el.get_text(" ", strip=True) if value_el else ""
 
-    m_blocks = re.search(r"Block\(s\)\s*[:：]?\s*(\d+)", all_text, re.I)
-    if m_blocks:
-        blocks = m_blocks.group(1)
-    m_units = re.search(r"Unit\(s\)\s*[:：]?\s*(\d+)", all_text, re.I)
-    if m_units:
-        units = m_units.group(1)
-    m_rate = re.search(r"Unit Rate\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
-    if m_rate:
-        unit_rate = parse_html_ft_price(m_rate.group(1))
-    m_mom = re.search(r"MoM\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
-    if m_mom:
-        mom = m_mom.group(1)
-    m_sale = re.search(r"For Sale\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
-    if m_sale:
-        for_sale = parse_html_price(m_sale.group(1))
-    m_rent = re.search(r"For Rent\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
-    if m_rent:
-        for_rent = parse_html_price(m_rent.group(1))
+    def _field(pattern: str) -> str | None:
+        for label_text, value_text in field_text.items():
+            if re.search(pattern, label_text, re.I):
+                return value_text
+        return None
+
+    blocks = _field(r"Block\(s\)")
+    units = _field(r"No\.?\s*of Units")
+    rate_text = _field(r"Unit Rate")
+    if rate_text:
+        unit_rate = parse_html_ft_price(rate_text)
+    mom = _field(r"MoM")
+    sale_text = _field(r"For Sale")
+    if sale_text:
+        for_sale = parse_html_price(sale_text)
+    rent_text = _field(r"For Rent")
+    if rent_text:
+        for_rent = parse_html_price(rent_text)
+
+    # Fall back to the pre-redesign free-text layout if a page still serves it
+    # (defensive — not observed live, but keeps this from silently degrading
+    # if the site reverts or A/B-tests the markup).
+    if not any((blocks, units, unit_rate, mom, for_sale, for_rent)):
+        lines = [el.get_text(" ", strip=True) for el in item.select(".property-text-info, .property-text-data, .property-text-sub")]
+        all_text = " | ".join(lines)
+        m_blocks = re.search(r"Block\(s\)\s*[:：]?\s*(\d+)", all_text, re.I)
+        if m_blocks:
+            blocks = m_blocks.group(1)
+        m_units = re.search(r"Unit\(s\)\s*[:：]?\s*(\d+)", all_text, re.I)
+        if m_units:
+            units = m_units.group(1)
+        m_rate = re.search(r"Unit Rate\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
+        if m_rate:
+            unit_rate = parse_html_ft_price(m_rate.group(1))
+        m_mom = re.search(r"MoM\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
+        if m_mom:
+            mom = m_mom.group(1)
+        m_sale = re.search(r"For Sale\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
+        if m_sale:
+            for_sale = parse_html_price(m_sale.group(1))
+        m_rent = re.search(r"For Rent\s*[:：]?\s*([^\|\n]+)", all_text, re.I)
+        if m_rent:
+            for_rent = parse_html_price(m_rent.group(1))
 
     return {
         "Name": name,
@@ -580,7 +650,11 @@ def _extract_element_text_playwright(page: Page, xpath: str) -> Optional[str]:
         return None
 
 
-def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
+def scrape_estate_details(
+    listings_df: pd.DataFrame,
+    existing_details: pd.DataFrame,
+    params: Dict[str, Any],
+) -> pd.DataFrame:
     """
     Scrape detailed estate information with incremental updates and gap-filling.
     """
@@ -590,11 +664,10 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
     full_rerun = params.get("source_a_res", {}).get("full_rerun", False)
     logger.info(f"Details File: {details_file}")
 
-    existing_details = pd.DataFrame()
-    if not full_rerun and os.path.exists(details_file):
-        existing_details = pd.read_parquet(details_file)
-        logger.info(f"Loaded {len(existing_details)} existing estate details")
+    if not full_rerun and not existing_details.empty:
+        logger.info(f"Received {len(existing_details)} existing estate details")
     elif full_rerun:
+        existing_details = pd.DataFrame()
         logger.info("Full rerun mode: scraping all estates (no skip)")
 
     done_links: set = set()
@@ -758,8 +831,11 @@ def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> 
             else:
                 existing_to_keep = existing_details
             updated_df = pd.concat([existing_to_keep, new_df], ignore_index=True)
-            updated_df.to_parquet(details_file, index=False)
-            logger.info(f"💾 Saved {len(updated_df):,} estate details ({len(new_df):,} new/updated)")
+            logger.info(
+                "Prepared %s estate details (%s new/updated) for catalog persistence",
+                f"{len(updated_df):,}",
+                f"{len(new_df):,}",
+            )
 
             record_node_execution(
                 node_name="estate_detail_scraper",

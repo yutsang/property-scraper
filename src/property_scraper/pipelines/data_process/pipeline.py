@@ -1,9 +1,10 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import cleanse_source_a_res, cleanse_source_a_commercial
 from .nodes import cleanse_source_b_commercial, cleanse_source_b_res
-from .nodes import build_residential_quality_report, merge_and_excel
+from .nodes import build_residential_quality_report, build_run_statistics, merge_and_excel
 from .nodes import select_source_a_res_columns, select_source_a_commercial_columns
 from .nodes import select_source_b_res_columns, select_source_b_commercial_columns
+from .quality import validate_primary_for_publication
 
 def create_pipeline(**kwargs) -> Pipeline:
     """
@@ -75,6 +76,17 @@ def create_pipeline(**kwargs) -> Pipeline:
                 outputs="residential_quality_audit",
                 name="build_residential_quality_report",
             ),
+            node(
+                func=build_run_statistics,
+                inputs=[
+                    "source_a_res",
+                    "source_a_commercial",
+                    "source_b_res",
+                    "source_b_commercial",
+                ],
+                outputs="run_statistics",
+                name="build_run_statistics",
+            ),
             
             # Step 4: Data Processing for Source B ICI Data
             node(
@@ -93,8 +105,26 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             # Step 5: Combine all processed data and split by residential/commercial
             node(
+                func=validate_primary_for_publication,
+                inputs=[
+                    "source_a_res",
+                    "source_a_commercial",
+                    "source_b_res",
+                    "source_b_commercial",
+                ],
+                outputs="publication_quality_gate",
+                name="validate_primary_for_publication",
+            ),
+            node(
                 func=merge_and_excel,
-                inputs=["source_a_res", "source_a_commercial", "source_b_res", "source_b_commercial", "parameters"],
+                inputs=[
+                    "source_a_res",
+                    "source_a_commercial",
+                    "source_b_res",
+                    "source_b_commercial",
+                    "parameters",
+                    "publication_quality_gate",
+                ],
                 outputs={
                     'residential_2020_2023': 'output_residential_2020_2023',
                     'commercial_2020_2023': 'output_commercial_2020_2023',

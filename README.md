@@ -179,16 +179,16 @@ src/property_scraper/pipelines/
 ╔══════════════════════ LAYER 5: EXPORT (03_primary/) ═══════════════════════════╗
 ║                                                                                 ║
 ║  merge_and_excel                                                                ║
-║  ├─ RE_residential_2020-2023.xlsx                                               ║
+║  ├─ RE_residential_2021-2024.xlsx                                               ║
 ║  │   ├─ Source A_Res   (centaline residential)                                 ║
 ║  │   ├─ Source B_Res   (midland residential)                                   ║
 ║  │   └─ Overlap_Res    (cross-source duplicates, if any)                       ║
-║  ├─ RE_residential_2024-{year}.xlsx   (same sheet structure)                   ║
-║  ├─ RE_commercial_2020-2023.xlsx                                                ║
+║  ├─ RE_residential_2025-{year}.xlsx   (same sheet structure)                   ║
+║  ├─ RE_commercial_2021-2024.xlsx                                                ║
 ║  │   ├─ Source A_OIR   (centaline office/industrial/retail)                    ║
 ║  │   ├─ Source B_ICI   (midland ICI)                                           ║
 ║  │   └─ Overlap_Com    (cross-source duplicates, if any)                       ║
-║  └─ RE_commercial_2024-{year}.xlsx    (same sheet structure)                   ║
+║  └─ RE_commercial_2025-{year}.xlsx    (same sheet structure)                   ║
 ║                                                                                 ║
 ║  Parquet snapshots (for downstream analysis):                                   ║
 ║  centaline_res.parquet  │  centaline_oir.parquet                               ║
@@ -277,10 +277,10 @@ python -c "from property_scraper.utils.node_tracker import get_node_tracker; get
 
 - **Parquet Files**: Processed data in `data/03_primary/`
 - **Excel Reports**:
-  - `data/03_primary/RE_residential_2020-2023.xlsx`
-  - `data/03_primary/RE_residential_2024-{year}.xlsx`
-  - `data/03_primary/RE_commercial_2020-2023.xlsx`
-  - `data/03_primary/RE_commercial_2024-{year}.xlsx`
+  - `data/03_primary/RE_residential_2021-2024.xlsx`
+  - `data/03_primary/RE_residential_2025-{year}.xlsx`
+  - `data/03_primary/RE_commercial_2021-2024.xlsx`
+  - `data/03_primary/RE_commercial_2025-{year}.xlsx`
 
 ## Configuration
 

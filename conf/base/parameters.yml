@@ -31,8 +31,9 @@ webscraper:
     res_trans_path: data/01_raw/centaline_res_trans_lv_0.parquet
     max_pages_per_area: 999
     max_transaction_workers: 6
-    transaction_lookback_days: 60  # Revisit recent dates for delayed/backfilled records
-    transaction_incremental_max_pages: 20  # Bounded recent-posting scan per area
+    use_api_transport: true  # Direct-POST transport (see _SourceAResApiClient); set false to fall back to Playwright
+    transaction_lookback_days: 30  # Refilled via the 2026-09 one-time API merge; back to a normal window
+    transaction_incremental_max_pages: 20  # Covers a 30-day window per area with headroom
     transaction_consecutive_stale_pages: 3  # Pages are not strictly date-sorted
     transaction_stop_on_stale_pages: false  # Scan the full bounded window; page order varies by session
     allow_transaction_live_skip: false  # Sitemap freshness is too coarse for transaction completeness
@@ -91,6 +92,11 @@ webscraper:
     request_delay_max: 3.0
     max_retries: 3
     timeout: 30
+    enable_landreg_deep_supplement: true  # Monthly sweep of active buildings via the per-building endpoint
+    deep_supplement_interval_days: 30
+    deep_supplement_active_months: 9  # Buildings with a transaction in the last N months get swept
+    deep_supplement_request_delay: 0.35
+    # deep_supplement_max_buildings: 500  # Uncomment to cap a single run (testing)
     site:
       districts_url: ""
       district_headers: {}
@@ -103,10 +109,11 @@ webscraper:
     save_incremental: True
     incremental_save_frequency: 5
     max_page_size: 20000
-    transaction_page_size: 100
+    transaction_page_size: 1000  # API accepts up to 1000 (verified); was 100
     resume_from_existing: True
     max_retries: 3
     request_delay: 0.5
+    incremental_lookback_days: 14  # dateFrom/dateTo window behind start_date; covers late-arriving revisions
     source_b_commercial_building_listings: 'data/01_raw/midland_ici_buildings.parquet'
     source_b_commercial_building_details: 'data/02_intermediate/midland_ici_building_details.parquet'
     buildings_url: ""
@@ -231,7 +238,49 @@ area_conversion:
       industrial: 0.73
 
 data_process:
+  # Stable export contract matching the four catalog workbook names.
+  export_start_year: 2021
+  export_split_year: 2025
+  export_end_year: 2026
   # Cross-source (Centaline vs Midland) overlap detection adds Overlap_Res/Overlap_Com
   # sheets to the RE_*.xlsx reports. Off until the matching logic has more test coverage.
   enable_overlap_sheets: false
+
+building_master:
+  # Resumable buildings-enumeration pulls (see utils/centaline_buildings_client.py
+  # and utils/midland_res_estate_buildings_client.py). Cheap to leave enabled:
+  # once the checkpoint is complete, a run does zero API calls unless the
+  # upstream estate catalog has grown.
+  enable_centaline_buildings_pull: true
+  centaline_buildings_out: data/centaline_buildings_full
+  centaline_buildings_delay: 0.3
+  enable_midland_buildings_pull: true
+  midland_buildings_out: data/midland_res_estate_buildings_full
+  midland_buildings_delay: 0.3
+
+building_master_matching:
+  fuzzy_threshold: 92.0
+  parent_fuzzy_threshold: 94.0
+  fuzzy_runner_up_margin: 8.0
+  max_fuzzy_candidates_per_record: 3
+  completion_year_tolerance: 1
+  geography_distance_km: 0.5
+  enable_parent_aware_matching: true
+  # Transaction-fingerprint matching: two records are the same building when they
+  # report the same deals. Calibrated against name-matched pairs at 0% false
+  # positives; lowering either value trades that precision for recall.
+  fingerprint_shared_min: 2
+  fingerprint_coverage_min: 0.30
+  # Midland publishes no amount on 72% of commercial deals, so those transaction
+  # sets overlap much less; both thresholds are looser for that domain.
+  fingerprint_commercial_shared_min: 2
+  fingerprint_commercial_coverage_min: 0.10
+  rule_version: "building-master-v2-parent-aware"
+
+building_master_review:
+  high_priority_cutoff: 30.0
+  medium_priority_cutoff: 10.0
+  address_evidence_weight: 10.0
+  completion_evidence_weight: 10.0
+  fuzzy_runner_up_margin: 8.0
 

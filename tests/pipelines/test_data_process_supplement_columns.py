@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from property_scraper.pipelines.data_process.nodes import (
+    _normalize_completion_years,
     build_residential_quality_report,
     cleanse_source_a_res,
     cleanse_source_b_res,
@@ -34,6 +35,19 @@ AREA_CONVERSION_PARAMS = {
         },
     }
 }
+
+
+def test_normalize_completion_years_preserves_future_building_years() -> None:
+    frame = pd.DataFrame(
+        {
+            "completion_year": [2027, "2028", "2024-01-01"],
+        }
+    )
+
+    result = _normalize_completion_years(frame, ["completion_year"])
+
+    assert result["completion_year"].tolist() == [2027, 2028, 2024]
+    assert result["age"].tolist() == [0, 0, pd.Timestamp.now().year - 2024]
 
 
 def test_select_source_a_commercial_columns_keeps_supplement_provenance_fields() -> None:

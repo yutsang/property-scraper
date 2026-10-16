@@ -4,10 +4,13 @@ from .health import (
     update_area_codes_from_sitemap,
 )
 from .estates import (
+    load_existing_estate_snapshots,
     scrape_estate_listings,
     scrape_estate_details,
 )
 from .nodes import (
+    load_existing_enriched_snapshot,
+    load_existing_transaction_snapshot,
     scrape_transaction_data,
     process_transaction_data,
     enrich_estate_data,
@@ -29,21 +32,54 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="update_area_codes",
         ),
         node(
+            func=load_existing_estate_snapshots,
+            inputs="params:webscraper",
+            outputs=[
+                "existing_source_a_res_estate_listings",
+                "source_a_res_estate_metadata",
+                "existing_source_a_res_estate_details",
+            ],
+            name="load_existing_source_a_res_estates",
+        ),
+        node(
             func=scrape_estate_listings,
-            inputs=["area_codes", "params:webscraper"],
+            inputs=[
+                "area_codes",
+                "existing_source_a_res_estate_listings",
+                "source_a_res_estate_metadata",
+                "params:webscraper",
+            ],
             outputs="raw_estate_listings",
             name="estate_listing_scraper"
         ),
 
         node(
             func=scrape_estate_details,
-            inputs=["raw_estate_listings", "params:webscraper"],
+            inputs=[
+                "raw_estate_listings",
+                "existing_source_a_res_estate_details",
+                "params:webscraper",
+            ],
             outputs="estate_details_raw",
             name="estate_detail_scraper"
         ),
         node(
+            func=load_existing_transaction_snapshot,
+            inputs="params:webscraper",
+            outputs=[
+                "existing_source_a_res_transactions",
+                "source_a_res_recovery_metadata",
+            ],
+            name="load_existing_source_a_res_transactions",
+        ),
+        node(
             func=scrape_transaction_data,
-            inputs=["area_codes", "params:webscraper"],
+            inputs=[
+                "area_codes",
+                "existing_source_a_res_transactions",
+                "source_a_res_recovery_metadata",
+                "params:webscraper",
+            ],
             outputs="raw_transaction_data",
             name="transaction_data_scraper"
         ),
@@ -54,8 +90,20 @@ def create_pipeline(**kwargs) -> Pipeline:
             name="transaction_processor"
         ),
         node(
+            func=load_existing_enriched_snapshot,
+            inputs="params:webscraper",
+            outputs="existing_source_a_res_base",
+            name="load_existing_source_a_res_base",
+        ),
+        node(
             func=enrich_estate_data,
-            inputs=["estate_details_raw", "processed_transactions", "params:webscraper"],
+            inputs=[
+                "estate_details_raw",
+                "processed_transactions",
+                "params:webscraper",
+                "raw_estate_listings",
+                "existing_source_a_res_base",
+            ],
             outputs="source_a_res_base",
             name="estate_data_enricher"
         )

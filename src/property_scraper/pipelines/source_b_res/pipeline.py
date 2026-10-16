@@ -1,8 +1,15 @@
 from kedro.pipeline import Pipeline, node, pipeline
 from .nodes import fetch_district_codes
 from .nodes import merge_transactions_estates #, calculate_price_metrics
-from .nodes import load_district_data, process_estate_data, normalize_all_columns
-from .nodes import fetch_transactions
+from .nodes import (
+    fetch_transactions,
+    fetch_landreg_deep_supplement,
+    load_district_data,
+    load_existing_estates,
+    load_existing_transactions,
+    normalize_all_columns,
+    process_estate_data,
+)
 
 def create_pipeline(**kwargs) -> Pipeline:
     """
@@ -32,8 +39,18 @@ def create_pipeline(**kwargs) -> Pipeline:
             
             # Step 2b: Fetch and process estate data
             node(
+                func=load_existing_estates,
+                inputs="params:webscraper",
+                outputs="existing_source_b_res_estates",
+                name="load_existing_source_b_res_estates",
+            ),
+            node(
                 func=process_estate_data,
-                inputs=["cleaned_district_data", "params:webscraper"],
+                inputs=[
+                    "cleaned_district_data",
+                    "existing_source_b_res_estates",
+                    "params:webscraper",
+                ],
                 outputs="raw_estate_data",
                 name="fetch_and_process_estate_data",
             ),
@@ -48,12 +65,31 @@ def create_pipeline(**kwargs) -> Pipeline:
             
             # Step 2d: Fetch transaction data - FIXED INPUT
             node(
+                func=load_existing_transactions,
+                inputs="params:webscraper",
+                outputs="existing_source_b_res_transactions",
+                name="load_existing_source_b_res_transactions",
+            ),
+            node(
                 func=fetch_transactions,
-                inputs=["cleaned_district_data", "params:webscraper"],
-                outputs="source_b_res_transactions",
+                inputs=[
+                    "cleaned_district_data",
+                    "existing_source_b_res_transactions",
+                    "params:webscraper",
+                ],
+                outputs="source_b_res_transactions_district_search",
                 name="fetch_source_b_transactions",
             ),
-            
+            node(
+                func=fetch_landreg_deep_supplement,
+                inputs=[
+                    "source_b_res_transactions_district_search",
+                    "params:webscraper",
+                ],
+                outputs="source_b_res_transactions",
+                name="fetch_landreg_deep_supplement",
+            ),
+
             # Step 3: Merge transaction and estate data
             node(
                 func=merge_transactions_estates,

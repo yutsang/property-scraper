@@ -14,8 +14,6 @@ from pathlib import Path
 from typing import Optional, Set
 import pickle
 import hashlib
-import yaml
-from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 import sys
@@ -28,6 +26,7 @@ from playwright.async_api import async_playwright
 # Import node tracking utilities
 from ...utils.node_tracker import (
     evaluate_node_run,
+    get_node_status,
     record_node_decision,
     record_node_execution,
 )
@@ -41,13 +40,11 @@ from ...utils.source_a_utils import (
     parse_html_area,
     parse_html_price,
     parse_html_ft_price,
-    clean_subdistrict,
     block_slow_resources,
     block_slow_resources_async,
     estate_changed,
-    safe_extract_bs4,
 )
-from ...utils.web_scraping import random_sleep, generate_session_id
+from ...utils.web_scraping import random_sleep
 from ...utils.data_processing import drop_non_parquet_serializable_columns, fix_transaction_df_parquet_types
 
 
@@ -124,6 +121,121 @@ def _deduplicate_transaction_rows(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([with_id, without_id], ignore_index=True)
 
 
+def _parse_nuxt_transaction_list(transactions: list) -> list:
+    """Parse raw transaction list from __NUXT__ into record dicts. Shared by sync/async scrapers and the raw-API jsonl pulls (same NUXT-shaped objects)."""
+    parsed_transactions = []
+    for txn in transactions:
+        try:
+            scope = txn.get('scope', {})
+            display_text = txn.get('displayText', {}).get('addr', {})
+            big_estate = txn.get('bigEstateName', '').strip()
+            estate = txn.get('estateName', '').strip()
+            building = txn.get('buildingName', '').strip()
+            formatted_address = display_text.get('line1', '').strip()
+            if big_estate and estate and building:
+                full_name = f"{big_estate} {estate} {building}"
+            elif big_estate and estate:
+                full_name = f"{big_estate} {estate}"
+            elif big_estate and building:
+                full_name = f"{big_estate} {building}"
+            elif big_estate:
+                full_name = big_estate
+            elif estate and building:
+                full_name = f"{estate} {building}"
+            elif building:
+                full_name = building
+            elif estate:
+                full_name = estate
+            elif formatted_address:
+                parts = formatted_address.split()
+                name_parts = []
+                for part in parts:
+                    if part in ['Upper', 'Middle', 'Lower', 'High', 'Mid', 'Low'] or 'Floor' in part or '/F' in part:
+                        break
+                    name_parts.append(part)
+                full_name = ' '.join(name_parts) if name_parts else formatted_address
+            else:
+                full_name = ''
+            completion_year_str = txn.get('opYear', '')
+            completion_year = None
+            if completion_year_str:
+                year_match = re.search(r'(\d{4})', completion_year_str)
+                if year_match:
+                    try:
+                        completion_year = int(year_match.group(1))
+                    except Exception:
+                        pass
+            age = None
+            if completion_year:
+                age = datetime.now().year - completion_year
+                if age < 0:
+                    age = None
+            n_area = txn.get('nArea')
+            g_area = txn.get('gArea')
+            salable_area = txn.get('salableArea')
+            floor_area = txn.get('floorArea')
+            build_area = txn.get('buildUpArea')
+            usable_area = txn.get('usableArea')
+            area_value = (n_area or g_area or salable_area or floor_area or build_area or usable_area)
+            n_unit_price = txn.get('nUnitPrice')
+            g_unit_price = txn.get('gUnitPrice')
+            ft_price_value = n_unit_price if n_unit_price is not None else g_unit_price
+            is_carpark = bool((full_name and 'carpark' in full_name.lower()) or (building and 'carpark' in building.lower()))
+            property_type = 'Carpark' if is_carpark else 'residential'
+            record = {
+                "date": txn.get("insDate", ""),
+                "date_original": txn.get("insDate", ""),
+                "region": scope.get("terr", ""),
+                "district": scope.get("db", ""),
+                "subdistrict": scope.get("hma", ""),
+                "Name": full_name if full_name else None,
+                "Tower": building if building else (estate if estate and not building else None),
+                "Floor": txn.get("yAxis", ""),
+                "Flat": txn.get("xAxis", ""),
+                "transaction_type": "SALE" if txn.get("postType") == "S" else "RENT" if txn.get("postType") == "R" else "",
+                "area": area_value,
+                "price": txn.get("transactionPrice"),
+                "ft_price": ft_price_value,
+                "source": "source_a_res",
+                "property_type": property_type,
+                "address": formatted_address,
+                "street_address": txn.get("address", ""),
+                "building_code": txn.get("typeCode", ""),
+                "estate_code": txn.get("estateId") or txn.get("bigEstateId") or txn.get("estateCode"),
+                "g_area": g_area,
+                "g_unit_price": g_unit_price,
+                "completion_year": completion_year,
+                "age": age,
+                "estate_type": txn.get("estateType", ""),
+                "transaction_url": txn.get("detailUrl", ""),
+                "transaction_id": txn.get("id", ""),
+                "title_lg": display_text.get("line5", ""),
+                "rooms": txn.get("bedroomCount"),
+                "direction": txn.get("direction", ""),
+                "estate_name": estate if estate else None,
+                "building_name": building if building else None,
+            }
+            known_keys = {
+                "scope", "displayText", "bigEstateName", "estateName", "buildingName",
+                "opYear", "nArea", "gArea", "salableArea", "floorArea", "buildUpArea", "usableArea",
+                "nUnitPrice", "gUnitPrice", "postType", "insDate", "yAxis", "xAxis",
+                "transactionPrice", "address", "typeCode", "estateType", "detailUrl", "id",
+                "bedroomCount", "direction", "estateId", "bigEstateId", "estateCode",
+                "media",
+            }
+            for key, val in txn.items():
+                if key not in known_keys and val is not None and val != "":
+                    if isinstance(val, (dict, list)):
+                        continue
+                    safe_key = f"nuxt_{key}" if not key.startswith("nuxt_") else key
+                    record[safe_key] = val
+            parsed_transactions.append(record)
+        except Exception as e:
+            logger.debug(f"Error parsing transaction: {e}")
+            continue
+    return parsed_transactions
+
+
 def scroll_down(page: Page) -> None:
     """Scroll to bottom of page to trigger lazy loading"""
     page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
@@ -164,12 +276,13 @@ def _probe_source_a_live_state(
 def _load_existing_transactions_with_recovery(
     transaction_file: str,
     params: Dict[str, Any],
-) -> tuple[pd.DataFrame, Optional[dict]]:
+) -> tuple[pd.DataFrame, dict]:
     """
     Load transactions, optionally restoring the newest backup when the file is corrupt.
 
-    Returns (dataframe, recovery_metadata).
-    Raises RuntimeError when the file is corrupt and recovery is not possible.
+    Returns (dataframe, recovery_metadata); the metadata is empty when nothing had
+    to be recovered. It must never be None — Kedro refuses to save None to any
+    dataset, which would fail the whole pipeline on the healthy path.
     """
     centa_params = params.get("source_a_res", {})
     restore_on_corruption = centa_params.get("restore_from_backup_on_corruption", True)
@@ -177,7 +290,7 @@ def _load_existing_transactions_with_recovery(
 
     try:
         existing = pd.read_parquet(transaction_file)
-        return existing, None
+        return existing, {}
     except Exception as exc:
         logger.error("Error loading existing data from %s: %s", transaction_file, exc)
         recovery_metadata = {
@@ -221,13 +334,140 @@ def _load_existing_transactions_with_recovery(
         )
         return pd.DataFrame(), recovery_metadata
 
+
+_OUTAGE_FAILURE_SHARE = 0.3
+
+
+class SourceServerError(RuntimeError):
+    """The source returned a 5xx, so this area failed upstream, not locally."""
+
+
+def _raise_for_server_error(response: Any, area: str) -> None:
+    """Surface a 5xx as itself instead of letting it read as a local timeout.
+
+    A site-wide outage otherwise shows up only as `wait_for_function` timeouts,
+    which sends the whole run chasing a scraper bug that isn't there.
+    """
+    status = getattr(response, "status", None)
+    if status is not None and status >= 500:
+        raise SourceServerError(f"HTTP {status} for {area}")
+
+
+class _SourceAResApiClient:
+    """Direct-POST transport for the transaction search API, replacing per-page
+    Playwright navigation. The anonymous bearer token is minted once via a
+    single headless-browser visit (see scripts/centaline_res_api_pull.py,
+    which validated this endpoint against the full history) and reused across
+    all areas for the run; only 401/403 triggers a re-mint.
+    """
+
+    API_URL = "https://hk.centanet.com/findproperty/api/Transaction/Search"
+    TOKEN_PAGE = "https://hk.centanet.com/findproperty/en/list/transaction/anderson_19-HMA051"
+    PAGE_SIZE = 100
+
+    def __init__(self, user_agent: str, delay: float):
+        self.user_agent = user_agent
+        self.delay = delay
+        self.token: Optional[str] = None
+        self.session = requests.Session()
+
+    def _mint_token(self) -> None:
+        from playwright.sync_api import sync_playwright
+
+        holder: Dict[str, Any] = {"t": None}
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            ctx = browser.new_context(user_agent=self.user_agent)
+            page = ctx.new_page()
+
+            def grab(req):
+                if "/findproperty/api/" in req.url and "authorization" in req.headers:
+                    holder["t"] = req.headers["authorization"]
+
+            page.on("request", grab)
+            page.goto(
+                f"{self.TOKEN_PAGE}?q=incr_{int(time.time())}",
+                wait_until="domcontentloaded",
+                timeout=45000,
+            )
+            page.wait_for_timeout(3000)
+            browser.close()
+        if not holder["t"]:
+            raise RuntimeError("could not obtain source_a_res API token")
+        self.token = holder["t"]
+        logger.info("source_a_res API token acquired")
+
+    def _headers(self) -> Dict[str, str]:
+        return {
+            "authorization": self.token,
+            "content-type": "application/json",
+            "referer": self.TOKEN_PAGE,
+            "user-agent": self.user_agent,
+        }
+
+    def fetch_page(self, area_code: str, offset: int) -> list:
+        if self.token is None:
+            self._mint_token()
+        body = {
+            "postType": "Both", "sort": "InsOrRegDate", "order": "Descending",
+            "size": self.PAGE_SIZE, "offset": offset, "pageSource": "search",
+            "bigPhotoMode": False, "hmas": [area_code], "mtrs": [],
+            "primarySchoolNets": [], "markets": [], "universities": [],
+            "typeCodes": [f"19-{area_code}"], "unitPlanGroupFilter": {},
+        }
+        backoff = 20.0
+        for attempt in range(5):
+            try:
+                r = self.session.post(self.API_URL, headers=self._headers(), json=body, timeout=40)
+            except requests.exceptions.RequestException as exc:
+                logger.warning("source_a_res API network error (%s); backing off %.0fs", exc, backoff)
+                time.sleep(backoff)
+                backoff = min(backoff * 2, 300)
+                continue
+            if r.status_code == 200:
+                time.sleep(self.delay)
+                return r.json().get("data", [])
+            if r.status_code in (401, 403):
+                logger.info("source_a_res API token expired — refreshing")
+                self._mint_token()
+                continue
+            if r.status_code == 429 or r.status_code >= 500:
+                logger.warning("source_a_res API HTTP %d — backing off %.0fs", r.status_code, backoff)
+                time.sleep(backoff)
+                backoff = min(backoff * 2, 300)
+                continue
+            raise RuntimeError(f"HTTP {r.status_code}: {r.text[:200]}")
+        raise RuntimeError("source_a_res API: too many consecutive failures")
+
+
+def load_existing_transaction_snapshot(
+    params: Dict[str, Any],
+) -> tuple[pd.DataFrame, Dict[str, Any]]:
+    """Load and recover the current transaction snapshot as an explicit node."""
+    source_params = params.get("source_a_res", {})
+    if source_params.get("full_rerun", False) or source_params.get(
+        "transaction_full_rerun",
+        False,
+    ):
+        return pd.DataFrame(), {}
+    transaction_file = source_params.get(
+        "res_trans_path",
+        "data/01_raw/centaline_res_trans_lv_0.parquet",
+    )
+    if not os.path.exists(transaction_file):
+        return pd.DataFrame(), {}
+    return _load_existing_transactions_with_recovery(transaction_file, params)
+
+
 ########################## scrape transaction data ##########################
     
 # Below is the updated version of the `scrape_transaction_data` function that includes robust error handling, pagination, and control date checks.
 
 def scrape_transaction_data(
-    area_df: pd.DataFrame,  
-    params: Dict[str, Any]
+    area_df: pd.DataFrame,
+    existing_data: pd.DataFrame,
+    recovery_metadata: Optional[Dict[str, Any]],
+    params: Dict[str, Any],
 ) -> pd.DataFrame:
     """
     Enhanced Kedro-compatible transaction data scraper with incremental updating.
@@ -254,120 +494,6 @@ def scrape_transaction_data(
                 break
             last_height = new_height
             scroll_attempts += 1
-
-    def _parse_nuxt_transaction_list(transactions: list) -> list:
-        """Parse raw transaction list from __NUXT__ into record dicts. Shared by sync/async."""
-        parsed_transactions = []
-        for txn in transactions:
-            try:
-                scope = txn.get('scope', {})
-                display_text = txn.get('displayText', {}).get('addr', {})
-                big_estate = txn.get('bigEstateName', '').strip()
-                estate = txn.get('estateName', '').strip()
-                building = txn.get('buildingName', '').strip()
-                formatted_address = display_text.get('line1', '').strip()
-                if big_estate and estate and building:
-                    full_name = f"{big_estate} {estate} {building}"
-                elif big_estate and estate:
-                    full_name = f"{big_estate} {estate}"
-                elif big_estate and building:
-                    full_name = f"{big_estate} {building}"
-                elif big_estate:
-                    full_name = big_estate
-                elif estate and building:
-                    full_name = f"{estate} {building}"
-                elif building:
-                    full_name = building
-                elif estate:
-                    full_name = estate
-                elif formatted_address:
-                    parts = formatted_address.split()
-                    name_parts = []
-                    for part in parts:
-                        if part in ['Upper', 'Middle', 'Lower', 'High', 'Mid', 'Low'] or 'Floor' in part or '/F' in part:
-                            break
-                        name_parts.append(part)
-                    full_name = ' '.join(name_parts) if name_parts else formatted_address
-                else:
-                    full_name = ''
-                completion_year_str = txn.get('opYear', '')
-                completion_year = None
-                if completion_year_str:
-                    year_match = re.search(r'(\d{4})', completion_year_str)
-                    if year_match:
-                        try:
-                            completion_year = int(year_match.group(1))
-                        except Exception:
-                            pass
-                age = None
-                if completion_year:
-                    age = datetime.now().year - completion_year
-                    if age < 0:
-                        age = None
-                n_area = txn.get('nArea')
-                g_area = txn.get('gArea')
-                salable_area = txn.get('salableArea')
-                floor_area = txn.get('floorArea')
-                build_area = txn.get('buildUpArea')
-                usable_area = txn.get('usableArea')
-                area_value = (n_area or g_area or salable_area or floor_area or build_area or usable_area)
-                n_unit_price = txn.get('nUnitPrice')
-                g_unit_price = txn.get('gUnitPrice')
-                ft_price_value = n_unit_price if n_unit_price is not None else g_unit_price
-                is_carpark = bool((full_name and 'carpark' in full_name.lower()) or (building and 'carpark' in building.lower()))
-                property_type = 'Carpark' if is_carpark else 'residential'
-                record = {
-                    "date": txn.get("insDate", ""),
-                    "date_original": txn.get("insDate", ""),
-                    "region": scope.get("terr", ""),
-                    "district": scope.get("db", ""),
-                    "subdistrict": scope.get("hma", ""),
-                    "Name": full_name if full_name else None,
-                    "Tower": building if building else (estate if estate and not building else None),
-                    "Floor": txn.get("yAxis", ""),
-                    "Flat": txn.get("xAxis", ""),
-                    "transaction_type": "SALE" if txn.get("postType") == "S" else "RENT" if txn.get("postType") == "R" else "",
-                    "area": area_value,
-                    "price": txn.get("transactionPrice"),
-                    "ft_price": ft_price_value,
-                    "source": "source_a_res",
-                    "property_type": property_type,
-                    "address": formatted_address,
-                    "street_address": txn.get("address", ""),
-                    "building_code": txn.get("typeCode", ""),
-                    "estate_code": txn.get("estateId") or txn.get("bigEstateId") or txn.get("estateCode"),
-                    "g_area": g_area,
-                    "g_unit_price": g_unit_price,
-                    "completion_year": completion_year,
-                    "age": age,
-                    "estate_type": txn.get("estateType", ""),
-                    "transaction_url": txn.get("detailUrl", ""),
-                    "transaction_id": txn.get("id", ""),
-                    "title_lg": display_text.get("line5", ""),
-                    "rooms": txn.get("bedroomCount"),
-                    "direction": txn.get("direction", ""),
-                    "estate_name": estate if estate else None,
-                    "building_name": building if building else None,
-                }
-                known_keys = {
-                    "scope", "displayText", "bigEstateName", "estateName", "buildingName",
-                    "opYear", "nArea", "gArea", "salableArea", "floorArea", "buildUpArea", "usableArea",
-                    "nUnitPrice", "gUnitPrice", "postType", "insDate", "yAxis", "xAxis",
-                    "transactionPrice", "address", "typeCode", "estateType", "detailUrl", "id",
-                    "bedroomCount", "direction", "estateId", "bigEstateId", "estateCode",
-                    "media",
-                }
-                for key, val in txn.items():
-                    if key not in known_keys and val is not None and val != "":
-                        if isinstance(val, (dict, list)):
-                            continue
-                        safe_key = f"nuxt_{key}" if not key.startswith("nuxt_") else key
-                        record[safe_key] = val
-                parsed_transactions.append(record)
-            except Exception as e:
-                logger.debug(f"Error parsing transaction: {e}")
-                continue
-        return parsed_transactions
 
     def extract_nuxt_transactions(page: Page):
         """
@@ -667,8 +793,6 @@ def scrape_transaction_data(
     tracker_params = _build_tracker_params(params)
     full_rerun = params.get("source_a_res", {}).get("full_rerun", False)
     transaction_full_rerun = params.get("source_a_res", {}).get("transaction_full_rerun", False)
-    existing_data = pd.DataFrame()
-    recovery_metadata = None
     live_state = {
         "node_name": "transaction_data_scraper",
         "source": "manual_full_rerun" if (full_rerun or transaction_full_rerun) else "pending",
@@ -678,11 +802,7 @@ def scrape_transaction_data(
     if full_rerun or transaction_full_rerun:
         logger.info("Full rerun mode: starting fresh (no existing data loaded)")
 
-    if not (full_rerun or transaction_full_rerun) and os.path.exists(transaction_file):
-        existing_data, recovery_metadata = _load_existing_transactions_with_recovery(
-            transaction_file,
-            params,
-        )
+    if not (full_rerun or transaction_full_rerun) and not existing_data.empty:
         logger.info(f"Loaded {len(existing_data)} existing transactions")
 
         if "date" in existing_data.columns and not existing_data.empty:
@@ -793,9 +913,24 @@ def scrape_transaction_data(
         8,
     )
     area_rows = list(area_df.iterrows())
+    # The source starts refusing requests part way through a run, so whichever
+    # areas sit at the front are the only ones that ever get scraped. Put last
+    # run's failures first so successive runs cover the whole list.
+    previously_failed = set(
+        get_node_status("transaction_data_scraper")
+        .get("metadata", {})
+        .get("failed_area_codes", [])
+    )
+    if previously_failed:
+        area_rows.sort(key=lambda pair: pair[1].get("Code") not in previously_failed)
+        logger.info(
+            "↻ Prioritising %s areas that failed on the previous run",
+            len(previously_failed),
+        )
 
-    async def _run_async_scrape():
+    async def _run_async_scrape(rows=None):
         """Async concurrent scraping using Playwright async API (safe for parallelism)."""
+        rows = area_rows if rows is None else rows
         semaphore = asyncio.Semaphore(max_concurrent)
 
         async def extract_nuxt_async(page):
@@ -893,7 +1028,8 @@ def scrape_transaction_data(
                 try:
                     subdistrict = area_row["Subdistrict"].replace(" ", "-").lower()
                     url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q=session_{int(datetime.now().timestamp())}"
-                    await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                    response = await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                    _raise_for_server_error(response, area_row["Subdistrict"])
                     await asyncio.sleep(random.uniform(params['global']['min_delay'], params['global']['max_delay']))
                     try:
                         await page.wait_for_function(
@@ -959,8 +1095,16 @@ def scrape_transaction_data(
                             )
                     return {"success": True, "data": area_data, "area": area_row["Subdistrict"]}
                 except Exception as e:
-                    logger.debug(f"Error scraping {area_row['Subdistrict']}: {e}")
-                    return {"success": False, "data": [], "area": area_row["Subdistrict"], "error": str(e)}
+                    # Keep what this area already yielded. Failing on page 150 used
+                    # to discard the previous 149 pages, and the lookback window
+                    # never comes back for them.
+                    logger.warning(
+                        "Error scraping %s after %s records: %s",
+                        area_row["Subdistrict"],
+                        len(area_data),
+                        e,
+                    )
+                    return {"success": False, "data": area_data, "area": area_row["Subdistrict"], "error": str(e)}
                 finally:
                     await page.close()
 
@@ -968,7 +1112,7 @@ def scrape_transaction_data(
             browser = await launch_browser_async(p, headless=headless)
             try:
                 context = await browser.new_context(user_agent=user_agent)
-                results = [None] * len(area_rows)
+                results = [None] * len(rows)
                 total_records = [0]  # mutable for closure
 
                 def make_done_cb(i):
@@ -994,7 +1138,7 @@ def scrape_transaction_data(
                     return cb
 
                 pbar = tqdm(
-                    total=len(area_rows),
+                    total=len(rows),
                     desc="Scraping areas",
                     file=sys.stderr,
                     dynamic_ncols=True,
@@ -1003,7 +1147,7 @@ def scrape_transaction_data(
                 )
                 pbar.refresh()  # Force display before first task completes
                 tasks = []
-                for i, (_, row) in enumerate(area_rows):
+                for i, (_, row) in enumerate(rows):
                     t = asyncio.create_task(scrape_one_area(context, row))
                     t.add_done_callback(make_done_cb(i))
                     tasks.append(t)
@@ -1029,7 +1173,10 @@ def scrape_transaction_data(
             session_id = f"session_{int(datetime.now().timestamp())}"
             url = f"{base_url}/{subdistrict}_19-{area_row['Code']}?q={session_id}"
 
-            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+            _raise_for_server_error(
+                page.goto(url, wait_until="domcontentloaded", timeout=30000),
+                area_row["Subdistrict"],
+            )
             _smart_sleep()
             try:
                 page.wait_for_selector("tr.cv-structured-list-item, .transactions-content", timeout=12000)
@@ -1089,24 +1236,124 @@ def scrape_transaction_data(
             return {"success": True, "data": area_data, "area": area_row["Subdistrict"]}
 
         except Exception as e:
-            logger.debug(f"Error scraping {area_row['Subdistrict']}: {e}")
-            return {"success": False, "data": [], "area": area_row["Subdistrict"], "error": str(e)}
+            logger.warning(
+                "Error scraping %s after %s records: %s",
+                area_row["Subdistrict"],
+                len(area_data),
+                e,
+            )
+            return {"success": False, "data": area_data, "area": area_row["Subdistrict"], "error": str(e)}
+
+    def scrape_area_transactions_via_api(api_client: "_SourceAResApiClient", area_row):
+        """Direct-POST equivalent of scrape_area_transactions for the incremental
+        lookback window. No offset-ceiling segmentation is needed here — a
+        lookback of days-to-weeks never approaches the ~10k-row ceiling that
+        the full-history puller (scripts/centaline_res_api_pull.py) has to
+        work around."""
+        area_data = []
+        area_code = area_row["Code"]
+        subdistrict = area_row["Subdistrict"]
+        max_pages = min(
+            params.get("source_a_res", {}).get(
+                "max_pages_per_area", params["global"].get("max_pages_per_area", 50)
+            ),
+            int(params.get("source_a_res", {}).get("transaction_incremental_max_pages", 20)),
+        )
+        try:
+            offset = 0
+            page_num = 1
+            consecutive_stale_pages = 0
+            while page_num <= max_pages:
+                raw_page = api_client.fetch_page(area_code, offset)
+                if not raw_page:
+                    break
+                parsed_page = _parse_nuxt_transaction_list(raw_page)
+                accepted_records, page_is_old = _partition_transaction_page(parsed_page, control_date)
+                for record in accepted_records:
+                    record['area_code'] = area_code
+                    record['scrape_timestamp'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    area_data.append(record)
+                consecutive_stale_pages = consecutive_stale_pages + 1 if page_is_old else 0
+                if stop_on_stale_pages and consecutive_stale_pages >= required_stale_pages:
+                    break
+                if len(raw_page) < api_client.PAGE_SIZE:
+                    break
+                offset += api_client.PAGE_SIZE
+                page_num += 1
+            return {"success": True, "data": area_data, "area": subdistrict}
+        except Exception as e:
+            logger.warning("Error scraping %s via API after %s records: %s", subdistrict, len(area_data), e)
+            return {"success": False, "data": area_data, "area": subdistrict, "error": str(e)}
 
     all_data = []
     failed_areas = []
 
-    if max_concurrent > 1:
-        logger.info(f"Scraping transaction areas with {max_concurrent} concurrent workers (Playwright async API)")
-        raw_results = asyncio.run(_run_async_scrape())
+    def _collect(raw_results, rows):
+        """Accumulate one pass's data and return the areas still needing a retry."""
+        still_failed = []
         for i, res in enumerate(raw_results):
-            if isinstance(res, Exception):
-                row = area_rows[i][1]
-                logger.warning(f"Unexpected exception for {row.get('Subdistrict', 'unknown')}: {res}")
-                failed_areas.append({"success": False, "data": [], "area": row.get("Subdistrict", "unknown"), "error": str(res)})
+            row = rows[i][1]
+            area = row.get("Subdistrict", "unknown")
+            if isinstance(res, Exception) or res is None:
+                logger.warning(f"Unexpected exception for {area}: {res}")
+                still_failed.append({"success": False, "data": [], "area": area, "error": str(res)})
             elif res.get("success"):
                 all_data.extend(res["data"])
             else:
-                failed_areas.append(res)
+                # Partial output counts; the retry pass picks up the remainder and
+                # the downstream dedup drops whatever both passes saw.
+                all_data.extend(res.get("data") or [])
+                still_failed.append(res)
+        return still_failed
+
+    use_api_transport = params.get("source_a_res", {}).get("use_api_transport", True)
+    if use_api_transport and not (full_rerun or transaction_full_rerun):
+        logger.info("Scraping transaction areas via direct API (incremental)")
+        api_client = _SourceAResApiClient(
+            user_agent=user_agent, delay=params["global"].get("min_delay", 0.3)
+        )
+        with tqdm(total=len(area_rows), desc="Scraping areas (API)") as pbar:
+            for _, row in area_rows:
+                try:
+                    result = scrape_area_transactions_via_api(api_client, row)
+                except Exception as exc:
+                    logger.warning(f"Unexpected exception for {row.get('Subdistrict', 'unknown')}: {exc}")
+                    result = {"success": False, "data": [], "area": row.get("Subdistrict", "unknown"), "error": str(exc)}
+                all_data.extend(result.get("data") or [])
+                if result["success"]:
+                    pbar.set_postfix({"area": result["area"][:15], "total": len(all_data)})
+                else:
+                    failed_areas.append(result)
+                pbar.update(1)
+    elif max_concurrent > 1:
+        logger.info(f"Scraping transaction areas with {max_concurrent} concurrent workers (Playwright async API)")
+        failed_areas = _collect(asyncio.run(_run_async_scrape()), area_rows)
+        # A timeout here is usually transient, but an area missed on this pass is
+        # missed for good: the lookback window moves on and never revisits it.
+        if failed_areas:
+            server_errors = sum(
+                1
+                for result in failed_areas
+                if "HTTP 5" in str(result.get("error", ""))
+            )
+            if server_errors > len(area_rows) * _OUTAGE_FAILURE_SHARE:
+                logger.error(
+                    "⛔ %s of %s areas returned a server error — the source looks "
+                    "down. Skipping the retry pass and keeping what was collected.",
+                    server_errors,
+                    len(area_rows),
+                )
+            else:
+                retry_names = {result.get("area") for result in failed_areas}
+                retry_rows = [
+                    pair
+                    for pair in area_rows
+                    if pair[1].get("Subdistrict") in retry_names
+                ]
+                logger.warning(f"🔁 Retrying {len(retry_rows)} failed areas")
+                failed_areas = _collect(
+                    asyncio.run(_run_async_scrape(retry_rows)), retry_rows
+                )
     else:
         logger.info("Scraping transaction areas sequentially")
         with sync_playwright() as playwright:
@@ -1122,8 +1369,8 @@ def scrape_transaction_data(
                         except Exception as exc:
                             logger.warning(f"Unexpected exception for {row.get('Subdistrict', 'unknown')}: {exc}")
                             result = {"success": False, "data": [], "area": row.get("Subdistrict", "unknown"), "error": str(exc)}
+                        all_data.extend(result.get("data") or [])
                         if result["success"]:
-                            all_data.extend(result["data"])
                             pbar.set_postfix({"area": result["area"][:15], "total": len(all_data)})
                         else:
                             failed_areas.append(result)
@@ -1210,6 +1457,12 @@ def scrape_transaction_data(
             "records_processed": len(combined_df),
             "areas_processed": len(area_df),
             "failed_areas": len(failed_areas),
+            "failed_area_codes": sorted(
+                str(row["Code"])
+                for _, row in area_rows
+                if row.get("Subdistrict")
+                in {result.get("area") for result in failed_areas}
+            ),
             "execution_time": datetime.now().isoformat(),
         },
         live_state=live_state,
@@ -1332,965 +1585,23 @@ def process_transaction_data(
     return processed_df
 
 
-def scrape_estate_listings(area_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
-    """Estate scraper with per-district change detection. Uses Playwright (Chromium/Edge)."""
-    from tqdm.auto import tqdm
-    from datetime import datetime
-    import json
-
-    centa_params = params.get("source_a_res", {})
-    listings_file = centa_params.get(
-        "estate_listings_file", "data/01_raw/centaline_estate_lv_1.parquet"
+def load_existing_enriched_snapshot(params: Dict[str, Any]) -> pd.DataFrame:
+    """Load the current enriched snapshot as an explicit Kedro node."""
+    path = params.get("source_a_res", {}).get(
+        "base_file",
+        "data/02_intermediate/centaline_res_base.parquet",
     )
-    meta_file = listings_file.replace(".parquet", "_meta.json")
-    full_rerun = centa_params.get("full_rerun", False)
-    estate_full_rerun = centa_params.get("estate_full_rerun", False)
-    required_columns = [
-        "Name", "Address", "Blocks", "Units", "UnitRate",
-        "MoM", "ForSale", "ForRent", "Link", "EstateCode", "Region",
-        "District", "Subdistrict", "Code", "LastScraped",
-    ]
-
-    existing_listings = pd.DataFrame(columns=required_columns)
-    district_meta: dict = {}
-    if not (full_rerun or estate_full_rerun):
-        try:
-            if os.path.exists(listings_file):
-                existing_listings = pd.read_parquet(listings_file)
-                existing_listings["Subdistrict"] = existing_listings["Subdistrict"].str.strip()
-                existing_listings["Code"] = existing_listings["Code"].astype(str).str.strip()
-                logger.info(f"Loaded {len(existing_listings)} existing estate listings")
-        except Exception as e:
-            logger.error(f"Failed to load existing listings: {e}")
-        try:
-            if os.path.exists(meta_file):
-                with open(meta_file, "r") as f:
-                    district_meta = json.load(f)
-        except Exception as e:
-            logger.warning(f"Could not load district metadata: {e}")
-    else:
-        logger.info("Full rerun mode: rescraping all districts (no skip)")
-
-    logger.info(f"🏘️  Will check {len(area_df)} districts for updates...")
-
-    new_or_updated_estates = []
-    skipped_districts = []
-    zero_count_districts = []
-    district_changes = []
-
-    # ── Per-district loop (Playwright) ────────────────────────────────────
-    def _run_estate_listings():
-        with sync_playwright() as p:
-            browser = launch_browser(p, headless=params["global"].get("headless", True))
-            page = browser.new_page()
-
-            page.route("**/*", block_slow_resources)
-            try:
-                return _scrape_estate_listings_impl(page, area_df, params, listings_file, meta_file, required_columns, district_meta, existing_listings)
-            finally:
-                try:
-                    browser.close()
-                except Exception:
-                    pass
-
-    try:
-        return _run_estate_listings()
-    except Exception as e:
-        logger.error(f"Estate listings failed: {e}")
-        return existing_listings[existing_listings["Name"].notnull()] if not existing_listings.empty else pd.DataFrame()
-
-
-def _scrape_estate_listings_impl(page, area_df, params, listings_file, meta_file, required_columns, district_meta, existing_listings):
-    """Estate listings: Playwright probes page 1, then full-scrapes only changed districts."""
-    from tqdm.auto import tqdm
-
-    new_or_updated_estates = []
-    skipped_districts = []
-    zero_count_districts = []
-    district_changes = []
-    probe_timeout_ms = int(params["global"].get("page_load_timeout", 35) * 1000)
-
-    def _probe_page1_with_playwright(url):
-        """Load page 1 once and return HTML-derived + NUXT-derived counts."""
-        try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
-            try:
-                page.wait_for_selector(
-                    "a.property-text.flex.def-property-box, .transactions-content, body",
-                    timeout=probe_timeout_ms,
-                )
-            except Exception:
-                pass
-
-            html = page.content()
-            soup = BeautifulSoup(html, "html.parser")
-            estate_items_page1 = soup.select("a.property-text.flex.def-property-box")
-            nuxt_estates = _extract_nuxt_estate_list(page)
-            page1_count = max(len(estate_items_page1), len(nuxt_estates))
-
-            website_total = None
-            total_selectors = [
-                ".result-count",
-                ".total-count",
-                "[data-total]",
-                ".search-result-count",
-                ".count-label",
-                "[class*='count']",
-                "[class*='total']",
-            ]
-            for sel in total_selectors:
-                el = soup.select_one(sel)
-                if el:
-                    digits = re.sub(r"[^\d]", "", el.get_text())
-                    if digits:
-                        website_total = int(digits)
-                        break
-
-            if website_total is None:
-                try:
-                    website_total = page.evaluate(
-                        """
-                        () => {
-                          const state = window.__NUXT__?.state || {};
-                          const buckets = [state.estate, state.property, state.search];
-                          for (const bucket of buckets) {
-                            if (!bucket || typeof bucket !== "object") continue;
-                            for (const value of Object.values(bucket)) {
-                              if (!value || typeof value !== "object") continue;
-                              const total = value.total ?? value.totalCount ?? value.pagination?.total ?? value.pageInfo?.total;
-                              if (typeof total === "number") return total;
-                            }
-                          }
-                          return null;
-                        }
-                        """
-                    )
-                    if website_total is not None:
-                        website_total = int(website_total)
-                except Exception:
-                    website_total = None
-
-            if website_total is None:
-                for el in soup.find_all(["span", "div", "p", "h2"]):
-                    txt = el.get_text(strip=True)
-                    match = re.search(r"(\d+)\s*Estate", txt, re.I)
-                    if match:
-                        website_total = int(match.group(1))
-                        break
-                    if re.match(r"^\d+$", txt):
-                        n = int(txt)
-                        if n >= page1_count:
-                            website_total = n
-                            break
-
-            return {
-                "soup": soup,
-                "estate_items_page1": estate_items_page1,
-                "nuxt_page1_count": len(nuxt_estates),
-                "page1_count": page1_count,
-                "website_total": website_total,
-            }
-        except Exception as e:
-            logger.debug(f"Playwright page-1 probe failed for {url}: {e}")
-            return {
-                "soup": None,
-                "estate_items_page1": [],
-                "nuxt_page1_count": 0,
-                "page1_count": 0,
-                "website_total": None,
-            }
-
-    try:
-        logger.info("Phase 1: Checking district page 1 with Playwright probes")
-        with tqdm(area_df.iterrows(), total=len(area_df), desc="Checking districts") as district_iter:
-            for _, row in district_iter:
-                subdistrict = str(row["Subdistrict"]).strip()
-                code = str(row["Code"]).strip()
-                try:
-                    subdistrict_clean = clean_subdistrict(subdistrict)
-                    session_id = generate_session_id()
-                    url = get_required_setting(
-                        params, "source_a_res", "site", "estate_list_url_template"
-                    ).format(
-                        subdistrict_slug=subdistrict_clean,
-                        code=code,
-                        session_id=session_id,
-                    )
-
-                    probe = _probe_page1_with_playwright(url)
-                    estate_items_page1 = probe["estate_items_page1"]
-                    page1_count = probe["page1_count"]
-                    website_total = probe["website_total"]
-
-                    stored = district_meta.get(code, {})
-                    stored_page1 = stored.get("page1_count")
-                    stored_total = stored.get("total")
-
-                    if page1_count == 0:
-                        zero_count_districts.append(code)
-                        logger.debug(
-                            "Page-1 probe returned 0 items for %s (%s) — forcing full scrape",
-                            subdistrict,
-                            code,
-                        )
-
-                    page1_unchanged = stored_page1 is not None and page1_count == stored_page1
-                    total_unchanged = (
-                        website_total is not None
-                        and stored_total is not None
-                        and website_total == stored_total
-                    )
-
-                    if page1_unchanged and total_unchanged:
-                        skipped_districts.append(code)
-                        logger.debug(f"Skipping unchanged {subdistrict} ({code})")
-                        district_iter.set_postfix({"district": subdistrict[:12], "skipped": len(skipped_districts)})
-                        continue
-
-                    reason = []
-                    if not page1_unchanged:
-                        reason.append(f"page1 {stored_page1}->{page1_count}")
-                    if not total_unchanged and website_total is not None:
-                        reason.append(f"total {stored_total}->{website_total}")
-                    if stored_total is None:
-                        reason.append("no previous data")
-
-                    district_changes.append({
-                        "district": subdistrict,
-                        "code": code,
-                        "row": row,
-                        "stored_total": stored_total,
-                        "website_total": website_total,
-                        "page1_count": page1_count,
-                        "estate_items_page1": estate_items_page1,
-                        "reason": ", ".join(reason),
-                    })
-                    district_iter.set_postfix({"district": subdistrict[:12], "skipped": len(skipped_districts), "to_scrape": len(district_changes)})
-                    continue
-
-                except Exception as e:
-                    logger.error(f"District check failed: {subdistrict} ({code}) - {e}")
-                    continue
-
-            if district_changes:
-                logger.info(f"Phase 2: Scraping {len(district_changes)} changed district(s) with Playwright")
-                current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                for ch in district_changes:
-                    subdistrict, code, row = ch["district"], ch["code"], ch["row"]
-                    estate_items_page1, page1_count = ch["estate_items_page1"], ch["page1_count"]
-                    try:
-                        subdistrict_clean = clean_subdistrict(subdistrict)
-                        url = get_required_setting(
-                            params, "source_a_res", "site", "estate_list_url_template"
-                        ).format(
-                            subdistrict_slug=subdistrict_clean,
-                            code=code,
-                            session_id=generate_session_id(),
-                        )
-                        page.goto(url, wait_until="domcontentloaded", timeout=60000)
-                        random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
-                        page.wait_for_selector("a.property-text.flex.def-property-box", timeout=15000)
-
-                        nuxt_estates = _extract_nuxt_estate_list(page)
-                        nuxt_by_code = {}
-                        if nuxt_estates:
-                            for e in nuxt_estates:
-                                estate_key = (e.get("estateCode") or e.get("id") or e.get("typeCode") or "")
-                                if isinstance(estate_key, str) and estate_key:
-                                    nuxt_by_code[estate_key] = e
-                            logger.debug(f"   __NUXT__ estate list: {len(nuxt_estates)} items")
-
-                        district_estates = []
-                        current_page = 1
-                        if estate_items_page1:
-                            for item in estate_items_page1:
-                                try:
-                                    rec = process_estate_item(item, row)
-                                    if rec.get("EstateCode") and rec["EstateCode"] in nuxt_by_code:
-                                        for k, v in nuxt_by_code[rec["EstateCode"]].items():
-                                            if k not in rec and v is not None and v != "" and not isinstance(v, (dict, list)):
-                                                rec[f"nuxt_{k}"] = v
-                                    district_estates.append(rec)
-                                except Exception as e:
-                                    logger.error(f"Error processing estate on page 1: {e}")
-                        else:
-                            soup_p1 = BeautifulSoup(page.content(), "html.parser")
-                            for item in soup_p1.select("a.property-text.flex.def-property-box"):
-                                try:
-                                    rec = process_estate_item(item, row)
-                                    if rec.get("EstateCode") and rec["EstateCode"] in nuxt_by_code:
-                                        for k, v in nuxt_by_code[rec["EstateCode"]].items():
-                                            if k not in rec and v is not None and v != "" and not isinstance(v, (dict, list)):
-                                                rec[f"nuxt_{k}"] = v
-                                    district_estates.append(rec)
-                                except Exception as e:
-                                    logger.error(f"Error processing estate on page 1: {e}")
-
-                        while True:
-                            try:
-                                next_loc = page.locator("button.btn-next:not([disabled])")
-                                if next_loc.count() == 0:
-                                    break
-                                next_loc.first.click()
-                                random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
-                                current_page += 1
-                                page.wait_for_selector("a.property-text.flex.def-property-box", timeout=20000)
-                                for e in (_extract_nuxt_estate_list(page) or []):
-                                    estate_key = (e.get("estateCode") or e.get("id") or e.get("typeCode") or "")
-                                    if isinstance(estate_key, str) and estate_key:
-                                        nuxt_by_code[estate_key] = e
-                                soup_page = BeautifulSoup(page.content(), "html.parser")
-                                for item in soup_page.select("a.property-text.flex.def-property-box"):
-                                    try:
-                                        rec = process_estate_item(item, row)
-                                        if rec.get("EstateCode") and rec["EstateCode"] in nuxt_by_code:
-                                            for k, v in nuxt_by_code[rec["EstateCode"]].items():
-                                                if k not in rec and v is not None and v != "" and not isinstance(v, (dict, list)):
-                                                    rec[f"nuxt_{k}"] = v
-                                        district_estates.append(rec)
-                                    except Exception as e:
-                                        logger.error(f"Error processing estate on page {current_page}: {e}")
-                            except PlaywrightTimeout:
-                                logger.warning(f"Timeout in {subdistrict} page {current_page}")
-                                break
-                            except Exception as e:
-                                logger.error(f"Error scraping {subdistrict} page {current_page}: {e}")
-                                break
-
-                        new_or_updated_estates.extend(district_estates)
-                        scraped_total = len(district_estates)
-                        district_meta[code] = {"page1_count": page1_count, "total": scraped_total, "last_scraped": current_time, "subdistrict": subdistrict}
-                        website_total_ch = ch.get("website_total")
-                        if website_total_ch is not None and scraped_total != website_total_ch:
-                            logger.warning(
-                                f"⚠️ Estate count mismatch {subdistrict} ({code}): "
-                                f"scraped={scraped_total} website_total={website_total_ch}"
-                            )
-                        logger.info(f"{subdistrict} ({code}): {scraped_total} estates from {current_page} page(s)")
-                    except Exception as e:
-                        logger.error(f"District scrape failed: {subdistrict} ({code}) - {e}")
-
-        # ── Consolidate data ─────────────────────────────────────────────
-        if new_or_updated_estates:
-            new_df = pd.DataFrame(new_or_updated_estates)
-            updated_districts = set(
-                (e['Subdistrict'], e['Code']) for e in new_or_updated_estates
-            )
-            existing_to_keep = existing_listings[
-                ~existing_listings[['Subdistrict', 'Code']]
-                .apply(tuple, axis=1).isin(updated_districts)
-            ]
-            logger.info(f"Keeping {len(existing_to_keep)} estates from {len(area_df) - len(district_changes)} unchanged districts")
-            final_df = pd.concat([existing_to_keep, new_df], ignore_index=True)
-        else:
-            logger.info("No changed districts — preserving all existing data")
-            final_df = existing_listings.copy()
-
-        # ── Final report ─────────────────────────────────────────────────
-        logger.info(f"\n{'='*60}")
-        logger.info(f"ESTATE SCRAPING COMPLETION REPORT")
-        logger.info(f"{'='*60}")
-        logger.info(f"  Districts checked:  {len(area_df)}")
-        logger.info(f"  Skipped (no change): {len(skipped_districts)}")
-        logger.info(f"  Re-scraped:         {len(district_changes)}")
-        logger.info(f"  Phase-1 zero-count probes: {len(zero_count_districts)}")
-        logger.info(f"  Estates from changed districts: {len(new_or_updated_estates)}")
-
-        if district_changes:
-            logger.info("\n  Changed districts:")
-            for ch in district_changes:
-                prev = ch['stored_total'] if ch['stored_total'] is not None else 'new'
-                web  = ch['website_total'] if ch['website_total'] is not None else '?'
-                logger.info(
-                    f"    {ch['district']} ({ch['code']}): "
-                    f"DB={prev} → Web≈{web}, scraped={district_meta.get(ch['code'], {}).get('total', '?')} "
-                    f"[{ch['reason']}]"
-                )
-        
-        # ── Parquet compatibility ───────────────────────────────────────
-        final_df = drop_non_parquet_serializable_columns(final_df)
-
-        # ── Safety deduplication ─────────────────────────────────────────
-        before_dedup = len(final_df)
-        final_df = final_df.drop_duplicates(
-            subset=['Name', 'Address', 'Region', 'District', 'Subdistrict', 'Code'],
-            keep='last'
-        )
-        if before_dedup != len(final_df):
-            logger.info(f"Removed {before_dedup - len(final_df)} duplicate estates")
-
-        # Drop rows where Name is None or empty
-        final_df = final_df[final_df['Name'].notnull() & (final_df['Name'].str.strip() != '')]
-
-        # ── Save parquet + metadata ──────────────────────────────────────
-        final_df.to_parquet(listings_file, index=False)
-        logger.info(f"📦 Saved {len(final_df)} total estates to {listings_file}")
-
-        try:
-            with open(meta_file, 'w') as f:
-                json.dump(district_meta, f, indent=2)
-            logger.info(f"📝 Saved district metadata to {meta_file}")
-        except Exception as e:
-            logger.warning(f"Could not save district metadata: {e}")
-
-        live_state = {
-            "source": "estate_page1_probe",
-            "probe_failed": False,
-            "districts_checked": len(area_df),
-            "districts_skipped": len(skipped_districts),
-            "districts_changed": len(district_changes),
-            "zero_probe_districts": zero_count_districts,
-            "changed_codes": [ch["code"] for ch in district_changes],
-        }
-        record_node_execution(
-            node_name="estate_listing_scraper",
-            node_type="estate",
-            metadata={
-                "estates_total": len(final_df),
-                "districts_checked": len(area_df),
-                "districts_scraped": len(district_changes),
-                "districts_skipped": len(skipped_districts),
-            },
-            live_state=live_state,
-            dataset_state={
-                "path": listings_file,
-                "row_count": len(final_df),
-                "meta_path": meta_file,
-            },
-        )
-
-        return final_df
-
-    except Exception as e:
-        logger.error(f"Data consolidation failed: {e}")
-        return existing_listings[existing_listings["Name"].notnull()]
-
-
-def log_district_completion(subdistrict, code, current_count, final_df):
-    """Deprecated — kept for backward compatibility only."""
-    actual_scraped_count = len(final_df[
-        (final_df['Subdistrict'] == subdistrict) &
-        (final_df['Code'] == code)
-    ])
-    logger.info(f"  {subdistrict} ({code}): scraped={actual_scraped_count} website_page1={current_count}")
-
-
-def _extract_nuxt_estate_list(page: Page) -> list:
-    """Try to extract estate list from __NUXT__. Returns [] if not found."""
-    try:
-        nuxt = page.evaluate("() => window.__NUXT__")
-        if not nuxt:
-            return []
-        state = nuxt.get("state", {})
-        for path in ("estate", "property", "findproperty"):
-            obj = state.get(path) or {}
-            for key in ("estateList", "propertyList", "list"):
-                val = obj.get(key)
-                if isinstance(val, list):
-                    return val
-                if isinstance(val, dict):
-                    data = val.get("data")
-                    if isinstance(data, list):
-                        return data
-        return []
-    except Exception:
-        return []
-
-
-def process_estate_item(item, district_row) -> dict:
-    """Extract structured data from individual estate elements."""
-    link = item.get("href", "")
-    estate_code = link.rstrip("/").split("/")[-1] if link else ""
-    return {
-        "Name": item.select_one("div.main-text").get_text(strip=True),
-        "Address": item.select_one("div.address.f-middle").get_text(strip=True),
-        "Blocks": safe_extract_bs4(item, "div:-soup-contains('No. of Block(s)') + div"),
-        "Units": safe_extract_bs4(item, "div:-soup-contains('No. of Units') + div"),
-        "UnitRate": safe_extract_bs4(item, "div:-soup-contains('Unit Rate of Saleable Area') + div"),
-        "MoM": safe_extract_bs4(item, "div:-soup-contains('MoM') + div"),
-        "ForSale": safe_extract_bs4(item, "div:-soup-contains('For Sale') + div"),
-        "ForRent": safe_extract_bs4(item, "div:-soup-contains('For Rent') + div"),
-        "Link": link,
-        "EstateCode": estate_code,
-        "Region": district_row["Region"],
-        "District": district_row["District"],
-        "Subdistrict": district_row["Subdistrict"],
-        "Code": district_row["Code"],
-        "LastScraped": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    }
-
-
-def _extract_element_text_playwright(page: Page, xpath: str) -> Optional[str]:
-    """Extract text from element by XPath (Playwright)."""
-    try:
-        el = page.locator(f"xpath={xpath}").first
-        el.wait_for(state="attached", timeout=10000)
-        return (el.text_content() or "").strip()
-    except Exception:
-        return None
-
-# nodes.py (Kedro compatible version with multi-threading and gap-filling)
-def scrape_estate_details(listings_df: pd.DataFrame, params: Dict[str, Any]) -> pd.DataFrame:
-    """
-    Scrape detailed estate information with multi-threading, incremental updates, and gap-filling.
-    - Uses multiple threads for parallel scraping
-    - Re-scrapes rows with missing critical data
-    - Resilient to failures with automatic retry on next run
-    """
-    logger = logging.getLogger(__name__)
-    
-    details_file = params.get("source_a_res", {}).get(
-        "estate_details_file", "data/01_raw/centaline_estate_lv_2.parquet"
-    )
-    full_rerun = params.get("source_a_res", {}).get("full_rerun", False)
-    logger.info(f"Details File: {details_file}")
-
-    existing_details = pd.DataFrame()
-    if not full_rerun and os.path.exists(details_file):
-        existing_details = pd.read_parquet(details_file)
-        logger.info(f"Loaded {len(existing_details)} existing estate details")
-    elif full_rerun:
-        logger.info("Full rerun mode: scraping all estates (no skip)")
-
-    # ── Determine completed estates using Link as the reliable key ───────
-    #
-    # Why Link and not Name?
-    #   • Name can differ between listings and details (Chinese chars, typos)
-    #   • Link is the estate's canonical URL — always consistent
-    #   • estate_code is just the last URL segment, so if it's populated the
-    #     page was successfully loaded (even if other optional fields are null)
-    #
-    # An estate counts as "done" when its Link appears in existing_details
-    # AND the scraped page produced at least an estate_code (URL parse,
-    # never fails) AND a scraped_estate_name (visible page title).
-    # If either column is missing from old data we fall back to Link-only.
-    done_links: set = set()
-    if not existing_details.empty and 'Link' in existing_details.columns:
-        ec_col  = 'estate_code'        if 'estate_code'        in existing_details.columns else None
-        sn_col  = 'scraped_estate_name' if 'scraped_estate_name' in existing_details.columns else None
-
-        if ec_col and sn_col:
-            # Proper completeness: both populated
-            done_mask = (
-                existing_details[ec_col].notna()  &
-                (existing_details[ec_col].astype(str).str.strip() != '') &
-                existing_details[sn_col].notna() &
-                (existing_details[sn_col].astype(str).str.strip() != '')
-            )
-            incomplete_count = (~done_mask).sum()
-            done_links = set(existing_details.loc[done_mask, 'Link'])
-            logger.info(f"✓ {len(done_links):,} estates complete, {incomplete_count:,} incomplete/missing")
-        elif ec_col or sn_col:
-            # Partial schema — use whichever column we have
-            col = ec_col or sn_col
-            done_mask = existing_details[col].notna() & (existing_details[col].astype(str).str.strip() != '')
-            done_links = set(existing_details.loc[done_mask, 'Link'])
-            logger.info(f"✓ {len(done_links):,} estates complete (schema: {col} only)")
-        else:
-            # Very old schema with no recognisable indicator — treat all as done
-            done_links = set(existing_details['Link'])
-            logger.info(f"ℹ️  Old schema, no scraped_estate_name/estate_code columns — "
-                        f"treating all {len(done_links):,} existing records as complete")
-    else:
-        logger.info("📂 No existing details — starting fresh")
-
-    # ── Which listings still need scraping? ──────────────────────────────
-    new_mask      = ~listings_df['Link'].isin(done_links)
-    estates_to_scrape = listings_df[new_mask].copy()
-    already_done  = len(listings_df) - len(estates_to_scrape)
-
-    if estates_to_scrape.empty:
-        logger.info("✅ All estates already scraped — nothing to do")
-        return existing_details
-
-    logger.info(f"🎯 Estates: {len(listings_df):,} total | "
-                f"{already_done:,} already done | "
-                f"{len(estates_to_scrape):,} to scrape now")
-
-    # ── Scraping setup ────────────────────────────────────────────────────
-    # NOTE: Playwright's sync API uses greenlets bound to a single thread and cannot
-    # be used from ThreadPoolExecutor workers. We run sequentially in the main thread.
-    from tqdm.auto import tqdm
-
-    headless = params["global"].get("headless", True)
-
-    def scrape_single_estate(page, row):
-        """Scrape a single estate. Must run in the same thread as sync_playwright."""
-        try:
-            page.goto(row["Link"], wait_until="domcontentloaded", timeout=30000)
-            random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
-
-            estate_code = row['Link'].rstrip('/').split('/')[-1] if row.get('Link') else ''
-
-            title_el = page.locator(".estate-detail-banner-title").first
-            title_el.wait_for(state="visible", timeout=10000)
-            scraped_name = (title_el.text_content() or "").strip()
-            detail_data = {
-                "Name": row["Name"],
-                "scraped_estate_name": scraped_name,
-                "occupation_permit": _extract_element_text_playwright(
-                    page, "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
-                ),
-                "scraped_blocks": _extract_element_text_playwright(
-                    page, "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
-                ),
-                "chinese_name": None,
-                "school_net_info": None,
-                "estate_detailed_address": None,
-                "developer": None,
-                "estate_code": estate_code,
-                "Link": row["Link"],
-                "Region": row["Region"],
-                "District": row["District"],
-            }
-
-            try:
-                cn_el = page.locator(".estate-detail-banner-title-cn, .chinese-name, h1.cn, .title-cn").first.text_content()
-                detail_data["chinese_name"] = (cn_el or "").strip()
-            except Exception:
-                try:
-                    banner = page.locator(".estate-detail-banner").first.text_content()
-                    chinese_matches = re.findall(r"[\u4e00-\u9fff]+", banner or "")
-                    if chinese_matches:
-                        detail_data["chinese_name"] = "".join(chinese_matches[:10])
-                except Exception:
-                    pass
-
-            try:
-                items = page.locator(".item").all()
-                for div in items:
-                    label_el = div.locator(".label-item-left").first.text_content()
-                    if label_el and "School Net" in label_el:
-                        links = div.locator("a").all()
-                        if len(links) >= 2:
-                            detail_data["school_net_info"] = f"{(links[0].text_content() or '').strip()} | {(links[1].text_content() or '').strip()}"
-                        break
-            except Exception:
-                pass
-
-            try:
-                addr_el = page.locator(".estate-detail-banner-position").first.text_content()
-                detail_data["estate_detailed_address"] = (addr_el or "").strip()
-            except Exception:
-                pass
-
-            try:
-                for item in page.locator(".item").all():
-                    label_el = item.locator(".label-item-left").first.text_content()
-                    if label_el and "Developer" in label_el:
-                        detail_data["developer"] = (item.locator(".label-item-right").first.text_content() or "").strip()
-                        break
-            except Exception:
-                pass
-
-            return {"success": True, "data": detail_data}
-
-        except Exception as e:
-            logger.debug(f"Failed to scrape {row.get('Name', 'Unknown')}: {e}")
-            return {"success": False, "name": row.get("Name", "Unknown"), "link": row.get("Link", ""), "error": str(e)}
-
-    new_details = []
-    failed_estates = []
-
-    logger.info("Scraping estates sequentially (Playwright sync API is single-threaded)")
-
-    with sync_playwright() as playwright:
-        browser = launch_browser(playwright, headless=headless)
-        context = browser.new_context(user_agent=params["global"].get("user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"))
-        page = context.new_page()
-        try:
-            estate_rows = list(estates_to_scrape.iterrows())
-            with tqdm(total=len(estate_rows), desc="Scraping estates") as pbar:
-                for _, row in estate_rows:
-                    try:
-                        result = scrape_single_estate(page, row)
-                    except Exception as exc:
-                        result = {"success": False, "name": row.get("Name", "?"), "link": row.get("Link", ""), "error": str(exc)}
-                    if result["success"]:
-                        new_details.append(result["data"])
-                    else:
-                        failed_estates.append(result)
-                    pbar.update(1)
-        finally:
-            try:
-                context.close()
-            except Exception:
-                pass
-            try:
-                browser.close()
-            except Exception:
-                pass
-
-    # Report results
-    logger.info(f"✅ Successfully scraped: {len(new_details)} estates")
-    if failed_estates:
-        logger.warning(f"⚠️  Failed to scrape: {len(failed_estates)} estates")
-        logger.info("   These will be retried on next run (gap-filling mechanism)")
-    
-    # ── Merge and save results ───────────────────────────────────────────
-    # Replace only the rows whose Link was just scraped — keep everything else
-    try:
-        if new_details:
-            new_df = pd.DataFrame(new_details)
-            scraped_links = set(new_df['Link']) if 'Link' in new_df.columns else set()
-            # Drop stale rows for re-scraped estates, then append freshly scraped ones
-            if not existing_details.empty and 'Link' in existing_details.columns and scraped_links:
-                existing_to_keep = existing_details[~existing_details['Link'].isin(scraped_links)]
-            else:
-                existing_to_keep = existing_details
-            updated_df = pd.concat([existing_to_keep, new_df], ignore_index=True)
-            updated_df.to_parquet(details_file, index=False)
-            logger.info(f"💾 Saved {len(updated_df):,} estate details ({len(new_df):,} new/updated)")
-            
-            # Record node execution
-            record_node_execution(
-                node_name="estate_detail_scraper",
-                node_type="estate",
-                metadata={
-                    "estates_processed": len(updated_df),
-                    "new_details_scraped": len(new_df),
-                    "execution_time": datetime.now().isoformat()
-                }
-            )
-            
-            return updated_df[updated_df['Name'].notnull()]
-        
-        # Record node execution (no new data)
-        record_node_execution(
-            node_name="estate_detail_scraper",
-            node_type="estate",
-            metadata={
-                "estates_processed": len(existing_details),
-                "new_details_scraped": 0,
-                "execution_time": datetime.now().isoformat()
-            }
-        )
-        
-        return existing_details
-    
-    except Exception as e:
-        logger.error(f"Fatal error in scrape_estate_details: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        # Attempt to save any new_details that were scraped before the error
-        if new_details:
-            try:
-                rescue_df = pd.DataFrame(new_details)
-                rescued = pd.concat([existing_details, rescue_df], ignore_index=True)
-                rescued.to_parquet(details_file, index=False)
-                logger.info(f"Rescued {len(new_details)} estate details scraped before error")
-                return rescued
-            except Exception:
-                pass
-        return existing_details if not existing_details.empty else pd.DataFrame()
-
-
-def update_control_date(params: Dict[str, Any]) -> None:
-    try:
-        params_path = "conf/base/parameters.yml"
-        with open(params_path, 'r') as file:
-            parameters = yaml.safe_load(file)
-        
-        parameters["source_a_estates"] = datetime.now().strftime("%Y-%m-%d")
-        
-        with open(params_path, 'w') as file:
-            yaml.dump(parameters, file, default_flow_style=False)
-        
-        logger.info("Successfully updated control date for estate details")
-    except Exception as e:
-        logger.error(f"Failed to update control date: {str(e)}")
-
-
-# Updated enrich_estate_data function
-'''def enrich_estate_data(
-    listings_df: pd.DataFrame,
-    transactions_df: pd.DataFrame
-) -> pd.DataFrame:
-    """Safe data enrichment with missing column handling"""
-    # Ensure required columns exist
-    required_cols = ['Name', 'Address', 'Blocks', 'Units', 'Developer']
-    for col in required_cols:
-        if col not in listings_df.columns:
-            listings_df[col] = None
-    
-    # Prepare listings data
-    listings_clean = (
-        listings_df
-        .rename(columns={'Name': 'Estate_Building'})
-        .drop_duplicates('Estate_Building')
-        [['Estate_Building', 'Address', 'Blocks', 'Units', 'Developer']]
-    )
-    
-    # Merge with transaction data
-    return pd.merge(
-        transactions_df,
-        listings_clean,
-        left_on='Building',
-        right_on='Estate_Building',
-        how='left',
-        suffixes=('', '_estate')
-    )'''
-
-def create_same_name_list(estate_details_df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Create a list of estates with duplicate names based on Name + Region + District + Subdistrict.
-    Returns DataFrame with duplicate estates and their codes.
-    """
-    logger.info("🔍 Creating same_name list for duplicate estates...")
-    
-    if estate_details_df.empty:
+    if not os.path.exists(path):
         return pd.DataFrame()
-    
-    # Group by Name, Region, District, Subdistrict (3 layers of region)
-    grouped = estate_details_df.groupby(['Scraped Estate Name', 'Region', 'District', 'Subdistrict']).size()
-    
-    # Find groups with more than one estate
-    duplicates = grouped[grouped > 1]
-    
-    if len(duplicates) == 0:
-        logger.info("✅ No duplicate estate names found")
-        return pd.DataFrame()
-    
-    # Get full details of duplicate estates
-    duplicate_keys = duplicates.index.tolist()
-    same_name_list = []
-    
-    for name, region, district, subdistrict in duplicate_keys:
-        mask = (
-            (estate_details_df['Scraped Estate Name'] == name) &
-            (estate_details_df['Region'] == region) &
-            (estate_details_df['District'] == district) &
-            (estate_details_df['Subdistrict'] == subdistrict)
-        )
-        duplicate_estates = estate_details_df[mask]
-        same_name_list.append(duplicate_estates)
-    
-    same_name_df = pd.concat(same_name_list, ignore_index=True) if same_name_list else pd.DataFrame()
-    
-    logger.info(f"📋 Found {len(duplicates)} groups with duplicate names, totaling {len(same_name_df)} estates")
-    logger.info(f"   Duplicate names: {duplicates.head(10).to_dict()}")
-    
-    return same_name_df
-
-
-def match_transaction_to_duplicate_estates(transaction_link: str, estate_codes: list, page: Page) -> str:
-    """
-    Visit transaction detail page and find which estate code appears in the HTML.
-    Returns the matching estate code or empty string if none found. Uses Playwright.
-    """
-    if not transaction_link or not estate_codes:
-        return ""
-
-    try:
-        page.goto(transaction_link, wait_until="domcontentloaded", timeout=15000)
-        time.sleep(2)
-        page_html = (page.content() or "").lower()
-        
-        # Check which estate code appears in the HTML
-        for code in estate_codes:
-            if code.lower() in page_html:
-                return code
-        
-        return ''
-    except Exception as e:
-        logger.debug(f"Error checking transaction HTML: {str(e)}")
-        return ''
-
-
-def refine_duplicate_estate_matching(
-    transactions_df: pd.DataFrame,
-    estate_details_df: pd.DataFrame,
-    params: Dict[str, Any]
-) -> pd.DataFrame:
-    """
-    OPTIONAL NODE: Refine estate matching for duplicate estate names by checking transaction HTML.
-    This node checks the HTML of transaction detail pages to find which estate code appears,
-    allowing precise matching when multiple estates share the same name.
-    
-    Only processes transactions where:
-    - Estate name appears in multiple estates (same name, region, district, subdistrict)
-    - Transaction needs more precise estate matching
-    
-    Args:
-        transactions_df: Transaction data with estate_name column
-        estate_details_df: Estate details with estate_code column
-        params: Pipeline parameters
-        
-    Returns:
-        Updated transactions DataFrame with refined estate_code matches
-    """
-    logger.info("🔍 Starting optional duplicate estate matching refinement...")
-    
-    # Create same_name list
-    same_name_df = create_same_name_list(estate_details_df)
-    
-    if same_name_df.empty:
-        logger.info("✅ No duplicate estates found - skipping refinement")
-        return transactions_df
-    
-    duplicate_estate_names = set(same_name_df['Scraped Estate Name'].unique())
-    
-    # Find transactions that need refinement
-    needs_refinement = transactions_df[
-        transactions_df['estate_name'].isin(duplicate_estate_names) &
-        transactions_df['estate_code'].isna()  # Only refine if estate_code is not set
-    ]
-    
-    if needs_refinement.empty:
-        logger.info("✅ No transactions need refinement")
-        return transactions_df
-    
-    logger.info(f"Refining {len(needs_refinement)} transactions with duplicate estate names...")
-
-    transactions_copy = transactions_df.copy()
-    headless = params.get("global", {}).get("headless", True)
-    from tqdm.auto import tqdm
-
-    with sync_playwright() as playwright:
-        browser = launch_browser(playwright, headless=headless)
-        page = browser.new_page()
-        try:
-            duplicate_estates_grouped = same_name_df.groupby("Scraped Estate Name")
-            refined_count = 0
-
-            for idx, row in tqdm(needs_refinement.iterrows(), total=len(needs_refinement), desc="Refining duplicates"):
-                estate_name = row["estate_name"]
-                if estate_name in duplicate_estates_grouped.groups:
-                    possible_estates = duplicate_estates_grouped.get_group(estate_name)
-                    estate_codes = possible_estates["estate_code"].dropna().tolist()
-                    if estate_codes:
-                        transaction_link = row.get("transaction_detail_link", "")
-                        if not transaction_link and "address" in row:
-                            logger.debug(f"No transaction detail link available for {estate_name}")
-                            continue
-                        matched_code = match_transaction_to_duplicate_estates(
-                            transaction_link, estate_codes, page
-                        )
-                        if matched_code:
-                            transactions_copy.at[idx, "estate_code"] = matched_code
-                            refined_count += 1
-                            logger.debug(f"Matched {estate_name} to estate code {matched_code}")
-
-            logger.info(f"Refined {refined_count} transactions with precise estate code matching")
-            return transactions_copy
-
-        except Exception as e:
-            logger.error(f"Error in duplicate estate refinement: {str(e)}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return transactions_df
-        finally:
-            try:
-                browser.close()
-            except Exception:
-                pass
+    return pd.read_parquet(path)
 
 
 def enrich_estate_data(
     estate_details_df: pd.DataFrame,
     transactions_df: pd.DataFrame,
-    params: Dict[str, Any] = None
+    params: Dict[str, Any] = None,
+    estate_listings: Optional[pd.DataFrame] = None,
+    existing_enriched: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """
     Enhanced estate data enrichment with 3-layer region matching and duplicate estate handling.
@@ -2303,19 +1614,17 @@ def enrich_estate_data(
     if params is None:
         params = {}
     
-    # Load existing data if available
-    output_file = "data/02_intermediate/centaline_res_base.parquet"
-    existing_enriched = pd.DataFrame()
-    
-    try:
-        if os.path.exists(output_file):
-            existing_enriched = pd.read_parquet(output_file)
-            logger.info(f"✅ Found existing enriched data: {len(existing_enriched)} records")
-        else:
-            logger.info("📂 No existing enriched data found - starting fresh")
-    except Exception as e:
-        logger.warning(f"⚠️ Warning: Error loading existing file: {str(e)}")
-        existing_enriched = pd.DataFrame()
+    estate_listings = (
+        estate_listings.copy()
+        if estate_listings is not None
+        else pd.DataFrame()
+    )
+    existing_enriched = (
+        existing_enriched.copy()
+        if existing_enriched is not None
+        else pd.DataFrame()
+    )
+    logger.info("Existing enriched records: %s", len(existing_enriched))
 
     # Simple estate name extraction (without complex matching)
     def extract_estate_name_from_address(address: str) -> str:
@@ -2393,7 +1702,8 @@ def enrich_estate_data(
         if 'date' in transactions_copy.columns:
             # Convert date to dd/mm/yyyy format
             try:
-                date_dt = pd.to_datetime(transactions_copy['date'], errors='coerce')
+                parsed_dates = transactions_copy['date'].map(parse_date_from_string)
+                date_dt = pd.to_datetime(parsed_dates, errors='coerce')
                 transactions_copy['date'] = date_dt.dt.strftime('%d/%m/%Y')
                 logger.info("✅ Fixed date format to dd/mm/yyyy")
             except Exception as e:
@@ -2446,20 +1756,19 @@ def enrich_estate_data(
                     centa_params = params.get("source_a_res", {})
                     logger.info(f"Enriching {len(transactions_copy)} transactions with estate details")
                     logger.info("   Matching: estate_code -> building_code -> name -> fuzzy")
-                    estate_listings = pd.DataFrame()
-                    try:
-                        estate_file = centa_params.get(
-                            "estate_listings_file", "data/01_raw/centaline_estate_lv_1.parquet"
+                    if (
+                        "EstateCode" not in estate_listings.columns
+                        and "Link" in estate_listings.columns
+                    ):
+                        estate_listings["EstateCode"] = estate_listings["Link"].apply(
+                            lambda value: value.rstrip("/").split("/")[-1]
+                            if pd.notna(value)
+                            else ""
                         )
-                        if os.path.exists(estate_file):
-                            estate_listings = pd.read_parquet(estate_file)
-                            if "EstateCode" not in estate_listings.columns and "Link" in estate_listings.columns:
-                                estate_listings["EstateCode"] = estate_listings["Link"].apply(
-                                    lambda x: x.rstrip("/").split("/")[-1] if pd.notna(x) else ""
-                                )
-                            logger.info(f"   Loaded {len(estate_listings)} estates for matching")
-                    except Exception as e:
-                        logger.warning(f"Could not load estate listings: {e}")
+                    logger.info(
+                        "   Received %s estates for matching",
+                        len(estate_listings),
+                    )
 
                     estate_code_map = {}
                     building_code_map = {}
@@ -2860,83 +2169,6 @@ def enrich_estate_data(
             
     except Exception as e:
         logger.warning(f"⚠️ Error fixing data types: {e}")
-    
-    # ============ LOAD AND MERGE OLD DATA ============
-    logger.info("📚 Loading and merging old Source A Residential data...")
-    try:
-        old_data_file = "./centaline_res.parquet"
-        if os.path.exists(old_data_file):
-            old_data = pd.read_parquet(old_data_file)
-            logger.info(f"📖 Loaded {len(old_data)} records from old data file")
-            
-            # Convert date format to match current data (dd/mm/yyyy)
-            if 'date' in old_data.columns:
-                try:
-                    # Convert from datetime to dd/mm/yyyy format
-                    old_data['date'] = pd.to_datetime(old_data['date'], errors='coerce').dt.strftime('%d/%m/%Y')
-                    logger.info("✅ Converted old data date format to dd/mm/yyyy")
-                except Exception as e:
-                    logger.warning(f"⚠️ Error converting old data date format: {e}")
-            
-            # Standardize column names to match current format
-            column_mapping = {
-                'Name': 'estate_name',
-                'Address': 'address',
-                'Blocks': 'building_name',
-                'Units': 'flat',
-                'Unit Rate': 'ft_price',
-                'Trans Record': 'transaction_type',
-                'Occupation Permit': 'occupation_permit',
-                'School Net Info': 'school_net_info',
-                'Developer': 'developer'
-            }
-            
-            # Rename columns that exist in old data
-            for old_col, new_col in column_mapping.items():
-                if old_col in old_data.columns:
-                    old_data = old_data.rename(columns={old_col: new_col})
-            
-            # Add missing columns to match current format
-            missing_columns = ['title_lg', 'property_name', 'Tower', 'Floor', 'Flat', 'Type', 'Carpark_Floor', 'Carpark_Number']
-            for col in missing_columns:
-                if col not in old_data.columns:
-                    old_data[col] = None
-            
-            # Filter old data to only include records older than 3 years from current date
-            current_date = pd.Timestamp.now()
-            cutoff_date = current_date - pd.DateOffset(years=3)
-            
-            # Convert old data dates to datetime for filtering
-            old_data_dates = pd.to_datetime(old_data['date'], format='%d/%m/%Y', errors='coerce')
-            old_data_filtered = old_data[old_data_dates < cutoff_date].copy()
-            
-            logger.info(f"📅 Filtered to {len(old_data_filtered)} records older than 3 years (before {cutoff_date.strftime('%d/%m/%Y')})")
-            
-            # Merge old data with current data
-            if not old_data_filtered.empty:
-                # Ensure both datasets have the same columns
-                common_columns = list(set(final_df.columns) & set(old_data_filtered.columns))
-                final_df_common = final_df[common_columns]
-                old_data_common = old_data_filtered[common_columns]
-                
-                # Reset indices to avoid conflicts and ensure unique indices
-                final_df_common = final_df_common.reset_index(drop=True)
-                old_data_common = old_data_common.reset_index(drop=True)
-                
-                # Ensure unique indices by adding offset to old data
-                old_data_common.index = old_data_common.index + len(final_df_common)
-                
-                # Concatenate old and new data
-                final_df = pd.concat([old_data_common, final_df_common], ignore_index=True, sort=False)
-                logger.info(f"📊 Merged {len(old_data_common)} old + {len(final_df_common)} new = {len(final_df)} total records")
-            else:
-                logger.info("📊 No old data to merge (all data is within 3 years)")
-                
-        else:
-            logger.info("📚 No old data file found at ./centaline_res.parquet")
-            
-    except Exception as e:
-        logger.error(f"⚠️ Error loading and merging old data: {e}")
     
     logger.info("✅ Simplified estate data enrichment completed successfully!")
     logger.info("📝 Note: Complex building matching has been moved to the centralized buildings pipeline")

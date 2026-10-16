@@ -5,6 +5,9 @@ import pandas as pd
 from property_scraper.pipelines.source_a_commercial.nodes import (
     join_transaction_with_building_details,
 )
+from property_scraper.utils.building_supplement import (
+    load_source_a_commercial_supplemental_master,
+)
 
 
 def test_join_transaction_with_building_details_uses_supplemental_master_for_unmatched_rows(
@@ -81,6 +84,7 @@ def test_join_transaction_with_building_details_uses_supplemental_master_for_unm
     result = join_transaction_with_building_details(
         transaction_data=transaction_data,
         building_details=building_details,
+        supplemental_master=load_source_a_commercial_supplemental_master(params),
         params=params,
     )
 

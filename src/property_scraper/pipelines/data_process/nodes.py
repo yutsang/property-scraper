@@ -11,6 +11,11 @@ from ...utils.area_conversion import (
     load_gross_to_net_ratios,
     normalize_region,
 )
+from .standardization import (
+    normalize_completion_years as _normalize_completion_years,
+    select_ordered_columns,
+)
+from .workbook import assemble_workbooks, standardize_transaction_dates
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -26,39 +31,6 @@ SOURCE_DISPLAY_LABELS = {
     "source_b_res": "Midland Residential",
     "source_b_commercial": "Midland ICI",
 }
-
-
-def _normalize_completion_years(
-    frame: pd.DataFrame,
-    candidate_columns: list[str],
-) -> pd.DataFrame:
-    """Coalesce completion-year candidates and derive a consistent age."""
-    result = frame.copy()
-    completion_year = pd.Series(pd.NA, index=result.index, dtype="Int64")
-
-    for column in candidate_columns:
-        if column not in result.columns:
-            continue
-        values = result[column]
-        if pd.api.types.is_datetime64_any_dtype(values):
-            years = values.dt.year
-        else:
-            parsed_dates = pd.to_datetime(values, errors="coerce")
-            numeric_years = pd.to_numeric(values, errors="coerce")
-            years = numeric_years.where(
-                numeric_years.between(1800, pd.Timestamp.now().year),
-                parsed_dates.dt.year,
-            )
-        valid_years = pd.to_numeric(years, errors="coerce").where(
-            lambda series: series.between(1800, pd.Timestamp.now().year)
-        )
-        completion_year = completion_year.fillna(valid_years.astype("Int64"))
-
-    result["completion_year"] = completion_year
-    result["age"] = (
-        pd.Timestamp.now().year - result["completion_year"]
-    ).where(result["completion_year"].notna()).astype("Int64")
-    return result
 
 
 ############################## 1. Source A Res Start ##############################
@@ -1948,9 +1920,9 @@ def build_residential_quality_report(
             None,
         )
         if date_column:
-            invalid_dates = pd.to_datetime(
-                frame[date_column], errors="coerce", utc=True
-            ).isna().sum()
+            invalid_dates = standardize_transaction_dates(
+                pd.DataFrame({"date": frame[date_column]})
+            )["standard_date"].isna().sum()
             add(
                 dataset_name,
                 "invalid_date_count",
@@ -2019,51 +1991,27 @@ def build_residential_quality_report(
     return pd.DataFrame(rows)
 
 
-def _generate_run_diff(
-    counts: Dict[str, int],
-    reporting_dir: str = 'data/08_reporting',
-) -> Dict[str, Any]:
-    """
-    Persist pipeline row counts and compute a delta vs the previous run.
-
-    Appends one entry to data/08_reporting/run_stats.json (kept to 30 runs).
-    Returns a diff dict: {source: {prev, current, delta}} for logging.
-    """
-    import json
-    import os
-
-    stats_file = os.path.join(reporting_dir, 'run_stats.json')
-    run_ts = datetime.now().isoformat()
-
-    prev_counts: Dict[str, int] = {}
-    history: list = []
-    if os.path.exists(stats_file):
-        try:
-            with open(stats_file) as f:
-                data = json.load(f)
-            history = data.get('history', [])
-            if history:
-                prev_counts = history[-1].get('counts', {})
-        except Exception as exc:
-            logger.warning("Could not read run_stats.json: %s", exc)
-
-    diff: Dict[str, Any] = {}
-    for key, current in counts.items():
-        prev = prev_counts.get(key)
-        delta = (current - prev) if prev is not None else None
-        diff[key] = {'prev': prev, 'current': current, 'delta': delta}
-
-    history.append({'run_at': run_ts, 'counts': counts, 'diff': diff})
-    history = history[-30:]
-
-    try:
-        os.makedirs(reporting_dir, exist_ok=True)
-        with open(stats_file, 'w') as f:
-            json.dump({'history': history}, f, indent=2, default=str)
-    except Exception as exc:
-        logger.warning("Could not write run_stats.json: %s", exc)
-
-    return diff
+def build_run_statistics(
+    source_a_res: pd.DataFrame,
+    source_a_commercial: pd.DataFrame,
+    source_b_res: pd.DataFrame,
+    source_b_commercial: pd.DataFrame,
+) -> pd.DataFrame:
+    """Return current source row counts for catalog-managed reporting."""
+    return pd.DataFrame(
+        [
+            {"source": "source_a_res", "row_count": len(source_a_res)},
+            {
+                "source": "source_a_commercial",
+                "row_count": len(source_a_commercial),
+            },
+            {"source": "source_b_res", "row_count": len(source_b_res)},
+            {
+                "source": "source_b_commercial",
+                "row_count": len(source_b_commercial),
+            },
+        ]
+    ).assign(run_at=datetime.now().isoformat())
 
 
 def merge_and_excel(
@@ -2071,18 +2019,20 @@ def merge_and_excel(
     co: pd.DataFrame,
     mr: pd.DataFrame,
     mi: pd.DataFrame,
-    params: dict
+    params: dict,
+    publication_quality_gate: Optional[dict] = None,
 ) -> Dict[str, Dict[str, pd.DataFrame]]:
     import logging
     logger = logging.getLogger(__name__)
 
     """
     Process four input DataFrames, standardize date columns, and split into
-    four Excel files:
-    - RE_residential_2020-2023
-    - RE_commercial_2020-2023
-    - RE_residential_2024-{current_year}
-    - RE_commercial_2024-{current_year}
+    four Excel files at the data_process.export_start_year/export_split_year
+    boundary (conf/base/parameters.yml):
+    - RE_residential_{export_start_year}-{export_split_year - 1}
+    - RE_commercial_{export_start_year}-{export_split_year - 1}
+    - RE_residential_{export_split_year}-{current_year}
+    - RE_commercial_{export_split_year}-{current_year}
 
     Args:
         cr: Source A Residential DataFrame
@@ -2095,35 +2045,19 @@ def merge_and_excel(
         Dictionary with four keys for the Excel outputs
     """
     
+    if publication_quality_gate is None:
+        raise ValueError("Publication quality gate was not executed")
     current_year = datetime.now().year
-    
-    # Standardize date columns
-    def standardize_dataframe(df, date_col='date'):
-        df_copy = df.copy()
-        # Try multiple formats instead of only %Y-%m-%d to avoid silent NaT conversion
-        parsed = pd.to_datetime(df_copy[date_col], format='%Y-%m-%d', errors='coerce')
-        # Fallback: parse remaining NaTs with flexible parser (handles dd/mm/yyyy, ISO, etc.)
-        still_nat = parsed.isna() & df_copy[date_col].notna()
-        if still_nat.any():
-            fallback = pd.to_datetime(df_copy.loc[still_nat, date_col], errors='coerce', dayfirst=True)
-            parsed.loc[still_nat] = fallback
-            recovered = fallback.notna().sum()
-            if recovered:
-                logger.info(f"  Recovered {recovered} dates via fallback parser")
-
-        df_copy['standard_date'] = parsed
-
-        if df_copy['standard_date'].dt.tz is not None:
-            df_copy['standard_date'] = df_copy['standard_date'].dt.tz_localize(None)
-
-        df_copy['date'] = df_copy['standard_date']
-        return df_copy
-    
-    # Process each dataframe
-    df_cr_processed = standardize_dataframe(cr)
-    df_co_processed = standardize_dataframe(co)
-    df_mr_processed = standardize_dataframe(mr)
-    df_mi_processed = standardize_dataframe(mi)
+    source_frames = {
+        "source_a_res": cr,
+        "source_a_commercial": co,
+        "source_b_res": mr,
+        "source_b_commercial": mi,
+    }
+    processed_frames = {
+        source: standardize_transaction_dates(frame)
+        for source, frame in source_frames.items()
+    }
 
     # ── Cross-source overlap detection ──────────────────────────────────────────
     # Identifies transactions present in BOTH source_a and source_b.
@@ -2135,13 +2069,14 @@ def merge_and_excel(
     if enable_overlap_sheets:
         logger.info("🔍 Running cross-source overlap detection...")
         overlap_res_df = _find_cross_source_overlap(
-            df_cr_processed, df_mr_processed,
+            processed_frames["source_a_res"], processed_frames["source_b_res"],
             area_col_a='area', area_col_b='area',
             label_a=SOURCE_DISPLAY_LABELS['source_a_res'],
             label_b=SOURCE_DISPLAY_LABELS['source_b_res'],
         )
         overlap_com_df = _find_cross_source_overlap(
-            df_co_processed, df_mi_processed,
+            processed_frames["source_a_commercial"],
+            processed_frames["source_b_commercial"],
             area_col_a='transactionArea', area_col_b='area',
             label_a=SOURCE_DISPLAY_LABELS['source_a_commercial'],
             label_b=SOURCE_DISPLAY_LABELS['source_b_commercial'],
@@ -2157,131 +2092,63 @@ def merge_and_excel(
         n_overlap_res = 0
         n_overlap_com = 0
 
-    # Split by date ranges: 2020-2023 and 2024-current
-    def split_by_date_range(df, name):
-        null_date_count = df['standard_date'].isna().sum()
-        valid_dates = df[df['standard_date'].notna()]
-        if not valid_dates.empty:
-            min_year = valid_dates['standard_date'].dt.year.min()
-            max_year = valid_dates['standard_date'].dt.year.max()
-            logger.info(f"{name}: Date range {min_year}-{max_year}, Total records: {len(df)}")
-
-        if null_date_count > 0:
-            logger.warning(f"{name}: {null_date_count} records have NULL dates and will be excluded from Excel output")
-
-        pre_2020 = valid_dates[valid_dates['standard_date'].dt.year < 2020]
-        if not pre_2020.empty:
-            logger.warning(f"{name}: {len(pre_2020)} records before 2020 will be excluded from Excel output")
-
-        df_2020_2023 = df[
-            (df['standard_date'].dt.year >= 2020) &
-            (df['standard_date'].dt.year <= 2023)
-        ].copy()
-
-        df_2024_current = df[
-            df['standard_date'].dt.year >= 2024
-        ].copy()
-
-        logger.info(f"{name}: 2020-2023: {len(df_2020_2023)} records, 2024-{current_year}: {len(df_2024_current)} records")
-
-        return df_2020_2023, df_2024_current
-    
-    # Prepare dataframe for Excel
-    def prepare_for_excel(df: pd.DataFrame) -> pd.DataFrame:
-        df_out = df.copy()
-        df_out['date'] = pd.to_datetime(df_out['standard_date'], errors='coerce')
-        
-        if df_out['date'].dt.tz is not None:
-            df_out['date'] = df_out['date'].dt.tz_localize(None)
-        
-        # Drop standard_date column
-        if 'standard_date' in df_out.columns:
-            df_out = df_out.drop(columns=['standard_date'])
-
-        for col in ['flat', 'streetno']:
-            if col in df_out.columns:
-                mask = df_out[col].notna() & (~df_out[col].astype('string').str.startswith("'"))
-                df_out.loc[mask, col] = "'" + df_out.loc[mask, col].astype('string')
-        
-        # Sort descending by date
-        if 'date' in df_out.columns:
-            df_out = df_out.sort_values(by='date', ascending=False, kind='mergesort').reset_index(drop=True)
-        return df_out
-    
-    # Split residential data (Centaline + Midland)
-    cr_2020_2023, cr_2024_current = split_by_date_range(df_cr_processed, SOURCE_DISPLAY_LABELS['source_a_res'])
-    mr_2020_2023, mr_2024_current = split_by_date_range(df_mr_processed, SOURCE_DISPLAY_LABELS['source_b_res'])
-
-    # Split commercial data (Centaline OIR + Midland ICI)
-    co_2020_2023, co_2024_current = split_by_date_range(df_co_processed, SOURCE_DISPLAY_LABELS['source_a_commercial'])
-    mi_2020_2023, mi_2024_current = split_by_date_range(df_mi_processed, SOURCE_DISPLAY_LABELS['source_b_commercial'])
-
-    # Split overlap data by the same date ranges (only when overlaps were found)
+    data_process_params = params.get("data_process", {})
+    end_year = data_process_params.get("export_end_year")
+    overlap_frames = {}
     if not overlap_res_df.empty:
-        overlap_res_2020_2023, overlap_res_2024_current = split_by_date_range(overlap_res_df, "Overlap_Residential")
-    else:
-        overlap_res_2020_2023, overlap_res_2024_current = pd.DataFrame(), pd.DataFrame()
-
+        overlap_frames["overlap_res"] = overlap_res_df.drop(
+            columns=["standard_date"],
+            errors="ignore",
+        )
     if not overlap_com_df.empty:
-        overlap_com_2020_2023, overlap_com_2024_current = split_by_date_range(overlap_com_df, "Overlap_Commercial")
-    else:
-        overlap_com_2020_2023, overlap_com_2024_current = pd.DataFrame(), pd.DataFrame()
-
-    # Combine residential and commercial separately
-    residential_2020_2023 = {
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_res']): sanitize_dataframe_content(prepare_for_excel(cr_2020_2023)) if not cr_2020_2023.empty else None,
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_res']): sanitize_dataframe_content(prepare_for_excel(mr_2020_2023)) if not mr_2020_2023.empty else None,
-        sanitize_worksheet_name('Overlap_Res'): sanitize_dataframe_content(prepare_for_excel(overlap_res_2020_2023)) if not overlap_res_2020_2023.empty else None,
+        overlap_frames["overlap_com"] = overlap_com_df.drop(
+            columns=["standard_date"],
+            errors="ignore",
+        )
+    output_labels = {
+        **SOURCE_DISPLAY_LABELS,
+        "overlap_res": "Overlap_Res",
+        "overlap_com": "Overlap_Com",
     }
+    export_start_year = int(data_process_params.get("export_start_year", 2020))
+    export_split_year = int(data_process_params.get("export_split_year", 2024))
+    outputs, workbook_metrics = assemble_workbooks(
+        source_frames,
+        output_labels,
+        overlap_frames,
+        start_year=export_start_year,
+        split_year=export_split_year,
+        end_year=int(end_year) if end_year is not None else None,
+    )
+    for source, metrics in workbook_metrics.items():
+        label = output_labels[source]
+        logger.info(
+            "%s: Date range %s-%s, total=%s, %s-%s=%s, %s-%s=%s",
+            label,
+            metrics["min_year"],
+            metrics["max_year"],
+            metrics["total"],
+            export_start_year,
+            export_split_year - 1,
+            metrics["historical"],
+            export_split_year,
+            current_year,
+            metrics["recent"],
+        )
+        if metrics["invalid_dates"]:
+            logger.warning(
+                "%s: %s records have invalid dates and were excluded",
+                label,
+                metrics["invalid_dates"],
+            )
+        if metrics["before_start"]:
+            logger.warning(
+                "%s: %s records before the export window were excluded",
+                label,
+                metrics["before_start"],
+            )
 
-    residential_2024_current = {
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_res']): sanitize_dataframe_content(prepare_for_excel(cr_2024_current)) if not cr_2024_current.empty else None,
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_res']): sanitize_dataframe_content(prepare_for_excel(mr_2024_current)) if not mr_2024_current.empty else None,
-        sanitize_worksheet_name('Overlap_Res'): sanitize_dataframe_content(prepare_for_excel(overlap_res_2024_current)) if not overlap_res_2024_current.empty else None,
-    }
-
-    commercial_2020_2023 = {
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_commercial']): sanitize_dataframe_content(prepare_for_excel(co_2020_2023)) if not co_2020_2023.empty else None,
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_commercial']): sanitize_dataframe_content(prepare_for_excel(mi_2020_2023)) if not mi_2020_2023.empty else None,
-        sanitize_worksheet_name('Overlap_Com'): sanitize_dataframe_content(prepare_for_excel(overlap_com_2020_2023)) if not overlap_com_2020_2023.empty else None,
-    }
-
-    commercial_2024_current = {
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_a_commercial']): sanitize_dataframe_content(prepare_for_excel(co_2024_current)) if not co_2024_current.empty else None,
-        sanitize_worksheet_name(SOURCE_DISPLAY_LABELS['source_b_commercial']): sanitize_dataframe_content(prepare_for_excel(mi_2024_current)) if not mi_2024_current.empty else None,
-        sanitize_worksheet_name('Overlap_Com'): sanitize_dataframe_content(prepare_for_excel(overlap_com_2024_current)) if not overlap_com_2024_current.empty else None,
-    }
-
-    # Remove None entries (also removes overlap sheets when no overlap was detected)
-    residential_2020_2023 = {k: v for k, v in residential_2020_2023.items() if v is not None}
-    residential_2024_current = {k: v for k, v in residential_2024_current.items() if v is not None}
-    commercial_2020_2023 = {k: v for k, v in commercial_2020_2023.items() if v is not None}
-    commercial_2024_current = {k: v for k, v in commercial_2024_current.items() if v is not None}
-
-    # ── Run-to-run diff ──────────────────────────────────────────────────────────
-    # Persists row counts to data/08_reporting/run_stats.json and logs deltas
-    # so you can tell at a glance how many records each run contributed.
-    run_counts = {
-        'source_a_res': len(cr),
-        'source_a_commercial': len(co),
-        'source_b_res': len(mr),
-        'source_b_commercial': len(mi),
-        'overlap_res_pairs': n_overlap_res,
-        'overlap_com_pairs': n_overlap_com,
-    }
-    run_diff = _generate_run_diff(run_counts)
-    logger.info("📊 Run diff vs previous run:")
-    for src, d in run_diff.items():
-        delta_str = f"+{d['delta']}" if d['delta'] and d['delta'] > 0 else str(d['delta']) if d['delta'] is not None else "n/a (first run)"
-        label = SOURCE_DISPLAY_LABELS.get(src, src)
-        logger.info("  %-28s %s  (prev=%s → current=%s)", label, delta_str, d['prev'], d['current'])
-
-    return {
-        'residential_2020_2023': residential_2020_2023,
-        'commercial_2020_2023': commercial_2020_2023,
-        'residential_2024_current': residential_2024_current,
-        'commercial_2024_current': commercial_2024_current
-    }
+    return outputs
 
 ############################## COLUMN SELECTION FUNCTIONS ##############################
 
@@ -2355,8 +2222,10 @@ def select_source_a_res_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
 
     # Filter dataframe to selected columns
-    available_columns = [col for col in selected_columns if col in df.columns]
-    result_df = df[available_columns].copy()  # Use .copy() to avoid SettingWithCopyWarning
+    result_df, missing_columns = select_ordered_columns(df, selected_columns)
+    available_columns = [
+        column for column in selected_columns if column not in missing_columns
+    ]
     
     # No need to rename or fill - Name column from transaction data is already complete!
 
@@ -2457,23 +2326,21 @@ def select_source_a_commercial_columns(df: pd.DataFrame, params: dict) -> pd.Dat
     ]
     
     # Filter to only columns that actually exist in the dataframe
-    available_cols = df.columns.tolist()
-    selected_columns = [col for col in desired_columns if col in available_cols]
-    
+    result_df, missing_cols = select_ordered_columns(
+        df,
+        desired_columns,
+        rename={"transactionDate": "date"},
+    )
+    selected_columns = [
+        column for column in desired_columns if column not in missing_cols
+    ]
+
     # Log which columns are included/missing
-    missing_cols = [col for col in desired_columns if col not in available_cols]
     if missing_cols:
         logger.info(f"  ⚠ Columns not found (will be skipped): {missing_cols}")
     
     logger.info(f"  ✓ Selected {len(selected_columns)} columns (out of {len(desired_columns)} desired)")
     
-    # Select available columns
-    result_df = df[selected_columns].copy()
-
-    # Rename transactionDate to date
-    if 'transactionDate' in result_df.columns:
-        result_df = result_df.rename(columns={'transactionDate': 'date'})
-
     logger.info(f"✅ Column selection completed")
     logger.info(f"📊 Final shape: {result_df.shape}")
 
@@ -2552,18 +2419,18 @@ def select_source_b_res_columns(df: pd.DataFrame, params: dict) -> pd.DataFrame:
     # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
     
     # Filter dataframe to selected columns that actually exist
-    available_columns = [col for col in selected_columns if col in df.columns]
-    missing_columns = [col for col in selected_columns if col not in df.columns]
+    result_df, missing_columns = select_ordered_columns(
+        df,
+        selected_columns,
+        rename={"tx_date": "date"},
+    )
+    available_columns = [
+        column for column in selected_columns if column not in missing_columns
+    ]
     
     if missing_columns:
         logger.warning(f"⚠️ Missing columns: {missing_columns}")
     
-    result_df = df[available_columns]
-
-    # Rename tx_date to date
-    if 'tx_date' in result_df.columns:
-        result_df = result_df.rename(columns={'tx_date': 'date'})
-
     logger.info(f"✅ Selected {len(available_columns)} columns for Source B Residential")
     logger.info(f"📊 Final shape: {result_df.shape}")
 
@@ -2673,18 +2540,14 @@ def select_source_b_commercial_columns(df: pd.DataFrame, params: dict) -> pd.Dat
     # selected_columns = df.columns.tolist()  # Uncomment this line if you want all columns
     
     # Ensure any missing columns exist to keep schema stable
-    missing_columns = [col for col in selected_columns if col not in df.columns]
+    result_df, missing_columns = select_ordered_columns(
+        df,
+        selected_columns,
+        rename={"tx_date": "date"},
+        fill_missing=True,
+    )
     if missing_columns:
-        for col in missing_columns:
-            df[col] = pd.Series(pd.NA, index=df.index)
         logger.warning(f"Missing columns filled with nulls: {missing_columns}")
-
-    # Filter dataframe to selected columns
-    result_df = df[selected_columns]
-
-    # Rename tx_date to date
-    if 'tx_date' in result_df.columns:
-        result_df = result_df.rename(columns={'tx_date': 'date'})
 
     logger.info(f"✅ Selected {len(selected_columns)} columns for Source B ICI")
     logger.info(f"📊 Final shape: {result_df.shape}")

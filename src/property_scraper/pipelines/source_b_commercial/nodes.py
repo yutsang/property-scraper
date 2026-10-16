@@ -15,12 +15,34 @@ from collections import defaultdict
 from ...utils.node_tracker import should_run_node, record_node_execution
 from ...utils.building_supplement import (
     apply_supplemental_matches,
-    load_supplemental_building_master,
 )
 from ...utils.source_runtime import get_required_setting
 
+
+def load_existing_source_b_commercial_snapshots(
+    params: Dict[str, Any],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load Source B commercial snapshots as an explicit Kedro node."""
+    source_params = params["source_b_commercial"]
+
+    def optional_parquet(path: str) -> pd.DataFrame:
+        return pd.read_parquet(path) if os.path.exists(path) else pd.DataFrame()
+
+    return (
+        optional_parquet(source_params["source_b_commercial_building_listings"]),
+        optional_parquet(source_params["source_b_commercial_building_details"]),
+        optional_parquet(
+            source_params.get(
+                "transaction_file",
+                "data/01_raw/midland_ici_trans.parquet",
+            )
+        ),
+    )
+
+
 def scrape_source_b_buildings(
     area_codes: pd.DataFrame,
+    existing_buildings_df: pd.DataFrame,
     params: Dict[str, Any],
     # csv_path: str, = inpuit
     # output_path: str = "source_b_buildings.csv", = output
@@ -80,18 +102,13 @@ def scrape_source_b_buildings(
     
     # Load existing building counts per (district_id, property_type_code)
     # Used to skip combinations where the API count matches the DB count.
-    existing_buildings_df = pd.DataFrame()
     db_combo_counts: dict[str, int] = {}   # key: "district_id_sbu" → count
 
-    if os.path.exists(listing_file):
-        try:
-            existing_buildings_df = pd.read_parquet(listing_file, engine='pyarrow')
-            logger.info(f"📊 Loaded {len(existing_buildings_df)} existing buildings")
-            if 'district_id' in existing_buildings_df.columns and 'property_type_code' in existing_buildings_df.columns:
-                for (did, sbu), grp in existing_buildings_df.groupby(['district_id', 'property_type_code']):
-                    db_combo_counts[f"{did}_{sbu}"] = len(grp)
-        except Exception as e:
-            logger.warning(f"Could not read existing output file: {e}. Starting from scratch.")
+    if not existing_buildings_df.empty:
+        logger.info(f"Received {len(existing_buildings_df)} existing buildings")
+        if 'district_id' in existing_buildings_df.columns and 'property_type_code' in existing_buildings_df.columns:
+            for (did, sbu), grp in existing_buildings_df.groupby(['district_id', 'property_type_code']):
+                db_combo_counts[f"{did}_{sbu}"] = len(grp)
     
     # Initialize an empty list to store all building data
     all_buildings = []
@@ -288,15 +305,6 @@ def _process_and_save_results(
     else:
         combined_df = existing_buildings_df
     
-    # Save the combined DataFrame to the output file
-    if not combined_df.empty:
-        try:
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            combined_df.to_parquet(output_path, engine='pyarrow', index=False)
-            logger.info(f"Saved {len(combined_df)} buildings to {output_path}")
-        except Exception as e:
-            logger.error(f"Failed to save buildings to {output_path}: {str(e)}")
-    
     return combined_df
 
 def _save_incremental_results(
@@ -336,14 +344,9 @@ from tqdm import tqdm
 import os
 import time
 
-def clean_for_url(text):
-    """Clean text for URL formatting by removing apostrophes and replacing spaces with hyphens."""
-    text = text.replace("'", "")
-    text = text.replace("+", "-")
-    return "-".join(text.split()).strip()
-
 def process_buildings(
     building_listings: pd.DataFrame,
+    existing_df: pd.DataFrame,
     params: Dict[str, Any]
 ) -> pd.DataFrame:
     """
@@ -472,15 +475,10 @@ def process_buildings(
     # Rest of the original implementation remains unchanged
     details_file = params.get('source_b_commercial', {}).get('building_details_file', 'data/02_intermediate/midland_ici_building_details.parquet')
     existing_ids = set()
-    existing_df = pd.DataFrame()
     
-    if os.path.exists(details_file) and params.get('resume_from_existing', True):
-        try:
-            existing_df = pd.read_parquet(details_file, engine='pyarrow')
-            existing_ids = set(existing_df['id']) if 'id' in existing_df.columns else set()
-            logger.info(f"Found existing output file with {len(existing_df)} buildings")
-        except Exception as e:
-            logger.warning(f"Could not read existing output file: {str(e)}. Starting from scratch.")
+    if not existing_df.empty and params.get('resume_from_existing', True):
+        existing_ids = set(existing_df['id']) if 'id' in existing_df.columns else set()
+        logger.info(f"Received existing snapshot with {len(existing_df)} buildings")
     
     new_listings = building_listings[~building_listings['id'].isin(existing_ids)]
     if new_listings.empty:
@@ -519,7 +517,10 @@ def process_buildings(
         final_df = pd.concat([existing_df, pd.DataFrame(results)], ignore_index=True)
         if 'id' in final_df.columns:
             final_df = final_df.drop_duplicates(subset=['id'], keep='last')
-        final_df.to_parquet(details_file, engine='pyarrow')
+        logger.info(
+            "Prepared %s building details for catalog persistence",
+            len(final_df),
+        )
         return final_df
 
     return existing_df
@@ -764,7 +765,9 @@ def _split_floor_flat_ici(
 
 
 def source_b_commercial_scrape_trans(
-    params: Dict[str, Any]) -> pd.DataFrame:
+    existing_df: pd.DataFrame,
+    params: Dict[str, Any],
+) -> pd.DataFrame:
     """
     Scrape transaction data from Source B ICI using NEW API endpoint.
     
@@ -788,10 +791,8 @@ def source_b_commercial_scrape_trans(
     logger = logging.getLogger(__name__)
     
     # Date-based decision: check DB max date vs today (no timer needed)
-    output_file = "data/01_raw/midland_ici_trans.parquet"
     all_transactions: List[Dict[str, Any]] = []
     pages_processed = 0
-    existing_df: pd.DataFrame = pd.DataFrame()
 
     def map_ics_type(value: str) -> str:
         if not value:
@@ -883,43 +884,42 @@ def source_b_commercial_scrape_trans(
     lang_zh = mici_params.get("transaction_lang_zh", api_params.get("lang", "zh-hk"))
     lang_en = mici_params.get("transaction_lang_en", "en")
 
-    # Date-based decision: read DB max date → decide start_date.
-    # NOTE: we intentionally do NOT return early here even when max_date >= today.
-    # We must fetch page 1 first so the gap detection (API total vs our count) can
-    # decide whether a full re-scrape is needed.  The early "up-to-date" skip only
-    # happens later, after confirming no significant gap exists.
+    # Date-based decision: read DB max date → decide start_date, then bound the
+    # fetch to a narrow dateFrom/dateTo window around it (unlocked via dateFrom/
+    # dateTo — see scripts/midland_ici_api_pull.py, which validated these two
+    # params against the same endpoint for the one-time full-history pull).
+    # A fixed lookback behind start_date (not just from today) covers records
+    # revised/uploaded late by the source, which a hard "already current" skip
+    # would otherwise never re-check.
     start_date = params["global"]["start_date"]
     date_columns = ["date", "transaction_date", "tx_date", "Date", "transactionDate"]
     today = datetime.now().date()
-    existing_record_count = 0  # track for gap detection later
-    _max_date_is_current = False  # True when existing data already reaches today
-    if os.path.exists(output_file):
-        try:
-            existing_df = pd.read_parquet(output_file)
-            existing_record_count = len(existing_df)
-            for col in date_columns:
-                if col in existing_df.columns:
-                    parsed = pd.to_datetime(existing_df[col], errors="coerce")
-                    if parsed.notna().any():
-                        max_date = parsed.max().date()
-                        if max_date >= today:
-                            _max_date_is_current = True
-                            # Don't skip yet — gap detection happens after page-1 fetch
-                            logger.info(
-                                f"📅 Existing data reaches {max_date}; "
-                                f"will verify API count before skipping (existing={existing_record_count:,})"
-                            )
-                        else:
-                            start_date = max_date + timedelta(days=1)
-                            logger.info(f"📊 Incremental fetch from {start_date}")
-                        break
-        except Exception as exc:
-            logger.warning(f"Failed to derive incremental start date: {exc}")
+    existing_record_count = 0
+    if not existing_df.empty:
+        existing_record_count = len(existing_df)
+        for col in date_columns:
+            if col in existing_df.columns:
+                parsed = pd.to_datetime(existing_df[col], errors="coerce")
+                if parsed.notna().any():
+                    max_date = parsed.max().date()
+                    start_date = max_date + timedelta(days=1)
+                    logger.info(f"📊 Incremental fetch from {start_date}")
+                    break
 
     if isinstance(start_date, str):
         start_date = datetime.fromisoformat(start_date).date()
     elif isinstance(start_date, datetime):
         start_date = start_date.date()
+
+    lookback_days = int(mici_params.get("incremental_lookback_days", 14))
+    date_from = max(start_date - timedelta(days=lookback_days), date(2000, 1, 1))
+    date_to = today + timedelta(days=1)
+    api_params["dateFrom"] = date_from.isoformat()
+    api_params["dateTo"] = date_to.isoformat()
+    logger.info(
+        f"📅 Bounded incremental window: dateFrom={date_from} dateTo={date_to} "
+        f"(lookback={lookback_days}d covers late-arriving revisions)"
+    )
 
     import math
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -1026,7 +1026,10 @@ def source_b_commercial_scrape_trans(
                 en_rec = {}
             tx_raw = zh_rec.get("txDate")
             tx_date_obj = _source_b_commercial_tx_date_to_date(tx_raw)
-            if tx_date_obj and tx_date_obj < start_date:
+            # date_from (not start_date) is the real cutoff now that the API
+            # itself is bounded by dateFrom/dateTo — start_date is narrower and
+            # would otherwise discard the lookback buffer we asked the API for.
+            if tx_date_obj and tx_date_obj < date_from:
                 stop = True
                 continue
             records.append(normalize_transaction(zh_rec, en_rec))
@@ -1043,29 +1046,7 @@ def source_b_commercial_scrape_trans(
         total_pages = math.ceil(total_count / page_size) if total_count else 1
         logger.info(f"📊 Total transactions: {total_count:,}  |  Pages: {total_pages}  |  Workers: {max_workers}")
 
-        # Gap detection: if the API total significantly exceeds our existing
-        # record count, the incremental start_date may be skipping historical
-        # gaps (e.g., missed pages during a previous partial scrape).
-        # Reset start_date to a very early date so ALL pages are processed;
-        # deduplication at merge time handles any overlap with existing data.
-        gap = total_count - existing_record_count
-        if existing_record_count > 0 and gap > max(100, existing_record_count * 0.01):
-            logger.warning(
-                f"⚠️  Gap detected: API total={total_count:,} existing={existing_record_count:,} "
-                f"(gap={gap:,}) — resetting start_date to 2000-01-01 for full re-fetch"
-            )
-            start_date = datetime(2000, 1, 1).date()
-            _max_date_is_current = False  # force full scrape even if max_date was today
-            # Re-parse page 1 with the updated start_date so records aren't
-            # incorrectly filtered out by the old (incremental) cutoff.
-            page1_records, page1_stop = parse_page(page1_zh, page1_en)
-        elif _max_date_is_current:
-            # Data is genuinely up-to-date and no gap — safe to skip.
-            logger.info(f"✅ Source B ICI transactions up-to-date (API={total_count:,} = existing={existing_record_count:,}) — skipping")
-            return existing_df if existing_record_count > 0 else pd.DataFrame(all_transactions)
-        else:
-            page1_records, page1_stop = parse_page(page1_zh, page1_en)
-
+        page1_records, page1_stop = parse_page(page1_zh, page1_en)
         all_transactions.extend(page1_records)
 
         # ── Step 3: Fetch remaining pages in parallel ─────────────────────
@@ -1121,10 +1102,8 @@ def source_b_commercial_scrape_trans(
         pages_processed = total_pages
 
     if not all_transactions:
-        _existing_file = "data/01_raw/midland_ici_trans.parquet"
-        if os.path.exists(_existing_file):
-            logger.info("No new transactions found — returning existing data unchanged")
-            existing_df = pd.read_parquet(_existing_file, engine='pyarrow')
+        if not existing_df.empty:
+            logger.info("No new transactions found — returning existing snapshot unchanged")
             record_node_execution(
                 node_name="source_b_commercial_scrape_trans",
                 node_type="transaction",
@@ -1132,7 +1111,7 @@ def source_b_commercial_scrape_trans(
                           "execution_time": datetime.now().isoformat()}
             )
             return existing_df
-        logger.warning("No transactions collected and no existing file — returning empty DataFrame")
+        logger.warning("No transactions collected and no existing snapshot")
         trans_df = pd.DataFrame()
     else:
         trans_df = pd.DataFrame(all_transactions)
@@ -1147,71 +1126,45 @@ def source_b_commercial_scrape_trans(
         if isinstance(x, str) else x
     )
     
-    # MERGE with existing data (don't overwrite!)
-    if not trans_df.empty:
-        try:
-            output_file = "data/01_raw/midland_ici_trans.parquet"
-            os.makedirs(os.path.dirname(output_file), exist_ok=True)
-            
-            # Load existing data if available
-            if os.path.exists(output_file):
-                try:
-                    existing_df = pd.read_parquet(output_file, engine='pyarrow')
-                    logger.info(f"Loading {len(existing_df):,} existing transactions for merge")
-                    
-                    # Align columns
-                    all_cols = sorted(set(existing_df.columns) | set(trans_df.columns))
-                    for col in all_cols:
-                        if col not in existing_df.columns:
-                            existing_df[col] = pd.NA
-                        if col not in trans_df.columns:
-                            trans_df[col] = pd.NA
-                    
-                    existing_df = existing_df[all_cols]
-                    trans_df = trans_df[all_cols]
-                    
-                    # Fix data types before concatenation
-                    for col in all_cols:
-                        # Ensure string columns stay as strings
-                        if col in ['building_id', 'dist_code', 'floor', 'flat', 'streetno', 'street_id']:
-                            existing_df[col] = existing_df[col].astype(str).replace('nan', pd.NA).replace('None', pd.NA)
-                            trans_df[col] = trans_df[col].astype(str).replace('nan', pd.NA).replace('None', pd.NA)
-                    
-                    # Concatenate
-                    combined_df = pd.concat([existing_df, trans_df], ignore_index=True)
-                    logger.info(f"Combined: {len(combined_df):,} ({len(existing_df):,} existing + {len(trans_df):,} new)")
-
-                    # Re-sanitize after concat: mixed float+string object columns
-                    # (e.g. area1..area4 from older/newer API payloads) must be
-                    # coerced back to a single dtype before pyarrow serialization.
-                    combined_df = sanitize_parquet_columns(combined_df)
-                    
-                    # Deduplicate using a broad key that preserves distinct
-                    # transactions. ICI records often have NULL floor, so using
-                    # only (tx_date, building_id, floor, flat) collapses legitimate
-                    # records. Adding tx_type + sell + rent + area gives much
-                    # better selectivity without a proper transaction ID.
-                    dedup_cols = ['tx_date', 'building_id', 'floor', 'flat',
-                                  'tx_type', 'sell', 'rent', 'area']
-                    existing_dedup_cols = [col for col in dedup_cols if col in combined_df.columns]
-                    
-                    if existing_dedup_cols:
-                        before_dedup = len(combined_df)
-                        combined_df = combined_df.drop_duplicates(subset=existing_dedup_cols, keep='last')
-                        logger.info(f"Deduplication: {before_dedup:,} -> {len(combined_df):,} (removed {before_dedup - len(combined_df):,} duplicates)")
-                    
-                    trans_df = combined_df
-                    
-                except Exception as e:
-                    logger.warning(f"Failed to load existing data for merge: {e}")
-                    logger.info("Saving new data only")
-            
-            # Save merged/new data
-            trans_df.to_parquet(output_file, engine='pyarrow', index=False)
-            logger.info(f"Saved {len(trans_df):,} total transactions to {output_file}")
-            
-        except Exception as e:
-            logger.error(f"Failed to save transactions to {output_file}: {str(e)}")
+    # Merge with the explicit snapshot; Kedro owns final persistence.
+    if not trans_df.empty and not existing_df.empty:
+        all_cols = sorted(set(existing_df.columns) | set(trans_df.columns))
+        existing_df = existing_df.reindex(columns=all_cols)
+        trans_df = trans_df.reindex(columns=all_cols)
+        for col in ['building_id', 'dist_code', 'floor', 'flat', 'streetno', 'street_id']:
+            if col in all_cols:
+                existing_df[col] = existing_df[col].astype(str).replace(
+                    {'nan': pd.NA, 'None': pd.NA}
+                )
+                trans_df[col] = trans_df[col].astype(str).replace(
+                    {'nan': pd.NA, 'None': pd.NA}
+                )
+        combined_df = sanitize_parquet_columns(
+            pd.concat([existing_df, trans_df], ignore_index=True)
+        )
+        dedup_cols = [
+            'tx_date', 'building_id', 'floor', 'flat',
+            'tx_type', 'sell', 'rent', 'area',
+        ]
+        existing_dedup_cols = [
+            col for col in dedup_cols if col in combined_df.columns
+        ]
+        if existing_dedup_cols:
+            before_dedup = len(combined_df)
+            combined_df = combined_df.drop_duplicates(
+                subset=existing_dedup_cols,
+                keep='last',
+            )
+            logger.info(
+                "Deduplication: %s -> %s",
+                f"{before_dedup:,}",
+                f"{len(combined_df):,}",
+            )
+        trans_df = combined_df
+    logger.info(
+        "Prepared %s transactions for catalog persistence",
+        f"{len(trans_df):,}",
+    )
     
     # Record node execution
     record_node_execution(
@@ -1230,6 +1183,7 @@ def source_b_commercial_scrape_trans(
 def source_b_commercial_join(
     transactions: pd.DataFrame,
     building_details: pd.DataFrame,
+    supplemental_master: pd.DataFrame,
     params: Dict[str, Any],
 ) -> pd.DataFrame:
     """
@@ -1260,11 +1214,6 @@ def source_b_commercial_join(
     left_on = join_params.get('join_left_on', 'building_id')
     right_on = join_params.get('join_right_on', 'id')
     join_type = join_params.get('join_type', 'left')
-    supplemental_master = load_supplemental_building_master(
-        params,
-        domain="commercial",
-        source_system="source_b_commercial",
-    )
     
     logger.info(f"Joining {len(transactions)} transactions with {len(building_details)} buildings")
     logger.info(f"Join configuration: {join_type} join with transactions.{left_on} and buildings.{right_on}")

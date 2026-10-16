@@ -32,12 +32,6 @@ source_b_res_estates:
   save_args:
     index: False
 
-merged_property_data:
-  type: pandas.ParquetDataset
-  filepath: data/02_intermediate/midland_res_trans_lv_1.parquet
-  save_args:
-    index: False
-
 source_b_res_base:
   type: pandas.ParquetDataset
   filepath: data/02_intermediate/midland_res_base.parquet
@@ -172,25 +166,25 @@ source_a_commercial:
 # Data Catalog for Final Outputs
 output_residential_2020_2023:
   type: pandas.ExcelDataset
-  filepath: data/03_primary/RE_residential_2020-2023.xlsx
+  filepath: data/03_primary/RE_residential_2021-2024.xlsx
   save_args:
     index: false
 
 output_commercial_2020_2023:
   type: pandas.ExcelDataset
-  filepath: data/03_primary/RE_commercial_2020-2023.xlsx
+  filepath: data/03_primary/RE_commercial_2021-2024.xlsx
   save_args:
     index: false
 
 output_residential_2024_current:
   type: pandas.ExcelDataset
-  filepath: data/03_primary/RE_residential_2024-2026.xlsx
+  filepath: data/03_primary/RE_residential_2025-2026.xlsx
   save_args:
     index: false
 
 output_commercial_2024_current:
   type: pandas.ExcelDataset
-  filepath: data/03_primary/RE_commercial_2024-2026.xlsx
+  filepath: data/03_primary/RE_commercial_2025-2026.xlsx
   save_args:
     index: false
 
@@ -266,17 +260,6 @@ manual_review_list:
     index: False
     engine: pyarrow
 
-manual_building_supplement_workbook:
-  type: pandas.ExcelDataset
-  filepath: data/02_intermediate/buildings.xlsx
-
-supplemental_building_review_queue:
-  type: pandas.ParquetDataset
-  filepath: data/03_primary/manual_review_list.parquet
-  save_args:
-    index: False
-    engine: pyarrow
-
 building_match_audit_summary:
   type: pandas.CSVDataset
   filepath: data/08_reporting/building_match_audit_summary.csv
@@ -289,12 +272,89 @@ residential_quality_audit:
   save_args:
     index: False
 
+run_statistics:
+  type: pandas.CSVDataset
+  filepath: data/08_reporting/run_statistics.csv
+  save_args:
+    index: False
+
 consolidated_commercial_building_master:
   type: pandas.ParquetDataset
   filepath: data/03_primary/consolidated_commercial_building_master.parquet
   save_args:
     index: False
     engine: pyarrow
+
+# Independent cross-source building master
+building_master_source_records:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/building_master_source_records.parquet
+  save_args:
+    index: False
+
+building_master_candidate_pairs:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/building_master_candidate_pairs.parquet
+  save_args:
+    index: False
+
+building_master_reviewed_overrides:
+  type: pandas.CSVDataset
+  filepath: conf/base/curated/building_master_reviewed_overrides.csv
+
+canonical_building_master:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/canonical_building_master.parquet
+  save_args:
+    index: False
+
+building_source_bridge:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/building_source_bridge.parquet
+  save_args:
+    index: False
+
+building_master_review_queue:
+  type: pandas.ExcelDataset
+  filepath: data/08_reporting/building_master_review_queue.xlsx
+  save_args:
+    index: False
+
+building_master_override_template:
+  type: pandas.ExcelDataset
+  filepath: data/08_reporting/building_master_override_template.xlsx
+  save_args:
+    index: False
+
+building_master_review_summary:
+  type: pandas.CSVDataset
+  filepath: data/08_reporting/building_master_review_summary.csv
+  save_args:
+    index: False
+
+centaline_building_blocks:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/centaline_building_blocks.parquet
+
+midland_estate_buildings:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/midland_estate_buildings.parquet
+
+consolidated_building_workbook:
+  type: pandas.ExcelDataset
+  filepath: data/03_primary/consolidated_building_list.xlsx
+
+building_master_match_audit:
+  type: pandas.CSVDataset
+  filepath: data/08_reporting/building_master_match_audit.csv
+  save_args:
+    index: False
+
+building_master_commercial_compatibility:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/consolidated_commercial_building_master_v2.parquet
+  save_args:
+    index: False
 
 final_consolidated_commercial_db:
   type: pandas.ParquetDataset

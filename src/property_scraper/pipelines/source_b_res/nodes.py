@@ -18,11 +18,12 @@ import os
 from bs4 import BeautifulSoup
 import glob 
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import logging
 
 # Import node tracking utilities
-from ...utils.node_tracker import should_run_node, record_node_execution
+from ...utils.node_tracker import should_run_node, record_node_execution, get_node_status
+from ...utils.incremental import merge_snapshot
 from ...utils.source_runtime import get_optional_setting, get_required_setting
 
 # Configure logging
@@ -233,7 +234,22 @@ def _probe_district_estate_count(district_code: str, base_url: str, headers: dic
         return -1       # on error always refresh
 
 
-def process_estate_data(district_df: pd.DataFrame, params: Dict[str, Any] = {}) -> pd.DataFrame:
+def load_existing_estates(params: Dict[str, Any]) -> pd.DataFrame:
+    """Load the current estate snapshot as an explicit Kedro node."""
+    output_file = params.get("source_b_res", {}).get(
+        "estate_output_path",
+        "data/01_raw/midland_res_estates.parquet",
+    )
+    if not os.path.exists(output_file):
+        return pd.DataFrame()
+    return pd.read_parquet(output_file)
+
+
+def process_estate_data(
+    district_df: pd.DataFrame,
+    existing_df: pd.DataFrame,
+    params: Dict[str, Any] = {},
+) -> pd.DataFrame:
     """Fetch Source B Residential estate data per district.
 
     For each district:
@@ -242,27 +258,16 @@ def process_estate_data(district_df: pd.DataFrame, params: Dict[str, Any] = {}) 
     - Fetch all pages only for districts that changed.
     """
     logger = logging.getLogger(__name__)
-    source_settings = params.get("source_b_res", {})
-    output_file = source_settings.get(
-        "estate_output_path", "data/01_raw/midland_res_estates.parquet"
-    )
-
     # Build the auth headers once (same as fetch_estates_data)
     estate_base_url = get_required_setting(params, "source_b_res", "site", "estate_search_url")
     headers = get_required_setting(params, "source_b_res", "site", "estate_headers")
 
     # Load existing DB counts per district code
     db_counts: dict[str, int] = {}
-    existing_df = pd.DataFrame()
-    if os.path.exists(output_file):
-        try:
-            existing_df = pd.read_parquet(output_file)
-            if "intsmdist_ids" in existing_df.columns:
-                db_counts = existing_df.groupby("intsmdist_ids").size().to_dict()
-            elif "district_code" in existing_df.columns:
-                db_counts = existing_df.groupby("district_code").size().to_dict()
-        except Exception as e:
-            logger.warning(f"Could not load existing estate data: {e}")
+    if "intsmdist_ids" in existing_df.columns:
+        db_counts = existing_df.groupby("intsmdist_ids").size().to_dict()
+    elif "district_code" in existing_df.columns:
+        db_counts = existing_df.groupby("district_code").size().to_dict()
 
     logger.info(f"🏘️  Checking {len(district_df)} districts (DB has {len(existing_df):,} existing records)")
 
@@ -305,9 +310,8 @@ def process_estate_data(district_df: pd.DataFrame, params: Dict[str, Any] = {}) 
         logger.warning("No estate data — returning existing data unchanged")
         return existing_df
 
-    df = pd.DataFrame(all_estate_data)
-    df.to_parquet(output_file, index=False)
-    logger.info(f"💾 Saved {len(df):,} estate records to {output_file}")
+    df = _deduplicate_estates_by_id(pd.DataFrame(all_estate_data))
+    logger.info(f"Prepared {len(df):,} estate records for catalog persistence")
     return df
 
 def deep_flatten_json(df: pd.DataFrame, column: str) -> pd.DataFrame:
@@ -330,7 +334,27 @@ def deep_flatten_json(df: pd.DataFrame, column: str) -> pd.DataFrame:
     flattened = df[column].apply(lambda x: flatten_record(x) if pd.notnull(x) else {})
     return pd.DataFrame(flattened.tolist()).add_prefix(f'{column}_')
 
+
+def _deduplicate_estates_by_id(df: pd.DataFrame) -> pd.DataFrame:
+    """Collapse identical estate payloads and reject conflicting stable IDs."""
+    if df.empty or "id" not in df.columns:
+        return df
+
+    duplicate_ids = df.loc[df["id"].duplicated(keep=False), "id"].dropna().unique()
+    for estate_id in duplicate_ids:
+        records = df.loc[df["id"] == estate_id].to_dict("records")
+        canonical_payloads = {
+            json.dumps(record, sort_keys=True, default=str, ensure_ascii=False)
+            for record in records
+        }
+        if len(canonical_payloads) > 1:
+            raise ValueError(f"Conflicting estate records for id={estate_id}")
+
+    return df.drop_duplicates(subset=["id"], keep="first").reset_index(drop=True)
+
+
 def normalize_all_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = _deduplicate_estates_by_id(df.copy())
     json_columns = [
         'sm_district', 'region', 'subregion', 'district',
         'combined_district', 'int_district', 'int_sm_district',
@@ -648,17 +672,25 @@ def scrape_data(
     return all_data
 
 
+def load_existing_transactions(params: Dict[str, Any]) -> pd.DataFrame:
+    """Load the current transaction snapshot as an explicit Kedro node."""
+    path = params["source_b_res"]["res_trans_path"]
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    return pd.read_parquet(path)
+
+
 def fetch_transactions(
     district_codes_df: pd.DataFrame,
-    params: Dict[str, Any]) -> pd.DataFrame:
+    existing_df: pd.DataFrame,
+    params: Dict[str, Any],
+) -> pd.DataFrame:
     """Fetch Source B Residential transaction data with date-based incremental updates.
 
     Decision logic (no time-based skip):
     - If DB exists and max_date >= today → already up-to-date, return existing.
     - Otherwise → scrape from max_date+1 (or full history if no DB).
     """
-    source_settings = params["source_b_res"]
-    res_trans_path = source_settings["res_trans_path"]
     base_url = get_required_setting(params, "source_b_res", "site", "transaction_search_url")
     transaction_headers = get_required_setting(params, "source_b_res", "site", "transaction_headers")
     parameters = {
@@ -672,8 +704,7 @@ def fetch_transactions(
     }
 
     # Determine scraping mode from actual data, not a timer
-    if os.path.exists(res_trans_path):
-        existing_df = pd.read_parquet(res_trans_path)
+    if not existing_df.empty:
         date_cols = ["tx_date", "date", "transaction_date"]
         max_date = None
         for col in date_cols:
@@ -692,7 +723,6 @@ def fetch_transactions(
         parameters["tx_date"] = "1year"
     else:
         logger.info("🚀 Full historical mode — no existing data")
-        existing_df = pd.DataFrame()
 
     # Scrape new transactions
     # Get rate limiting parameters from config
@@ -721,22 +751,55 @@ def fetch_transactions(
     # Create DataFrame from scraped data
     new_df = pd.DataFrame(transactions_data)
     
-    # Only try to drop columns if they exist in the DataFrame
-    columns_to_drop = ['id', 'region_id', 'subregion_id', 'district_id', 
+    # Only try to drop columns if they exist in the DataFrame.
+    # 'id' is kept (was dropped before): it's globally unique and is what the
+    # LANDREG deep-pull supplement (fetch_landreg_deep_supplement) matches
+    # district-search rows against alongside (tx_date, building_id, floor,
+    # flat, price).
+    columns_to_drop = ['region_id', 'subregion_id', 'district_id',
                        'sm_district_id', 'combined_district_id', 'combined_district', 'original_source']
     existing_columns_to_drop = [col for col in columns_to_drop if col in new_df.columns]
     
     if existing_columns_to_drop:
         new_df = new_df.drop(columns=existing_columns_to_drop, axis=1)
 
-    # Merge and deduplicate
+    # Merge and deduplicate. LANDREG / LANDREG_DEEP_PULL rows are excluded from
+    # this merge and passed through untouched — fetch_landreg_deep_supplement
+    # owns their identity (content-keyed on building_id/tx_date/floor/flat/price)
+    # and runs right after this node. Folding them into this composite key
+    # (tx_date, estate_id, price, building_id, unit) is unsafe: 'unit' is null
+    # for every source here, so the key is effectively 4 columns, and the 1.5M+
+    # LANDREG_DEEP_PULL rows added by the 2026-09 one-time merge make same-day/
+    # same-building/same-price collisions across genuinely different units
+    # common enough to silently discard real transactions (observed: >100k rows
+    # lost in one incremental run before this fix).
     if not existing_df.empty:
-        combined_df = pd.concat([existing_df, new_df], ignore_index=True)
-        combined_df = combined_df.drop_duplicates(
-            subset=['tx_date', 'estate_id', 'price', 'building_id', 'unit'],
-            keep='last'
+        is_landreg = existing_df.get("source", pd.Series(dtype=object)).isin(["LANDREG", "LANDREG_DEEP_PULL"])
+        existing_landreg = existing_df[is_landreg]
+        existing_other = existing_df[~is_landreg]
+        # The district-search API returns some LANDREG-tagged rows directly
+        # (not only via the deep-pull supplement), and this scrape's lookback
+        # re-fetches the same window every run. Dropping them here (not just
+        # excluding *existing* LANDREG rows above) is what actually prevents
+        # duplication: without this, a LANDREG transaction re-scraped on run N
+        # has nothing to dedupe against (existing_other excludes LANDREG) and
+        # piles up next to the untouched existing_landreg copy from run N-1 —
+        # observed live as the same id/tx_date/price appearing 2-3x after a
+        # few incremental runs, once per run that re-saw it.
+        new_is_landreg = new_df.get("source", pd.Series(dtype=object)).isin(["LANDREG", "LANDREG_DEEP_PULL"])
+        new_landreg_count = int(new_is_landreg.sum())
+        new_other = new_df[~new_is_landreg]
+        merged_other = merge_snapshot(
+            existing_other,
+            new_other,
+            ['tx_date', 'estate_id', 'price', 'building_id', 'unit'],
         )
-        logger.info(f"➡️ Merged {len(new_df)} new transactions with existing {len(existing_df)} records")
+        combined_df = pd.concat([existing_landreg, merged_other], ignore_index=True)
+        logger.info(
+            f"➡️ Merged {len(new_other)} new non-LANDREG transactions with existing {len(existing_other)} "
+            f"non-LANDREG records ({len(existing_landreg)} LANDREG rows passed through untouched, "
+            f"{new_landreg_count} freshly-scraped LANDREG rows discarded as redundant with the deep supplement)"
+        )
     else:
         combined_df = new_df
 
@@ -756,6 +819,217 @@ def fetch_transactions(
     return combined_df
 
 
+_LANDREG_DEEP_PULL_BASE = "https://data.midland.com.hk/info/v1/transactions/buildings/"
+
+
+def _safe_float(v) -> Optional[float]:
+    if v in (None, ""):
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _landreg_match_key(building_id, tx_date, floor, flat, price):
+    """Same content-based key used to validate the one-time deep-pull merge
+    (~95% overlap with existing LANDREG rows) — building_id/tx_date/floor/flat
+    plus rounded price, since the deep-pull endpoint carries no id comparable
+    to district-search rows scraped before 'id' was retained."""
+    try:
+        p = round(float(price)) if price is not None and price == price and price != "" else None
+    except (TypeError, ValueError):
+        p = None
+    return (building_id, tx_date, str(floor), str(flat), p)
+
+
+def _fetch_building_deep_pull(session: requests.Session, headers: dict, building_id: str, delay: float) -> list:
+    """One building's full LANDREG history via the per-building endpoint
+    (see scripts/midland_res_buildings_pull.py, which validated this endpoint
+    against the full one-time pull)."""
+    backoff = 20.0
+    for _ in range(5):
+        try:
+            r = session.get(
+                _LANDREG_DEEP_PULL_BASE + building_id,
+                headers=headers,
+                params={"lang": "en", "unit": "feet", "currency": "HKD"},
+                timeout=40,
+            )
+        except RequestException as exc:
+            logger.warning("LANDREG deep-pull network error for %s (%s); backing off %.0fs", building_id, exc, backoff)
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 300)
+            continue
+        if r.status_code == 200:
+            time.sleep(delay)
+            try:
+                payload = r.json()
+            except ValueError:
+                return []
+            rows = []
+            for unit in payload.get("data", []):
+                unit_fields = {k: unit.get(k) for k in
+                               ("unit_id", "unit_type", "floor", "floor_seq", "flat", "flat_name", "area", "net_area")}
+                for tx in unit.get("transactions", []):
+                    rows.append({"building_id": building_id, **unit_fields, **tx})
+            return rows
+        if r.status_code == 404:
+            time.sleep(delay)
+            return []
+        if r.status_code == 429 or r.status_code >= 500:
+            logger.warning("LANDREG deep-pull HTTP %d for %s — backing off %.0fs", r.status_code, building_id, backoff)
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 300)
+            continue
+        logger.warning("LANDREG deep-pull HTTP %d for %s — giving up", r.status_code, building_id)
+        return []
+    logger.warning("LANDREG deep-pull: too many failures for %s — skipping", building_id)
+    return []
+
+
+def fetch_landreg_deep_supplement(
+    transactions_df: pd.DataFrame,
+    params: Dict[str, Any],
+) -> pd.DataFrame:
+    """Monthly sweep: deep-pull LANDREG history for buildings with recent
+    activity, to catch registrations that land later than the district-search
+    scrape (fetch_transactions) sees them.
+
+    The per-building endpoint reaches back to ~1996 but ONLY carries LANDREG
+    sale records — zero rentals, zero self-reported (MIDLAND/HKP/SRPE) sales
+    (verified against the full one-time pull). It is therefore merged against
+    the existing LANDREG rows, never used to replace them: rows the sweep
+    re-confirms are superseded by the fresher deep-pull version (via a content
+    key, since the endpoint predates the retained 'id' field for older scraped
+    rows); rows it doesn't cover are left untouched, and every non-LANDREG row
+    (MIDLAND/SRPE/HKP/rentals) is passed through unchanged.
+    """
+    sb_params = params.get("source_b_res", {})
+    if not sb_params.get("enable_landreg_deep_supplement", True):
+        return transactions_df
+    if transactions_df.empty or "building_id" not in transactions_df.columns:
+        return transactions_df
+
+    interval_days = int(sb_params.get("deep_supplement_interval_days", 30))
+    status = get_node_status("fetch_landreg_deep_supplement")
+    days_since = status.get("days_since_last_run")
+    if days_since is not None and days_since < interval_days:
+        logger.info(
+            "Skipping LANDREG deep supplement (ran %d days ago, interval=%d)",
+            days_since, interval_days,
+        )
+        return transactions_df
+
+    active_months = int(sb_params.get("deep_supplement_active_months", 9))
+    cutoff = datetime.now().date() - timedelta(days=active_months * 30)
+    parsed_dates = pd.to_datetime(transactions_df["tx_date"], errors="coerce")
+    active_mask = parsed_dates.dt.date >= cutoff
+    building_ids = sorted(
+        transactions_df.loc[active_mask, "building_id"].dropna().astype(str).unique().tolist()
+    )
+    max_buildings = sb_params.get("deep_supplement_max_buildings")
+    if max_buildings:
+        building_ids = building_ids[: int(max_buildings)]
+    logger.info(
+        "LANDREG deep supplement: %d buildings active in the last %d months",
+        len(building_ids), active_months,
+    )
+    if not building_ids:
+        record_node_execution(
+            node_name="fetch_landreg_deep_supplement", node_type="default",
+            metadata={"buildings_swept": 0},
+        )
+        return transactions_df
+
+    headers = get_required_setting(params, "source_b_res", "site", "transaction_headers")
+    delay = float(sb_params.get("deep_supplement_request_delay", 0.35))
+    session = requests.Session()
+
+    hier_cols = [c for c in (
+        "region_name", "subregion", "district", "sm_district",
+        "int_district_id", "int_district", "int_sm_district_id", "int_sm_district",
+        "estate_id", "estate", "building", "building_first_op_date", "location",
+    ) if c in transactions_df.columns]
+    hierarchy = (
+        transactions_df.dropna(subset=["building_id"])
+        .drop_duplicates(subset=["building_id"], keep="last")[["building_id"] + hier_cols]
+    )
+
+    source_col = transactions_df["source"] if "source" in transactions_df.columns else pd.Series("", index=transactions_df.index)
+    is_landreg = source_col.isin(["LANDREG", "LANDREG_DEEP_PULL"])
+    existing_landreg = transactions_df[is_landreg].copy()
+    existing_other = transactions_df[~is_landreg].copy()
+    existing_landreg["_key"] = existing_landreg.apply(
+        lambda r: _landreg_match_key(r["building_id"], r["tx_date"], r.get("floor"), r.get("flat"), r.get("price")),
+        axis=1,
+    )
+
+    pull_ts = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
+    new_records = []
+    new_keys_seen = set()
+    for bid in tqdm(building_ids, desc="LANDREG deep supplement"):
+        rows = _fetch_building_deep_pull(session, headers, bid, delay)
+        for r in rows:
+            price_f = _safe_float(r.get("price"))
+            gain_f = _safe_float(r.get("gain"))
+            last_tx_date = r.get("last_tx_date")
+            last_price = price_f / (1 + gain_f / 100) if (price_f is not None and gain_f is not None) else None
+            holding_period = None
+            if last_tx_date and r.get("tx_date"):
+                try:
+                    d1 = pd.Timestamp(r["tx_date"])
+                    d0 = pd.Timestamp(last_tx_date)
+                    holding_period = f"{(d1 - d0).days / 365.25:.1f}"
+                except (ValueError, TypeError):
+                    pass
+            area_f = _safe_float(r.get("area"))
+            net_area_f = _safe_float(r.get("net_area"))
+            mkt_type_f = _safe_float(r.get("mkt_type"))
+            new_records.append({
+                "building_id": r.get("building_id"), "unit": None, "floor": r.get("floor"),
+                "floor_level": None, "floor_level_id": None, "flat": r.get("flat") or None,
+                "area": int(area_f) if area_f is not None else None,
+                "net_area": int(net_area_f) if net_area_f is not None else None,
+                "price": price_f, "tags": np.array(["LANDREG_DEEP_PULL"], dtype=object),
+                "tx_date": r.get("tx_date"), "tx_type": r.get("tx_type"), "last_tx_date": last_tx_date,
+                "holding_period": holding_period, "last_price": last_price,
+                "mkt_type": int(mkt_type_f) if mkt_type_f is not None else None,
+                "source": "LANDREG_DEEP_PULL", "update_date": pull_ts, "gain": gain_f,
+                "transaction_type": r.get("transaction_type"), "url_desc": r.get("url_desc"),
+                "unit_price_net": r.get("net_ft_price"),
+            })
+            new_keys_seen.add(
+                _landreg_match_key(r.get("building_id"), r.get("tx_date"), r.get("floor"), r.get("flat"), price_f)
+            )
+
+    if not new_records:
+        logger.info("LANDREG deep supplement: no rows returned for %d buildings", len(building_ids))
+        record_node_execution(
+            node_name="fetch_landreg_deep_supplement", node_type="default",
+            metadata={"buildings_swept": len(building_ids), "rows_added": 0},
+        )
+        return transactions_df
+
+    new_df = pd.DataFrame(new_records).merge(hierarchy, on="building_id", how="left")
+    existing_landreg_residual = existing_landreg[~existing_landreg["_key"].isin(new_keys_seen)].drop(columns=["_key"])
+
+    final_cols = list(transactions_df.columns)
+    new_df = new_df.reindex(columns=final_cols)
+    existing_other = existing_other.reindex(columns=final_cols)
+    existing_landreg_residual = existing_landreg_residual.reindex(columns=final_cols)
+    merged = pd.concat([existing_other, existing_landreg_residual, new_df], ignore_index=True)
+
+    logger.info(
+        "LANDREG deep supplement: %d buildings swept, %d rows fetched, %d final rows (was %d)",
+        len(building_ids), len(new_df), len(merged), len(transactions_df),
+    )
+    record_node_execution(
+        node_name="fetch_landreg_deep_supplement",
+        node_type="default",
+        metadata={"buildings_swept": len(building_ids), "rows_added": len(new_df), "final_rows": len(merged)},
+    )
+    return merged
 
 
 ############# Transaction End #############
@@ -810,14 +1084,21 @@ def merge_transactions_estates(transactions_df: pd.DataFrame, estates_df: pd.Dat
     
     logger.info(f"Merging on: transactions.estate_id = estates.{right_on}")
     
-    return pd.merge(
+    merged = pd.merge(
         transactions_df,
         estates_df,
         left_on='estate_id',
         right_on=right_on,
         how='left',
+        validate='many_to_one',
         suffixes=('_trans', '_estate')
     )
+    if len(merged) != len(transactions_df):
+        raise ValueError(
+            "Estate enrichment changed transaction cardinality: "
+            f"{len(transactions_df)} -> {len(merged)}"
+        )
+    return merged
 
 
 

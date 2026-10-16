@@ -22,12 +22,34 @@ except ImportError:
 from ...utils.node_tracker import should_run_node, record_node_execution
 from ...utils.building_supplement import (
     apply_supplemental_matches,
-    load_supplemental_building_master,
 )
 from ...utils.source_runtime import get_optional_setting, get_required_setting
 
+
+def load_existing_source_a_commercial_snapshots(
+    params: Dict[str, Any],
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load the three Source A commercial snapshots as an explicit node."""
+    source_params = params["source_a_commercial"]
+
+    def optional_parquet(path: str) -> pd.DataFrame:
+        return pd.read_parquet(path) if os.path.exists(path) else pd.DataFrame()
+
+    return (
+        optional_parquet(source_params["building_listings_file"]),
+        optional_parquet(
+            source_params.get(
+                "building_details_file",
+                "data/02_intermediate/centanet_oir_details.parquet",
+            )
+        ),
+        optional_parquet(source_params["transaction_file"]),
+    )
+
+
 def scrape_building_listings(
     source_a_commercial_area_code: pd.DataFrame,
+    existing_df: pd.DataFrame,
     params: Dict[str, Any])  -> pd.DataFrame:
     """
     Scrape building listings from Source A OIR.
@@ -38,12 +60,8 @@ def scrape_building_listings(
     logger = logging.getLogger(__name__)
     
     # Building listings: compare API total per district vs DB count — already in loop below.
-    listings_file = params["source_a_commercial"]["building_listings_file"]
-
-    # Load existing data with backward compatibility
     existing_counts = {}
-    if os.path.exists(listings_file):
-        existing_df = pd.read_parquet(listings_file)
+    if not existing_df.empty:
         existing_counts = existing_df['queriedDistrict'].value_counts().to_dict()
 
     # Initialize data storage
@@ -151,7 +169,7 @@ def scrape_building_listings(
 
     # Save results
     new_df = pd.DataFrame(data)
-    if os.path.exists(listings_file):
+    if not existing_df.empty:
         combined_df = pd.concat([existing_df, new_df]).drop_duplicates(subset=["propertyID"], keep="last")
         #combined_df.to_csv(existing_df, index=False)
         
@@ -186,6 +204,7 @@ def scrape_building_listings(
     
 def scrape_building_details(
     building_listing_df: pd.DataFrame,
+    existing_data: pd.DataFrame,
     params: Dict[str, Any]) -> pd.DataFrame:
     """
     Scrape building details from Source A OIR with sophisticated anti-detection measures.
@@ -228,29 +247,18 @@ def scrape_building_details(
     }     
     
     # Read district information
-    details_file = params["source_a_commercial"].get(
-        "building_details_file", "data/02_intermediate/centanet_oir_details.parquet"
-    )
     detail_base_url = get_required_setting(params, "source_a_commercial", "site", "detail_base_url")
     landing_url = get_required_setting(params, "source_a_commercial", "site", "landing_url")
     search_url = get_required_setting(params, "source_a_commercial", "site", "search_url")
 
     # Load existing data if available
-    existing_data = pd.DataFrame()
     scraped_ids = set()
-    if os.path.exists(details_file):
-        try:
-            existing_data = pd.read_parquet(details_file, engine='pyarrow')
-            if 'property_id' in existing_data.columns:
-                scraped_ids = set(existing_data['property_id'].astype(str))
-            else:
-                logger.warning("Existing building details file has no 'property_id' column; treating as empty.")
-                existing_data = pd.DataFrame()
-                scraped_ids = set()
-        except Exception as e:
-            logger.warning(f"Failed to read existing building details: {e}")
+    if not existing_data.empty:
+        if 'property_id' in existing_data.columns:
+            scraped_ids = set(existing_data['property_id'].astype(str))
+        else:
+            logger.warning("Existing building details have no 'property_id'; treating as empty.")
             existing_data = pd.DataFrame()
-            scraped_ids = set()
 
     # Prepare filtered input dataframe
     building_listing_df = building_listing_df.copy()
@@ -437,16 +445,11 @@ def scrape_building_details(
         # Final duplicate removal
         combined_data = combined_data.drop_duplicates(subset=['property_id'], keep='last')
         
-        # Save only if we have valid data
-        if not combined_data.empty:
-            try:
-                # Save to parquet with proper error handling
-                combined_data.to_parquet(details_file, engine='pyarrow', index=False)
-                logger.info(f"Successfully saved {len(combined_data)} records ({len(new_data)} new)")
-            except Exception as e:
-                logger.error(f"Failed to save data: {e}")
-                # Return existing data if save fails
-                return existing_data
+        logger.info(
+            "Prepared %s building details (%s new) for catalog persistence",
+            len(combined_data),
+            len(new_data),
+        )
         
         # Log summary statistics
         logger.info(f"Scraping Summary: {success_count} successful, {error_count} errors, {timeout_count} timeouts out of {total_processed} total requests")
@@ -496,7 +499,6 @@ import datetime
 from tqdm import tqdm
 import urllib.parse
 import os
-import ast
 from fake_useragent import UserAgent
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -616,16 +618,6 @@ def get_advanced_cookies():
         "last_visit": str(int(time.time())),
         "visit_count": str(random.randint(1, 50))
     }
-
-def safe_get_value(x, key, default=None):
-    if isinstance(x, str):
-        try:
-            x = ast.literal_eval(x)
-        except (SyntaxError, ValueError):
-            return default
-    if isinstance(x, dict):
-        return x.get(key, default)
-    return default
 
 def fuzzy_match_properties(
     transaction_data: pd.DataFrame,
@@ -915,8 +907,9 @@ def test_fuzzy_matching_accuracy(
     
     return results_df
 
-def scrape_transaction( 
+def scrape_transaction(
     area_codes: pd.DataFrame,
+    existing_df: pd.DataFrame,
     params: Dict[str, Any]
 ) -> pd.DataFrame:    
 
@@ -940,8 +933,6 @@ def scrape_transaction(
     logger = logging.getLogger(__name__)
     
     # Date-based decision: no time-based guard needed — date logic below handles it.
-    input_path = params["source_a_commercial"]["transaction_file"]
-    
     # Set default dates
     #end_date = params.get("end_date", datetime.date.today().strftime("%Y-%m-%d"))
     
@@ -952,18 +943,11 @@ def scrape_transaction(
     else:
         end_date = params.get("end_date", datetime.date.today().strftime("%Y-%m-%d"))
     
-    existing_df = pd.DataFrame()  # Initialize empty DataFrame
     our_counts_by_code = {}  # Per-district record counts in existing data
-    if os.path.exists(input_path):
-        try:
-            existing_df = pd.read_parquet(input_path)
-            logger.info(f"Loaded {len(existing_df)} existing transaction records from storage")
-            # Build per-district count map for gap detection
-            if not existing_df.empty and "AreaCode" in existing_df.columns:
-                our_counts_by_code = existing_df.groupby("AreaCode").size().to_dict()
-        except Exception as e:
-            logger.warning(f"Failed to load existing data: {str(e)}")
-            
+    if not existing_df.empty:
+        logger.info(f"Received {len(existing_df)} existing transaction records")
+        if "AreaCode" in existing_df.columns:
+            our_counts_by_code = existing_df.groupby("AreaCode").size().to_dict()
         if not existing_df.empty:
             try:
                 date_in_df = pd.to_datetime(
@@ -1495,6 +1479,7 @@ def scrape_transaction(
 def join_transaction_with_building_details(
     transaction_data: pd.DataFrame,
     building_details: pd.DataFrame,
+    supplemental_master: pd.DataFrame,
     params: Dict[str, Any]
 ) -> pd.DataFrame:
     """Hybrid join function: Exact ID matching first, fuzzy matching fallback with validation"""
@@ -1504,11 +1489,6 @@ def join_transaction_with_building_details(
     
     source_params = params.get("source_a_commercial", {})
     join_params = source_params.get("join", params.get("join", {}))
-    supplemental_master = load_supplemental_building_master(
-        params,
-        domain="commercial",
-        source_system="source_a_commercial",
-    )
     
     # Get join configuration with NEW DEFAULTS
     use_exact_id_first = join_params.get("use_exact_id_first", True)  # NEW: Default to exact ID first
@@ -1813,7 +1793,17 @@ def join_transaction_with_building_details(
     # the unmatched paths if the index tracking was imperfect in a
     # previous run's cached data.  Deduplicate by 'id', keeping the row
     # with the highest match score (exact match wins over unmatched).
-    if 'id' in result_df.columns and result_df['id'].notna().any():
+    #
+    # 'id' alone is not a unique transaction key: Centanet reuses one id for
+    # distinct listings (different unit/floor/date) sharing one property page,
+    # e.g. "China HK City Tower 6" unit '--' vs '01-03A' on different dates.
+    # The scrape-level dedup a few steps upstream already uses the wider key
+    # ['id','propertyNameEn','transactionDate','unit'], which correctly tells
+    # those apart — match it here so this later dedup doesn't undo that and
+    # silently drop real transactions (47 pairs / 94 rows observed on the
+    # 2020-2026 published dataset).
+    dedup_subset = [c for c in ('id', 'propertyNameEn', 'transactionDate', 'unit') if c in result_df.columns]
+    if dedup_subset and result_df['id'].notna().any():
         if '_match_score' not in result_df.columns:
             result_df['_match_score'] = 0.0
         result_df['_match_score'] = pd.to_numeric(result_df['_match_score'], errors='coerce').fillna(0.0)
@@ -1821,12 +1811,12 @@ def join_transaction_with_building_details(
         result_df = (
             result_df
             .sort_values('_match_score', ascending=False)
-            .drop_duplicates(subset=['id'], keep='first')
+            .drop_duplicates(subset=dedup_subset, keep='first')
             .reset_index(drop=True)
         )
         removed = before_dedup - len(result_df)
         if removed:
-            logger.info(f"  🗑️ Removed {removed:,} duplicate transaction rows (same 'id', kept best match)")
+            logger.info(f"  🗑️ Removed {removed:,} duplicate transaction rows (same {dedup_subset}, kept best match)")
 
     # ==================== FINAL STATISTICS ====================
     logger.info("="*80)
