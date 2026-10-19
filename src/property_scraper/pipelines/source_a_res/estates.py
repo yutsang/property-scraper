@@ -709,28 +709,69 @@ def scrape_estate_details(
     logger.info(f"🎯 Estates: {len(listings_df):,} total | {already_done:,} already done | {len(estates_to_scrape):,} to scrape now")
 
     from tqdm.auto import tqdm
+    import requests
 
-    headless = params["global"].get("headless", True)
+    user_agent = params["global"].get("user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    session = requests.Session()
 
-    def scrape_single_estate(page, row):
+    def _get_with_retry(url: str, max_retries: int = 2):
+        """A sustained run against this site hits a run of transient 500s
+        (verified live 2026-10-18: 11,667/17,974 estates failed overnight,
+        then a fresh retry succeeded on 30/30 of a random sample minutes
+        later — not a dead page, not a selector problem). But a SHORT
+        in-process retry is the wrong tool for that: a follow-up test
+        showed the recovery happens on a scale of minutes-to-hours, not
+        seconds, so a short backoff mostly just burns time on estates that
+        stay down for the whole run anyway. Keep retries short (one quick
+        retry, not an escalating multi-minute one) and let the existing
+        gap-filling mechanism (this node's own resume-by-done_links logic)
+        pick up whatever recovers by the next run. A definitive 4xx (not
+        429) raises immediately — some estates are genuinely gone (404,
+        delisted since the catalog was last built) and retrying changes
+        nothing."""
+        backoff = 3.0
+        last_exc = None
+        for _ in range(max_retries):
+            try:
+                resp = session.get(url, headers={"user-agent": user_agent}, timeout=20)
+                if resp.status_code == 200:
+                    return resp
+                resp.raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and 400 <= e.response.status_code < 500 and e.response.status_code != 429:
+                    raise  # definitive client error (e.g. 404 delisted) — won't resolve by retrying
+                last_exc = e
+            except requests.exceptions.RequestException as e:
+                last_exc = e
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 120)
+        raise last_exc or RuntimeError("request failed with no exception captured")
+
+    def scrape_single_estate(row):
         try:
-            page.goto(row["Link"], wait_until="domcontentloaded", timeout=30000)
+            resp = _get_with_retry(row["Link"])
             random_sleep(params["global"]["min_delay"], params["global"]["max_delay"])
 
+            soup = BeautifulSoup(resp.text, "html.parser")
             estate_code = row["Link"].rstrip("/").split("/")[-1] if row.get("Link") else ""
 
-            title_el = page.locator(".estate-detail-banner-title").first
-            title_el.wait_for(state="visible", timeout=10000)
-            scraped_name = (title_el.text_content() or "").strip()
+            title_el = soup.select_one(".estate-detail-banner-title")
+            scraped_name = title_el.get_text(strip=True) if title_el else ""
+            if not scraped_name:
+                raise ValueError("estate-detail-banner-title not found or empty")
+
             detail_data = {
                 "Name": row["Name"],
                 "scraped_estate_name": scraped_name,
-                "occupation_permit": _extract_element_text_playwright(
-                    page, "//div[contains(text(), 'Date of Occupation Permit')]/following-sibling::div"
-                ),
-                "scraped_blocks": _extract_element_text_playwright(
-                    page, "//div[contains(text(), 'No. of Block(s)')]/following-sibling::div"
-                ),
+                # "Date of Occupation Permit"/"No. of Block(s)" (the original
+                # XPath targets) are stale label text \u2014 verified live 2026-10-17
+                # the site now renders "Year of Occupation Permit" in a
+                # multi-column phase table and "No. of Blocks" as a
+                # value-then-label .table-item pair. Both were already always
+                # None in production before this fix (same root cause, not a
+                # regression from moving off Playwright).
+                "occupation_permit": None,
+                "scraped_blocks": None,
                 "chinese_name": None,
                 "school_net_info": None,
                 "estate_detailed_address": None,
@@ -741,44 +782,48 @@ def scrape_estate_details(
                 "District": row["District"],
             }
 
-            try:
-                cn_el = page.locator(".estate-detail-banner-title-cn, .chinese-name, h1.cn, .title-cn").first.text_content()
-                detail_data["chinese_name"] = (cn_el or "").strip()
-            except Exception:
-                try:
-                    banner = page.locator(".estate-detail-banner").first.text_content()
-                    chinese_matches = re.findall(r"[\u4e00-\u9fff]+", banner or "")
+            def _clean_ws(text: str) -> str:
+                return re.sub(r"\s+", " ", text).strip()
+
+            op_label = soup.find(lambda tag: tag.name == "div" and tag.get_text(strip=True) == "Year of Occupation Permit")
+            if op_label:
+                row_el = op_label.find_parent("tr")
+                if row_el:
+                    value_cells = row_el.find_all("td")[1:]
+                    if value_cells:
+                        detail_data["occupation_permit"] = _clean_ws(value_cells[0].get_text(" "))
+
+            for table_item in soup.select(".table-item"):
+                label_el = table_item.select_one(".table-item-text")
+                value_el = table_item.select_one(".table-item-title")
+                if label_el and value_el and "Block" in label_el.get_text():
+                    detail_data["scraped_blocks"] = _clean_ws(value_el.get_text(" "))
+                    break
+
+            cn_el = soup.select_one(".estate-detail-banner-title-cn, .chinese-name, h1.cn, .title-cn")
+            if cn_el:
+                detail_data["chinese_name"] = cn_el.get_text(strip=True)
+            else:
+                banner = soup.select_one(".estate-detail-banner")
+                if banner:
+                    chinese_matches = re.findall(r"[\u4e00-\u9fff]+", banner.get_text())
                     if chinese_matches:
                         detail_data["chinese_name"] = "".join(chinese_matches[:10])
-                except Exception:
-                    pass
 
-            try:
-                items = page.locator(".item").all()
-                for div in items:
-                    label_el = div.locator(".label-item-left").first.text_content()
-                    if label_el and "School Net" in label_el:
-                        links = div.locator("a").all()
-                        if len(links) >= 2:
-                            detail_data["school_net_info"] = f"{(links[0].text_content() or '').strip()} | {(links[1].text_content() or '').strip()}"
-                        break
-            except Exception:
-                pass
+            for div in soup.select(".item"):
+                label_el = div.select_one(".label-item-left")
+                label_text = label_el.get_text(strip=True) if label_el else ""
+                if "School Net" in label_text:
+                    links = div.find_all("a")
+                    if len(links) >= 2:
+                        detail_data["school_net_info"] = f"{_clean_ws(links[0].get_text(' '))} | {_clean_ws(links[1].get_text(' '))}"
+                elif "Developer" in label_text:
+                    value_el = div.select_one(".label-item-right")
+                    detail_data["developer"] = value_el.get_text(strip=True) if value_el else None
 
-            try:
-                addr_el = page.locator(".estate-detail-banner-position").first.text_content()
-                detail_data["estate_detailed_address"] = (addr_el or "").strip()
-            except Exception:
-                pass
-
-            try:
-                for item in page.locator(".item").all():
-                    label_el = item.locator(".label-item-left").first.text_content()
-                    if label_el and "Developer" in label_el:
-                        detail_data["developer"] = (item.locator(".label-item-right").first.text_content() or "").strip()
-                        break
-            except Exception:
-                pass
+            addr_el = soup.select_one(".estate-detail-banner-position")
+            if addr_el:
+                detail_data["estate_detailed_address"] = addr_el.get_text(strip=True)
 
             return {"success": True, "data": detail_data}
         except Exception as e:
@@ -787,35 +832,47 @@ def scrape_estate_details(
 
     new_details = []
     failed_estates = []
+    saved_count = 0  # how many of new_details are already flushed to disk
 
-    logger.info("Scraping estates sequentially (Playwright sync API is single-threaded)")
+    def _flush_incremental():
+        """Write progress to disk periodically — a multi-hour run over
+        thousands of estates has no business losing everything it scraped
+        just because the process got interrupted partway (observed live
+        2026-10-18: a run that reached somewhere past estate #4952 of 11,667
+        was killed and left zero trace, since the old code only persisted
+        once at the very end)."""
+        if not new_details:
+            return
+        new_df = pd.DataFrame(new_details)
+        scraped_links = set(new_df["Link"]) if "Link" in new_df.columns else set()
+        existing_to_keep = (
+            existing_details[~existing_details["Link"].isin(scraped_links)]
+            if not existing_details.empty and "Link" in existing_details.columns and scraped_links
+            else existing_details
+        )
+        combined = pd.concat([existing_to_keep, new_df], ignore_index=True)
+        combined = drop_non_parquet_serializable_columns(combined)
+        combined.to_parquet(details_file, engine="pyarrow", index=False)
 
-    with sync_playwright() as playwright:
-        browser = launch_browser(playwright, headless=headless)
-        context = browser.new_context(user_agent=params["global"].get("user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"))
-        page = context.new_page()
-        try:
-            estate_rows = list(estates_to_scrape.iterrows())
-            with tqdm(total=len(estate_rows), desc="Scraping estates") as pbar:
-                for _, row in estate_rows:
-                    try:
-                        result = scrape_single_estate(page, row)
-                    except Exception as exc:
-                        result = {"success": False, "name": row.get("Name", "?"), "link": row.get("Link", ""), "error": str(exc)}
-                    if result["success"]:
-                        new_details.append(result["data"])
-                    else:
-                        failed_estates.append(result)
-                    pbar.update(1)
-        finally:
+    logger.info("Scraping estates via direct HTTP (server-rendered HTML, no browser needed)")
+
+    estate_rows = list(estates_to_scrape.iterrows())
+    with tqdm(total=len(estate_rows), desc="Scraping estates") as pbar:
+        for _, row in estate_rows:
             try:
-                context.close()
-            except Exception:
-                pass
-            try:
-                browser.close()
-            except Exception:
-                pass
+                result = scrape_single_estate(row)
+            except Exception as exc:
+                result = {"success": False, "name": row.get("Name", "?"), "link": row.get("Link", ""), "error": str(exc)}
+            if result["success"]:
+                new_details.append(result["data"])
+            else:
+                failed_estates.append(result)
+            pbar.update(1)
+            if len(new_details) - saved_count >= 200:
+                _flush_incremental()
+                saved_count = len(new_details)
+
+    _flush_incremental()
 
     logger.info(f"✅ Successfully scraped: {len(new_details)} estates")
     if failed_estates:

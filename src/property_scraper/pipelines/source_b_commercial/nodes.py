@@ -350,141 +350,131 @@ def process_buildings(
     params: Dict[str, Any]
 ) -> pd.DataFrame:
     """
-    Revised implementation with JSON data parsing for completion date
+    Direct-HTTP implementation: the building detail page migrated from the old
+    `/ics/property/.../details/<id>/<slug>` route (Next.js pages-router,
+    server JSON in a `<script type="application/json">` tag + static
+    `meta-info-container` divs — both now gone) to a new app-router route,
+    `https://www.midlandici.com.hk/zh-hk/building/-/<id>` (verified live
+    2026-10-17). The old Selenium scraper had been silently dead for a while:
+    `new_listings` was always empty (every known id already in existing_df),
+    so it never actually launched the browser against the new page.
+
+    The new page is plain server-rendered HTML — no JS execution needed. Label
+    and value sit in sibling/paired elements (see below); which labels appear
+    varies per building (not every building has every facility), so this
+    collects whatever is present into a flexible dict rather than a fixed
+    column list.
     """
-    import time
     import pandas as pd
-    import chromedriver_autoinstaller
-    from selenium import webdriver
-    from selenium.webdriver.chrome.options import Options
+    import requests
     from bs4 import BeautifulSoup
     from tqdm import tqdm
-    import os
     import logging
-    import json
-    import re
-    from dateutil import parser
-    
+    import time
+
     logger = logging.getLogger(__name__)
-    
-    # Initialize driver once per execution
-    def initialize_driver():
-        from selenium import webdriver
-        from selenium.webdriver.chrome.options import Options as ChromeOptions
-        try:
-            # Switchable by params:webscraper.global.use_edge
-            use_edge = params.get('global', {}).get('use_edge', False)
-        except Exception:
-            use_edge = False
 
-        if use_edge:
-            import edgedriver_autoinstaller
-            edgedriver_autoinstaller.install()
-            opts = webdriver.EdgeOptions()
-            opts.use_chromium = True
-            opts.add_argument("--headless=new")
-            opts.add_argument("--no-sandbox")
-            opts.add_argument("--disable-dev-shm-usage")
-            return webdriver.Edge(options=opts)
-        else:
-            import chromedriver_autoinstaller
-            chromedriver_autoinstaller.install()
-            opts = ChromeOptions()
-            opts.add_argument("--headless=new")
-            opts.add_argument("--no-sandbox")
-            opts.add_argument("--disable-dev-shm-usage")
-            return webdriver.Chrome(options=opts)
-    
-    driver = initialize_driver()
+    base_url = get_required_setting(params, "source_b_commercial", "site", "detail_base_url")
+    delay = float(params.get('source_b_commercial', {}).get('building_detail_request_delay', 1.0))
+    headers = {
+        "user-agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"),
+    }
+    session = requests.Session()
 
-    # URL construction matching notebook
     def construct_url(row):
-        base_url = get_required_setting(params, "source_b_commercial", "site", "detail_base_url")
-        return f"{base_url}{row['__typename'].lower()}/details/{row['id']}/{row['nameEn'].replace(' ', '-')}?lang=english"
+        return f"{base_url}{row['id']}"
 
-    # Core scraping function with JSON extraction
+    def _leaf_text(el) -> str:
+        """Join only the deepest nested divs (multi-line values), else the
+        element's own text — avoids double-counting a value that is both a
+        wrapper div and contains child divs."""
+        divs = el.find_all('div')
+        leaves = [d for d in divs if not d.find('div')]
+        if leaves:
+            return '; '.join(d.get_text(strip=True) for d in leaves)
+        return el.get_text(strip=True)
+
+    def _get_with_retry(url: str, max_retries: int = 5):
+        """The site drops connections under sustained request rates even with
+        a polite delay (observed live: clean responses for ~470 requests,
+        then RemoteDisconnected/Max-retries for the rest of the run) — retry
+        with exponential backoff rather than treating that as a hard failure."""
+        backoff = 15.0
+        last_exc = None
+        for attempt in range(max_retries):
+            try:
+                resp = session.get(url, headers=headers, timeout=20)
+                if resp.status_code == 200:
+                    return resp
+                if resp.status_code == 429 or resp.status_code >= 500:
+                    last_exc = RuntimeError(f"HTTP {resp.status_code}")
+                else:
+                    resp.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                last_exc = e
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 180)
+        raise last_exc or RuntimeError("request failed with no exception captured")
+
     def scrape_building_info(row):
+        url = construct_url(row)
         try:
-            url = construct_url(row)
-            driver.get(url)
-            time.sleep(1.5)  # Allow JavaScript execution
-            
-            soup = BeautifulSoup(driver.page_source, 'html.parser')
-            info = {
-                'id': row['id'],
-                'Building Name': row['nameEn'],
-                'URL': url
-            }
-            
-            # Extract JSON data from script tag
-            script_tag = soup.find('script', {'type': 'application/json'})
-            if script_tag:
-                try:
-                    json_data = json.loads(script_tag.string)
-                    building_data = json_data['props']['pageProps']['building']
-                    
-                    # Extract completion dates
-                    info['Completion Date Raw'] = building_data.get('inTakeDate')
-                    info['Completion Date Format'] = building_data.get('inTakeDateFormat')
-                    
-                    # Parse datetime with timezone handling
-                    if info['Completion Date Raw']:
-                        dt_str = info['Completion Date Raw'].split(' (')[0]  # Remove timezone name
-                        info['Completion Date'] = parser.parse(dt_str).isoformat()
-
-                    # District / region hierarchy when exposed in JSON (keys vary by page version)
-                    for i in range(1, 5):
-                        ak, dk, dk_alt = f'area{i}', f'areaDesc{i}', f'areadesc{i}'
-                        if ak in building_data and building_data[ak] is not None:
-                            info[f'area{i}'] = building_data[ak]
-                        if dk in building_data and building_data[dk] is not None:
-                            info[f'area_desc{i}'] = building_data[dk]
-                        elif dk_alt in building_data and building_data[dk_alt] is not None:
-                            info[f'area_desc{i}'] = building_data[dk_alt]
-                    for key in ('district', 'region', 'subDistrict'):
-                        node = building_data.get(key)
-                        if isinstance(node, dict) and node.get('name'):
-                            slot = None
-                            for j in range(1, 5):
-                                if f'area_desc{j}' not in info:
-                                    slot = j
-                                    break
-                            if slot is not None:
-                                code = node.get('code') or node.get('distCode') or node.get('id')
-                                info[f'area{slot}'] = code if code is not None else ''
-                                info[f'area_desc{slot}'] = node.get('name') or ''
-                except Exception as e:
-                    logger.error(f"JSON parsing error: {str(e)[:100]}")
-
-            # Existing meta-info parsing (keep for other fields)
-            for block in soup.find_all('div', class_='meta-info-container'):
-                title = block.find('div', class_='title')
-                content = block.find('div', 'content')
-                icon = block.find('div', 'icon')
-                
-                if title:
-                    key = title.text.strip()
-                    value = content.text.strip() if content else "N/A"
-                    info[key] = value
-                    
-            return info
+            resp = _get_with_retry(url)
         except Exception as e:
-            logger.error(f"Error scraping {row['nameEn']}: {str(e)[:100]}...")
+            logger.error(f"Error fetching {row['id']}: {str(e)[:150]}")
             return None
 
-    # Rest of the original implementation remains unchanged
+        try:
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            info: Dict[str, Any] = {'id': row['id'], 'URL': url}
+
+            h1 = soup.find('h1')
+            info['Building Name'] = h1.get_text(strip=True) if h1 else row.get('nameEn')
+
+            # "Overview" quick stats (物業類型/總樓層數目/落成年份): label sits
+            # next to an icon (<i>) inside its own container, and the value is
+            # the PREVIOUS sibling of that container — structurally distinct
+            # from the basic-info pairs below, which share the same label
+            # class but have no icon sibling.
+            for label_p in soup.select('p.hjVpxu'):
+                label_container = label_p.parent
+                if label_container is None or label_container.name != 'div':
+                    continue
+                if label_container.find('i') is None:
+                    continue
+                value_div = label_container.find_previous_sibling('div')
+                if value_div is not None:
+                    info[label_p.get_text(strip=True)] = value_div.get_text(strip=True)
+
+            # Basic/facility/management info: one container per field, first
+            # child is the label, second is the value (sometimes multi-line).
+            # A label can carry a nested "*footnote" child (e.g. management
+            # fee's "*每平方呎約") — drop everything from "*" on.
+            for pair in soup.select('div.sc-990d88a2-12'):
+                kids = pair.find_all(recursive=False)
+                if len(kids) == 2:
+                    label = kids[0].get_text(strip=True).split('*', 1)[0].strip()
+                    if label and label not in info:
+                        info[label] = _leaf_text(kids[1])
+
+            return info
+        except Exception as e:
+            logger.error(f"Error parsing {row['id']}: {str(e)[:150]}")
+            return None
+
     details_file = params.get('source_b_commercial', {}).get('building_details_file', 'data/02_intermediate/midland_ici_building_details.parquet')
     existing_ids = set()
-    
+
     if not existing_df.empty and params.get('resume_from_existing', True):
         existing_ids = set(existing_df['id']) if 'id' in existing_df.columns else set()
         logger.info(f"Received existing snapshot with {len(existing_df)} buildings")
-    
+
     new_listings = building_listings[~building_listings['id'].isin(existing_ids)]
     if new_listings.empty:
         logger.info("All buildings already processed")
         return existing_df
-    
+
     results = []
     saved_count = 0  # track how many results have already been merged to disk
     try:
@@ -493,7 +483,7 @@ def process_buildings(
                 result = scrape_building_info(row)
                 if result:
                     results.append(result)
-                    if len(results) % 5 == 0 and len(results) > saved_count:
+                    if len(results) % 25 == 0 and len(results) > saved_count:
                         # Incremental save: merge new results with existing data
                         incremental_df = pd.concat([existing_df, pd.DataFrame(results)], ignore_index=True)
                         if 'id' in incremental_df.columns:
@@ -501,6 +491,7 @@ def process_buildings(
                         incremental_df.to_parquet(details_file, engine='pyarrow')
                         saved_count = len(results)
                 pbar.update(1)
+                time.sleep(delay)
 
     except KeyboardInterrupt:
         logger.warning("User interrupt detected! Saving partial results...")
@@ -509,9 +500,6 @@ def process_buildings(
             if 'id' in partial_df.columns:
                 partial_df = partial_df.drop_duplicates(subset=['id'], keep='last')
             partial_df.to_parquet(details_file, engine='pyarrow')
-
-    finally:
-        driver.quit()
 
     if results:
         final_df = pd.concat([existing_df, pd.DataFrame(results)], ignore_index=True)
